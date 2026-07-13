@@ -23,9 +23,13 @@ Holding `D` and `Right Arrow` sets movement/shooting vectors in `GameView::input
 
 History moves from research/architecture to SFML shell, combat, rooms, enemies, items, Boss ending, traced assets and release tests. Stage 8 review found literal asset paths in `GameView`. Texture objects were isolated correctly, but path catalog responsibility belonged to Resource. Commit `bc2ef8f` moved every mapping to `resource::AssetCatalog`; architecture and tests were rerun. Stage 1 had also exposed an overly broad architecture regex that mistook `viewmodel/` for a Model include; it was narrowed to actual include directives before that stage commit.
 
+## Why the final version does not switch to EasyX
+
+EasyIsaac is the final visual reference, not the new architecture. EasyX is Windows/Visual-C++ specific, while the accepted project already uses SFML 3 and a testable MVVM boundary. Replacing the renderer would add platform risk and encourage copying the reference's global-state design without improving gameplay. The final branch instead imports a small traced asset subset, converts EasyX's `_back`/`_front` mask pairs to alpha textures inside Resource, and reproduces the paper menus, basement room, HUD and pause composition in `GameView`. Model and ViewModel rules are unchanged except for menu states and additional display-only HUD fields.
+
 ## Test strategy
 
-Model assertions cover the 12-heart cap/damage order, death, projectile hit/destruction, clear-gated doors, key/bomb/coin success/failure, passive stacking, shop/chest, secret reveal, Boss/dead/devil/floor boundaries, fixed-seed connectivity and 30/60/120 FPS-equivalent fixed steps. A ViewModel flow test covers menu, selection, pause/resume, HUD, defeat and three-floor victory. Resource tests verify pointer-identical caching, missing diagnostics and one-to-one provenance. Debug, Release and supported sanitizer builds are recorded in Executor feedback.
+Model assertions cover the 12-heart cap/damage order, death, projectile hit/destruction, clear-gated doors, key/bomb/coin success/failure, passive stacking, shop/chest, secret reveal, Boss/dead/devil/floor boundaries, fixed-seed connectivity and 30/60/120 FPS-equivalent fixed steps. A ViewModel flow test covers main menu, quick run, rankings, selection, pause/resume, HUD, defeat and three-floor victory. Resource tests verify pointer-identical texture/audio caching, differently sized EasyX mask pairs, missing diagnostics and one-to-one provenance. Debug, Release and supported sanitizer builds are recorded in project evidence.
 
 ## Scope simplification
 

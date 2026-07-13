@@ -119,6 +119,20 @@ Commit hashes are recorded only after the referenced commit exists; stage tags p
 - Next: independent Acceptance review.
 - MVVM self-check: Model has no SFML; View has no Model include; ViewModel has no View/SFML or game-rule algorithms; App loop remains scheduling-only.
 
+## Iteration 9 — 2026-07-13 15:20 +08:00
+
+- Objective: preserve the accepted build as the midterm backup and reproduce `tianguantg/EasyIsaac` as the final presentation layer.
+- Prior problem: the accepted game was mechanically complete but visually sparse, while directly switching to EasyX would make the cross-platform SFML project Windows-only and weaken its MVVM boundary.
+- Options: port the whole reference, replace SFML with EasyX, or reproduce only its presentation. Selected presentation parity so the larger existing gameplay remains intact.
+- Actual change: `v1.0-midterm-backup`, a dedicated final branch, paper start/main/rank/selection/end screens, basement art, runtime mask-pair conversion, masked sprites, reference HUD/pause composition, event audio, presentation effects and deterministic framebuffer capture modes.
+- Architecture effect: SFML texture/audio types remain in Resource/View; AssetCatalog owns paths; ViewModel adds menu state and display-only stats; Model rules remain pure C++ and unchanged.
+- Verification: Debug, Release and ASan+UBSan builds each pass all six CTests; architecture and extended JPG/PNG/MP3/WAV provenance checks pass. Visual QA found and corrected an initial damage flash, cluttered pause text, under-scaled sprites and a real 48×48/51×48 health-mask mismatch before the final captures were accepted.
+- Evidence: `docs/progress/final-easyisaac-*.png` are live SFML framebuffer captures; `docs/design/easyisaac-visual-parity.md` records the explicit boundary.
+- Implementation commit: `fb0520f`.
+- Unresolved: only the non-force remote push remains after the evidence commit.
+- Next: run the final build matrix, record the delivery commit and push the final branch without changing the midterm tag.
+- MVVM self-check: no Model SFML include, no View Model include, no asset-path rule outside Resource, and capture preparation still advances through ViewModel commands.
+
 ## Existing stage evidence
 
 | Stage | Commit | Tag |

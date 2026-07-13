@@ -57,3 +57,11 @@
 - Rendered every HUD field inside the window and exposed current character stats during selection.
 - Added all four character icons, dedicated implemented-item research and per-content failed-asset lookup records.
 - Added genuine SFML window captures for start, selection, gameplay HUD and pause states.
+
+### Stage 9 — EasyIsaac final presentation
+
+- Froze the accepted midterm build at `v1.0-midterm-backup` and moved final work to `feature/easyisaac-final-replica`.
+- Added paper start/menu/rank/selection/ending screens, basement room art, masked character/enemy/projectile/item sprites, reference-style HUD and pause scroll.
+- Added runtime EasyX mask-pair conversion, cached SFML Audio event effects, transition/damage feedback and optional hitbox inspection.
+- Preserved the strict MVVM dependency direction and the full four-character, six-enemy, four-Boss, three-floor course loop.
+- Added menu/rank/quick-run tests, mask/audio resource tests, complete imported-asset provenance and reproducible final framebuffer captures.
