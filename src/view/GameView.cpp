@@ -13,7 +13,7 @@ namespace isaac::view {
 
 GameView::GameView(viewmodel::GameViewModel& viewModel, resource::ResourceManager& resources)
     : viewModel_(viewModel), resources_(resources),
-      window_(sf::VideoMode({960U, 540U}), "ISA — MVVM course project") {
+      window_(sf::VideoMode({960U, 540U}), "ISA - MVVM course project") {
   window_.setVerticalSyncEnabled(true);
 }
 
