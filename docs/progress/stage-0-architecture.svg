@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+  <rect width="960" height="540" fill="#17131d"/>
+  <text x="48" y="62" fill="#f2e7d5" font-family="sans-serif" font-size="30">ISA course project — Stage 0 architecture</text>
+  <g font-family="sans-serif" font-size="22" text-anchor="middle">
+    <rect x="70" y="160" width="210" height="110" rx="14" fill="#6b3851"/><text x="175" y="220" fill="white">View / SFML</text>
+    <rect x="375" y="160" width="210" height="110" rx="14" fill="#74542d"/><text x="480" y="220" fill="white">ViewModel / DTO</text>
+    <rect x="680" y="160" width="210" height="110" rx="14" fill="#315b54"/><text x="785" y="220" fill="white">Pure C++ Model</text>
+    <path d="M280 215 H365" stroke="#e8c88c" stroke-width="8"/><path d="M585 215 H670" stroke="#e8c88c" stroke-width="8"/>
+    <text x="480" y="335" fill="#d6c9b7">Only permitted major dependency direction</text>
+    <text x="480" y="385" fill="#9fb3aa" font-size="18">4 characters • 6 enemies • 4 bosses • 3 floors</text>
+    <text x="480" y="425" fill="#9fb3aa" font-size="18">Research, tests, provenance and staged evidence are first-class deliverables</text>
+  </g>
+</svg>
+
