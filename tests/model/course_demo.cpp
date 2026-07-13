@@ -68,6 +68,7 @@ int main() {
   isaac::model::GameSession session;
   isaac::viewmodel::GameViewModel vm(session);
   pressConfirm(vm);
+  pressConfirm(vm);
   isaac::viewmodel::InputCommand nextCharacter;
   nextCharacter.movement = {1.F, 0.F};
   tick(vm, nextCharacter);

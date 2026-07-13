@@ -22,6 +22,11 @@ struct HudDTO {
   int bombs{1};
   int keys{1};
   int floor{1};
+  float moveSpeed{};
+  float damage{};
+  float shotsPerSecond{};
+  float projectileSpeed{};
+  float elapsedSeconds{};
   std::string activeItem{"None"};
   std::string roomState{"Start room"};
 };
@@ -36,6 +41,7 @@ struct MinimapRoomDTO {
 
 struct DisplayState {
   common::ScreenState screen{common::ScreenState::Start};
+  int menuIndex{};
   std::string selectionName;
   std::string selectionStats;
   std::vector<EntityDTO> entities;

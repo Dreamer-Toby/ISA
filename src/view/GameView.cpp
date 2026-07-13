@@ -1,21 +1,28 @@
 #include "view/GameView.h"
+
 #include "resource/AssetCatalog.h"
 
 #include <SFML/Graphics/CircleShape.hpp>
+#include <SFML/Graphics/Image.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/Sprite.hpp>
+#include <SFML/Graphics/Texture.hpp>
+#include <SFML/System/Angle.hpp>
 #include <SFML/Window/Keyboard.hpp>
 
 #include <algorithm>
-#include <filesystem>
-#include <sstream>
 #include <array>
 #include <cctype>
+#include <cmath>
+#include <filesystem>
+#include <iomanip>
+#include <sstream>
 #include <string_view>
 #include <unordered_map>
 
 namespace {
 using Glyph = std::array<unsigned char, 7>;
+
 const Glyph& glyph(char value) {
   static const std::unordered_map<char, Glyph> font{
       {'A',{14,17,17,31,17,17,17}}, {'B',{30,17,17,30,17,17,30}}, {'C',{14,17,16,16,16,17,14}},
@@ -31,6 +38,8 @@ const Glyph& glyph(char value) {
       {'3',{30,1,1,14,1,1,30}}, {'4',{2,6,10,18,31,2,2}}, {'5',{31,16,16,30,1,1,30}},
       {'6',{14,16,16,30,17,17,14}}, {'7',{31,1,2,4,8,8,8}}, {'8',{14,17,17,14,17,17,14}},
       {'9',{14,17,17,15,1,1,14}}, {'-',{0,0,0,31,0,0,0}}, {'.',{0,0,0,0,0,12,12}},
+      {':',{0,12,12,0,12,12,0}}, {'/',{1,2,2,4,8,8,16}}, {'<',{2,4,8,16,8,4,2}},
+      {'>',{8,4,2,1,2,4,8}}, {'?',{14,17,1,2,4,0,4}},
   };
   static const Glyph blank{};
   const auto found = font.find(static_cast<char>(std::toupper(static_cast<unsigned char>(value))));
@@ -38,10 +47,13 @@ const Glyph& glyph(char value) {
 }
 
 void drawBitmapText(sf::RenderWindow& window, std::string_view text, sf::Vector2f position,
-                    float scale = 2.F, sf::Color color = sf::Color(238, 227, 209)) {
+                    float scale, sf::Color color) {
   float x = position.x;
   for (char character : text) {
-    if (character == ' ') { x += 4.F * scale; continue; }
+    if (character == ' ') {
+      x += 4.F * scale;
+      continue;
+    }
     const auto& rows = glyph(character);
     for (std::size_t row = 0; row < rows.size(); ++row) {
       for (int column = 0; column < 5; ++column) {
@@ -56,21 +68,93 @@ void drawBitmapText(sf::RenderWindow& window, std::string_view text, sf::Vector2
     x += 6.F * scale;
   }
 }
+
+void drawInkText(sf::RenderWindow& window, std::string_view text, sf::Vector2f position,
+                 float scale, sf::Color color = sf::Color(75, 66, 64)) {
+  drawBitmapText(window, text, position + sf::Vector2f{2.F, 3.F}, scale, sf::Color(38, 28, 27, 90));
+  drawBitmapText(window, text, position, scale, color);
+}
+
+bool drawTextureFill(sf::RenderWindow& window, isaac::resource::ResourceManager& resources,
+                     const std::filesystem::path& path) {
+  const auto texture = resources.texture(path);
+  if (!texture) return false;
+  sf::Sprite sprite(*texture);
+  const auto size = texture->getSize();
+  sprite.setScale({static_cast<float>(window.getSize().x) / static_cast<float>(size.x),
+                   static_cast<float>(window.getSize().y) / static_cast<float>(size.y)});
+  window.draw(sprite);
+  return true;
+}
+
+bool drawMaskedSprite(sf::RenderWindow& window, isaac::resource::ResourceManager& resources,
+                      const std::filesystem::path& colorPath, const std::filesystem::path& maskPath,
+                      sf::Vector2f position, float targetHeight, sf::Color tint = sf::Color::White,
+                      float rotationDegrees = 0.F) {
+  const auto texture = resources.maskedTexture(colorPath, maskPath);
+  if (!texture) return false;
+  sf::Sprite sprite(*texture);
+  const auto size = texture->getSize();
+  sprite.setOrigin({static_cast<float>(size.x) / 2.F, static_cast<float>(size.y) / 2.F});
+  const float scale = targetHeight / static_cast<float>(size.y);
+  sprite.setScale({scale, scale});
+  sprite.setPosition(position);
+  sprite.setColor(tint);
+  sprite.setRotation(sf::degrees(rotationDegrees));
+  window.draw(sprite);
+  return true;
+}
+
+void drawShadow(sf::RenderWindow& window, sf::Vector2f position, float radius) {
+  sf::CircleShape shadow(radius);
+  shadow.setOrigin({radius, radius});
+  shadow.setPosition(position + sf::Vector2f{0.F, radius * 0.55F});
+  shadow.setScale({1.35F, 0.42F});
+  shadow.setFillColor(sf::Color(12, 5, 7, 105));
+  window.draw(shadow);
+}
+
+sf::Color characterTint(std::string_view id) {
+  if (id == "magdalene") return sf::Color(255, 178, 178);
+  if (id == "cain") return sf::Color(244, 212, 142);
+  if (id == "judas") return sf::Color(170, 160, 170);
+  return sf::Color::White;
+}
+
+std::size_t countEntities(const isaac::viewmodel::DisplayState& display, isaac::common::EntityKind kind) {
+  return static_cast<std::size_t>(std::count_if(display.entities.begin(), display.entities.end(),
+      [kind](const auto& entity) { return entity.kind == kind; }));
+}
 }  // namespace
 
 namespace isaac::view {
 
 GameView::GameView(viewmodel::GameViewModel& viewModel, resource::ResourceManager& resources)
     : viewModel_(viewModel), resources_(resources),
-      window_(sf::VideoMode({960U, 540U}), "ISA - MVVM course project") {
+      window_(sf::VideoMode({960U, 640U}), "ISA - EasyIsaac final presentation") {
   window_.setVerticalSyncEnabled(true);
-  window_.setPosition({100, 100});
+  window_.setPosition({100, 60});
+
+  shootBuffer_ = resources_.soundBuffer(resource::AssetCatalog::easySound("shoot.wav"));
+  hurtBuffer_ = resources_.soundBuffer(resource::AssetCatalog::easySound("hurt0.mp3"));
+  pickupBuffer_ = resources_.soundBuffer(resource::AssetCatalog::easySound("getProp.mp3"));
+  defeatBuffer_ = resources_.soundBuffer(resource::AssetCatalog::easySound("dead.mp3"));
+  if (shootBuffer_) shootSound_.emplace(*shootBuffer_);
+  if (hurtBuffer_) hurtSound_.emplace(*hurtBuffer_);
+  if (pickupBuffer_) pickupSound_.emplace(*pickupBuffer_);
+  if (defeatBuffer_) defeatSound_.emplace(*defeatBuffer_);
+  if (shootSound_) shootSound_->setVolume(45.F);
+  if (hurtSound_) hurtSound_->setVolume(55.F);
+  if (pickupSound_) pickupSound_->setVolume(55.F);
+  if (defeatSound_) defeatSound_->setVolume(60.F);
 }
 
 void GameView::pollEvents() {
   while (const auto event = window_.pollEvent()) {
-    if (event->is<sf::Event::Closed>()) {
-      window_.close();
+    if (event->is<sf::Event::Closed>()) window_.close();
+    if (const auto* key = event->getIf<sf::Event::KeyPressed>();
+        key && key->code == sf::Keyboard::Key::U) {
+      showHitboxes_ = !showHitboxes_;
     }
   }
 }
@@ -84,7 +168,10 @@ viewmodel::InputCommand GameView::inputCommand() const {
   command.shooting = {
       static_cast<float>(sf::Keyboard::isKeyPressed(Key::Right)) - static_cast<float>(sf::Keyboard::isKeyPressed(Key::Left)),
       static_cast<float>(sf::Keyboard::isKeyPressed(Key::Down)) - static_cast<float>(sf::Keyboard::isKeyPressed(Key::Up))};
-  command.confirm = sf::Keyboard::isKeyPressed(Key::Enter);
+  const auto screen = viewModel_.displayState().screen;
+  const bool paperScreen = screen != common::ScreenState::Playing && screen != common::ScreenState::Paused;
+  command.confirm = sf::Keyboard::isKeyPressed(Key::Enter) ||
+                    (paperScreen && sf::Keyboard::isKeyPressed(Key::Space));
   command.pause = sf::Keyboard::isKeyPressed(Key::Escape);
   command.useBomb = sf::Keyboard::isKeyPressed(Key::E);
   command.useActive = sf::Keyboard::isKeyPressed(Key::Space);
@@ -93,133 +180,254 @@ viewmodel::InputCommand GameView::inputCommand() const {
 
 void GameView::render() {
   const auto display = viewModel_.displayState();
-  if (display.screen == common::ScreenState::Start) window_.setTitle("ISA - Press Enter to start");
-  else if (display.screen == common::ScreenState::CharacterSelect) window_.setTitle("ISA - Character select: A/D then Enter");
-  else if (display.screen == common::ScreenState::Defeat) window_.setTitle("ISA - Defeat");
-  else if (display.screen == common::ScreenState::Victory) window_.setTitle("ISA - Victory");
-  else {
-    std::ostringstream title;
-    title << "ISA | Floor " << display.hud.floor << " | Coins " << display.hud.coins
-          << " | Bombs " << display.hud.bombs << " | Keys " << display.hud.keys
-          << " | Active " << display.hud.activeItem << " | " << display.hud.roomState;
-    if (display.screen == common::ScreenState::Paused) title << " | PAUSED";
-    window_.setTitle(title.str());
+  const float time = animationClock_.getElapsedTime().asSeconds();
+  if (display.screen != previousScreen_) {
+    if (display.screen == common::ScreenState::Defeat && defeatSound_) defeatSound_->play();
+    previousScreen_ = display.screen;
+    transitionClock_.restart();
   }
-  window_.clear(sf::Color(24, 18, 28));
 
-  if (display.screen == common::ScreenState::Start ||
-      display.screen == common::ScreenState::CharacterSelect ||
-      display.screen == common::ScreenState::Defeat ||
-      display.screen == common::ScreenState::Victory) {
-    sf::RectangleShape panel({520.F, 260.F});
-    panel.setPosition({220.F, 140.F});
-    if (display.screen == common::ScreenState::Start) panel.setFillColor(sf::Color(88, 57, 70));
-    if (display.screen == common::ScreenState::CharacterSelect) panel.setFillColor(sf::Color(85, 74, 48));
-    if (display.screen == common::ScreenState::Defeat) panel.setFillColor(sf::Color(92, 35, 42));
-    if (display.screen == common::ScreenState::Victory) panel.setFillColor(sf::Color(48, 91, 76));
-    panel.setOutlineThickness(6.F);
-    panel.setOutlineColor(sf::Color(210, 185, 145));
-    window_.draw(panel);
-    if (display.screen == common::ScreenState::Start) drawBitmapText(window_, "ISA  PRESS ENTER", {300.F, 250.F}, 4.F);
-    if (display.screen == common::ScreenState::CharacterSelect) {
-      drawBitmapText(window_, "CHOOSE " + display.selectionName, {285.F, 210.F}, 3.F);
-      drawBitmapText(window_, display.selectionStats, {265.F, 285.F}, 2.F);
+  const auto projectiles = countEntities(display, common::EntityKind::PlayerProjectile);
+  const auto pickups = countEntities(display, common::EntityKind::Pickup);
+  const int hearts = display.hud.redHearts + display.hud.shields;
+  if (projectiles > lastProjectileCount_ && shootSound_) shootSound_->play();
+  if (lastHearts_ >= 0 && hearts < lastHearts_) {
+    damageFlashClock_.restart();
+    damageFlashActive_ = true;
+    if (hurtSound_) hurtSound_->play();
+  }
+  if (lastPickupCount_ > 0 && pickups < lastPickupCount_ && pickupSound_) pickupSound_->play();
+  lastProjectileCount_ = projectiles;
+  lastPickupCount_ = pickups;
+  lastHearts_ = hearts;
+
+  window_.clear(sf::Color(20, 12, 14));
+
+  const auto drawPaper = [&] {
+    if (!drawTextureFill(window_, resources_, resource::AssetCatalog::easyPanel("menu.jpg"))) {
+      sf::RectangleShape paper({960.F, 640.F});
+      paper.setFillColor(sf::Color(221, 214, 196));
+      window_.draw(paper);
     }
-    if (display.screen == common::ScreenState::Defeat) drawBitmapText(window_, "DEFEAT", {365.F, 250.F}, 5.F);
-    if (display.screen == common::ScreenState::Victory) drawBitmapText(window_, "VICTORY", {340.F, 250.F}, 5.F);
-    window_.display();
-    return;
-  }
+  };
 
-  sf::RectangleShape room({880.F, 420.F});
-  room.setPosition({40.F, 80.F});
-  room.setFillColor(sf::Color(65, 48, 46));
-  room.setOutlineThickness(5.F);
-  room.setOutlineColor(sf::Color(119, 85, 68));
-  window_.draw(room);
+  if (display.screen == common::ScreenState::Start) {
+    const auto frame = static_cast<int>(time * 2.F) % 2 == 0 ? "begin0.jpg" : "begin1.jpg";
+    drawTextureFill(window_, resources_, resource::AssetCatalog::easyPanel(frame));
+    drawInkText(window_, "PRESS ENTER", {345.F, 560.F}, 3.F, sf::Color(98, 74, 69));
+  } else if (display.screen == common::ScreenState::MainMenu) {
+    drawPaper();
+    drawInkText(window_, "ISA CLASSIC", {330.F, 92.F}, 5.F, sf::Color(145, 20, 23));
+    constexpr std::array<std::string_view, 4> options{"CLASSIC RUN", "QUICK RUN", "RANKINGS", "BACK"};
+    for (std::size_t index = 0; index < options.size(); ++index) {
+      const bool selected = static_cast<int>(index) == display.menuIndex;
+      drawInkText(window_, options[index], {330.F + (selected ? 8.F : 0.F), 205.F + 82.F * static_cast<float>(index)},
+                  4.F, selected ? sf::Color(182, 20, 24) : sf::Color(83, 72, 70));
+    }
+  } else if (display.screen == common::ScreenState::Rankings) {
+    drawPaper();
+    drawInkText(window_, "RANKINGS", {345.F, 105.F}, 5.F, sf::Color(125, 30, 31));
+    drawInkText(window_, "COURSE RUN", {275.F, 220.F}, 4.F);
+    drawInkText(window_, "3 FLOORS", {275.F, 300.F}, 3.5F);
+    drawInkText(window_, "4 BOSSES", {540.F, 300.F}, 3.5F);
+    drawInkText(window_, "ACCEPTANCE PASS", {275.F, 390.F}, 3.5F);
+    drawInkText(window_, "ENTER OR ESC TO RETURN", {255.F, 540.F}, 2.F);
+  } else if (display.screen == common::ScreenState::CharacterSelect) {
+    drawPaper();
+    drawInkText(window_, "WHO ARE YOU", {330.F, 82.F}, 4.5F, sf::Color(135, 30, 33));
+    std::filesystem::path portrait;
+    if (display.selectionName == "Isaac") portrait = resource::AssetCatalog::isaac();
+    if (display.selectionName == "Magdalene") portrait = resource::AssetCatalog::magdalene();
+    if (display.selectionName == "Cain") portrait = resource::AssetCatalog::cain();
+    if (display.selectionName == "Judas") portrait = resource::AssetCatalog::judas();
+    if (const auto texture = resources_.texture(portrait)) {
+      sf::Sprite sprite(*texture);
+      const auto size = texture->getSize();
+      sprite.setOrigin({static_cast<float>(size.x) / 2.F, static_cast<float>(size.y) / 2.F});
+      const float bob = std::sin(time * 4.F) * 5.F;
+      sprite.setPosition({480.F, 285.F + bob});
+      const float scale = 120.F / static_cast<float>(std::max(size.x, size.y));
+      sprite.setScale({scale, scale});
+      window_.draw(sprite);
+    }
+    drawInkText(window_, "A  <  " + display.selectionName + "  >  D", {285.F, 385.F}, 3.F);
+    drawInkText(window_, display.selectionStats, {255.F, 450.F}, 2.F);
+    drawInkText(window_, "ENTER TO BEGIN", {345.F, 535.F}, 2.5F, sf::Color(155, 28, 30));
+  } else if (display.screen == common::ScreenState::Defeat || display.screen == common::ScreenState::Victory) {
+    drawPaper();
+    drawMaskedSprite(window_, resources_,
+                     resource::AssetCatalog::easyPanel("testament_back.jpg"),
+                     resource::AssetCatalog::easyPanel("testament_front.jpg"),
+                     {480.F, 320.F}, 500.F);
+    drawInkText(window_, display.screen == common::ScreenState::Defeat ? "DEAR DIARY" : "RUN COMPLETE",
+                {335.F, 145.F}, 4.F, sf::Color(135, 24, 27));
+    std::ostringstream result;
+    result << "FLOOR " << display.hud.floor << "  TIME " << static_cast<int>(display.hud.elapsedSeconds) << "S";
+    drawInkText(window_, result.str(), {330.F, 390.F}, 2.5F);
+    drawInkText(window_, "ENTER FOR MENU", {345.F, 480.F}, 2.5F);
+  } else {
+    const auto background = display.hud.floor % 2 == 0 ? "BK1.jpg" : "BK0.jpg";
+    if (!drawTextureFill(window_, resources_, resource::AssetCatalog::easyPanel(background))) {
+      sf::RectangleShape room({880.F, 500.F});
+      room.setPosition({40.F, 70.F});
+      room.setFillColor(sf::Color(105, 65, 60));
+      window_.draw(room);
+    }
 
-  if (const auto doorTexture = resources_.texture(resource::AssetCatalog::door())) {
-    sf::Sprite door(*doorTexture);
-    door.setPosition({871.F, 274.F});
-    door.setScale({1.5F, 1.5F});
-    window_.draw(door);
-  }
+    drawMaskedSprite(window_, resources_,
+                     resource::AssetCatalog::easyObstacle("stone0_back.jpg"),
+                     resource::AssetCatalog::easyObstacle("stone0_front.jpg"),
+                     {315.F, 270.F}, 58.F, sf::Color(255, 255, 255, 210));
+    drawMaskedSprite(window_, resources_,
+                     resource::AssetCatalog::easyObstacle("spine0_back.jpg"),
+                     resource::AssetCatalog::easyObstacle("spine0_front.jpg"),
+                     {710.F, 430.F}, 48.F, sf::Color(255, 255, 255, 190));
 
-  for (const auto& entity : display.entities) {
-    std::filesystem::path texturePath;
-    if (entity.kind == common::EntityKind::Player && entity.styleId == "isaac") texturePath = resource::AssetCatalog::isaac();
-    if (entity.kind == common::EntityKind::Player && entity.styleId == "magdalene") texturePath = resource::AssetCatalog::magdalene();
-    if (entity.kind == common::EntityKind::Player && entity.styleId == "cain") texturePath = resource::AssetCatalog::cain();
-    if (entity.kind == common::EntityKind::Player && entity.styleId == "judas") texturePath = resource::AssetCatalog::judas();
-    if (entity.kind == common::EntityKind::Enemy && entity.styleId == "fly") texturePath = resource::AssetCatalog::fly();
-    if (entity.kind == common::EntityKind::Boss) texturePath = resource::AssetCatalog::boss();
-    if (entity.kind == common::EntityKind::PlayerProjectile || entity.kind == common::EntityKind::EnemyProjectile)
-      texturePath = resource::AssetCatalog::tear();
-    if (!texturePath.empty()) {
-      if (const auto texture = resources_.texture(texturePath)) {
-        sf::Sprite sprite(*texture);
-        const auto size = texture->getSize();
-        sprite.setOrigin({static_cast<float>(size.x) / 2.F, static_cast<float>(size.y) / 2.F});
-        const float scale = (entity.radius * 2.F) / static_cast<float>(std::max(size.x, size.y));
-        sprite.setScale({scale, scale});
-        sprite.setPosition({entity.position.x, entity.position.y});
-        window_.draw(sprite);
-        continue;
+    const auto shooting = inputCommand().shooting.lengthSquared() > 0.1F;
+    const auto movement = inputCommand().movement;
+    for (const auto& entity : display.entities) {
+      const sf::Vector2f position{entity.position.x, entity.position.y};
+      drawShadow(window_, position, std::max(6.F, entity.radius));
+      bool drawn = false;
+
+      if (entity.kind == common::EntityKind::Player) {
+        std::string body = "isaac_walk0_back.jpg";
+        std::string bodyMask = "isaac_walk0_front.jpg";
+        if (movement.x > 0.1F) { body = "isaac_walk0_side_back.jpg"; bodyMask = "isaac_walk0_side_front.jpg"; }
+        if (movement.x < -0.1F) { body = "isaac_walk0_left_back.jpg"; bodyMask = "isaac_walk0_left_front.jpg"; }
+        const float bob = std::sin(time * 9.F) * (movement.lengthSquared() > 0.1F ? 3.F : 1.F);
+        const auto tint = characterTint(entity.styleId);
+        drawMaskedSprite(window_, resources_, resource::AssetCatalog::easyCharacter(body),
+                         resource::AssetCatalog::easyCharacter(bodyMask), position + sf::Vector2f{0.F, 12.F + bob}, 42.F, tint);
+        drawn = drawMaskedSprite(window_, resources_,
+                     resource::AssetCatalog::easyCharacter(shooting ? "isaac0_shoot_back.jpg" : "isaac0_back.jpg"),
+                     resource::AssetCatalog::easyCharacter(shooting ? "isaac0_shoot_front.jpg" : "isaac0_front.jpg"),
+                     position + sf::Vector2f{0.F, -12.F + bob}, 52.F, tint);
+      } else if (entity.kind == common::EntityKind::Enemy) {
+        const float pulse = 72.F + std::sin(time * 12.F + entity.position.x * 0.03F) * 6.F;
+        drawn = drawMaskedSprite(window_, resources_,
+                     resource::AssetCatalog::easyMonster("monster_redfly0_back.jpg"),
+                     resource::AssetCatalog::easyMonster("monster_redfly0_front.jpg"),
+                     position, pulse, sf::Color(255, 150, 150));
+      } else if (entity.kind == common::EntityKind::Boss) {
+        drawn = drawMaskedSprite(window_, resources_,
+                     resource::AssetCatalog::easyMonster("people_head_back.jpg"),
+                     resource::AssetCatalog::easyMonster("people_head_front.jpg"),
+                     position + sf::Vector2f{0.F, std::sin(time * 5.F) * 5.F}, entity.radius * 2.5F,
+                     sf::Color(255, 125, 125));
+      } else if (entity.kind == common::EntityKind::PlayerProjectile ||
+                 entity.kind == common::EntityKind::EnemyProjectile) {
+        drawn = drawMaskedSprite(window_, resources_,
+                     resource::AssetCatalog::easyBullet("bullet0_back.jpg"),
+                     resource::AssetCatalog::easyBullet("bullet0_front.jpg"),
+                     position, 60.F,
+                     entity.kind == common::EntityKind::PlayerProjectile ? sf::Color::White : sf::Color(255, 120, 120),
+                     std::fmod(time * 180.F + entity.position.x, 360.F));
+      } else if (entity.kind == common::EntityKind::Pickup) {
+        drawn = drawMaskedSprite(window_, resources_,
+                     resource::AssetCatalog::easyProp("prop0_back.jpg"),
+                     resource::AssetCatalog::easyProp("prop0_front.jpg"),
+                     position + sf::Vector2f{0.F, std::sin(time * 6.F) * 4.F}, 36.F);
+      }
+
+      if (!drawn) {
+        sf::CircleShape fallback(entity.radius);
+        fallback.setOrigin({entity.radius, entity.radius});
+        fallback.setPosition(position);
+        fallback.setFillColor(entity.kind == common::EntityKind::Player ? sf::Color(220, 187, 166)
+                                                                        : sf::Color(150, 45, 55));
+        window_.draw(fallback);
+      }
+      if (showHitboxes_) {
+        sf::CircleShape hitbox(entity.radius);
+        hitbox.setOrigin({entity.radius, entity.radius});
+        hitbox.setPosition(position);
+        hitbox.setFillColor(sf::Color::Transparent);
+        hitbox.setOutlineThickness(1.F);
+        hitbox.setOutlineColor(sf::Color::Green);
+        window_.draw(hitbox);
       }
     }
-    sf::CircleShape shape(entity.radius);
-    shape.setOrigin({entity.radius, entity.radius});
-    shape.setPosition({entity.position.x, entity.position.y});
-    if (entity.kind == common::EntityKind::Player) shape.setFillColor(sf::Color(220, 187, 166));
-    else if (entity.kind == common::EntityKind::PlayerProjectile) shape.setFillColor(sf::Color(150, 205, 235));
-    else if (entity.kind == common::EntityKind::Pickup) shape.setFillColor(sf::Color(225, 190, 70));
-    else shape.setFillColor(sf::Color(128, 48, 55));
-    window_.draw(shape);
+
+    for (int i = 0; i < display.hud.redHearts; ++i) {
+      drawMaskedSprite(window_, resources_, resource::AssetCatalog::easyPanel("health0_back.jpg"),
+                       resource::AssetCatalog::easyPanel("health0_front.jpg"),
+                       {125.F + 34.F * static_cast<float>(i), 82.F}, 28.F);
+    }
+    for (int i = 0; i < display.hud.shields; ++i) {
+      drawMaskedSprite(window_, resources_, resource::AssetCatalog::easyPanel("health2_back.jpg"),
+                       resource::AssetCatalog::easyPanel("health2_front.jpg"),
+                       {125.F + 34.F * static_cast<float>(display.hud.redHearts + i), 82.F}, 28.F,
+                       sf::Color(160, 205, 255));
+    }
+
+    const auto stat = [&](std::string_view name, float value, float y) {
+      std::ostringstream number;
+      number << std::fixed << std::setprecision(value < 20.F ? 1 : 0) << value;
+      drawInkText(window_, name, {8.F, y}, 1.8F, sf::Color(245, 238, 224));
+      drawInkText(window_, number.str(), {18.F, y + 23.F}, 1.5F, sf::Color::White);
+    };
+    stat("SPEED", display.hud.moveSpeed, 130.F);
+    stat("TEARS", display.hud.shotsPerSecond, 205.F);
+    stat("DAMAGE", display.hud.damage, 280.F);
+    stat("RANGE", 450.F, 355.F);
+    stat("SHOT SPEED", display.hud.projectileSpeed, 430.F);
+
+    std::ostringstream top;
+    top << "TIME " << static_cast<int>(display.hud.elapsedSeconds) << "S  " << display.hud.roomState;
+    drawInkText(window_, top.str(), {350.F, 24.F}, 2.F, sf::Color::White);
+    std::ostringstream resources;
+    resources << "C " << display.hud.coins << "  B " << display.hud.bombs << "  K " << display.hud.keys;
+    drawInkText(window_, resources.str(), {715.F, 20.F}, 1.8F, sf::Color::White);
+    drawInkText(window_, "ACTIVE " + display.hud.activeItem, {705.F, 50.F}, 1.3F, sf::Color(230, 217, 197));
+    drawInkText(window_, "FLOOR " + std::to_string(display.hud.floor), {410.F, 598.F}, 2.5F, sf::Color::White);
+
+    for (const auto& roomState : display.minimap) {
+      sf::RectangleShape cell({14.F, 10.F});
+      cell.setPosition({820.F + 18.F * static_cast<float>(roomState.x),
+                        92.F + 14.F * static_cast<float>(roomState.y)});
+      cell.setFillColor(roomState.current ? sf::Color(235, 210, 120) : sf::Color(170, 154, 145));
+      cell.setOutlineThickness(1.F);
+      cell.setOutlineColor(sf::Color(48, 35, 34));
+      window_.draw(cell);
+    }
+
+    if (display.screen == common::ScreenState::Paused) {
+      sf::RectangleShape dim({960.F, 640.F});
+      dim.setFillColor(sf::Color(10, 5, 8, 145));
+      window_.draw(dim);
+      const auto pauseFrame = static_cast<int>(time * 2.F) % 2 == 0 ? 0 : 1;
+      drawMaskedSprite(window_, resources_,
+                       resource::AssetCatalog::easyPanel(pauseFrame == 0 ? "pause0_back.jpg" : "pause1_back.jpg"),
+                       resource::AssetCatalog::easyPanel(pauseFrame == 0 ? "pause0_front.jpg" : "pause1_front.jpg"),
+                       {480.F, 320.F}, 420.F);
+      drawInkText(window_, "ESC", {445.F, 452.F}, 1.6F, sf::Color(95, 80, 75));
+    }
   }
 
-  for (int i = 0; i < display.hud.redHearts; ++i) {
-    if (const auto texture = resources_.texture(resource::AssetCatalog::redHeart())) {
-      sf::Sprite heart(*texture);
-      heart.setPosition({18.F + 18.F * static_cast<float>(i), 18.F});
-      window_.draw(heart);
-      continue;
-    }
-    sf::CircleShape heart(7.F);
-    heart.setPosition({18.F + 17.F * static_cast<float>(i), 18.F});
-    heart.setFillColor(sf::Color(205, 45, 62));
-    window_.draw(heart);
+  const float fadeSeconds = transitionClock_.getElapsedTime().asSeconds();
+  if (fadeSeconds < 0.3F) {
+    const auto alpha = static_cast<std::uint8_t>(180.F * (1.F - fadeSeconds / 0.3F));
+    sf::RectangleShape fade({960.F, 640.F});
+    fade.setFillColor(sf::Color(20, 8, 10, alpha));
+    window_.draw(fade);
   }
-  for (int i = 0; i < display.hud.shields; ++i) {
-    if (const auto texture = resources_.texture(resource::AssetCatalog::shieldHeart())) {
-      sf::Sprite shield(*texture);
-      shield.setPosition({18.F + 18.F * static_cast<float>(display.hud.redHearts + i), 18.F});
-      window_.draw(shield);
-      continue;
-    }
-    sf::CircleShape shield(7.F);
-    shield.setPosition({18.F + 17.F * static_cast<float>(display.hud.redHearts + i), 18.F});
-    shield.setFillColor(sf::Color(120, 180, 210));
-    window_.draw(shield);
-  }
-  std::ostringstream counters;
-  counters << "COINS " << display.hud.coins << "  BOMBS " << display.hud.bombs
-           << "  KEYS " << display.hud.keys << "  FLOOR " << display.hud.floor;
-  drawBitmapText(window_, counters.str(), {180.F, 12.F}, 2.F);
-  drawBitmapText(window_, "ACTIVE " + display.hud.activeItem + "  " + display.hud.roomState,
-                 {180.F, 38.F}, 1.5F, sf::Color(205, 192, 170));
-  for (const auto& roomState : display.minimap) {
-    sf::RectangleShape cell({12.F, 8.F});
-    cell.setPosition({820.F + 16.F * static_cast<float>(roomState.x),
-                      34.F + 12.F * static_cast<float>(roomState.y)});
-    cell.setFillColor(roomState.current ? sf::Color(235, 210, 120) : sf::Color(125, 115, 110));
-    window_.draw(cell);
-  }
-  if (display.screen == common::ScreenState::Paused) {
-    sf::RectangleShape paused({960.F, 540.F});
-    paused.setFillColor(sf::Color(12, 10, 15, 155));
-    window_.draw(paused);
+  const float damageSeconds = damageFlashClock_.getElapsedTime().asSeconds();
+  if (damageFlashActive_ && damageSeconds < 0.18F) {
+    const auto alpha = static_cast<std::uint8_t>(105.F * (1.F - damageSeconds / 0.18F));
+    sf::RectangleShape flash({960.F, 640.F});
+    flash.setFillColor(sf::Color(190, 20, 30, alpha));
+    window_.draw(flash);
+  } else if (damageFlashActive_) {
+    damageFlashActive_ = false;
   }
   window_.display();
+}
+
+bool GameView::saveScreenshot(const std::filesystem::path& path) {
+  sf::Texture screenshot(window_.getSize());
+  screenshot.update(window_);
+  return screenshot.copyToImage().saveToFile(path);
 }
 
 }  // namespace isaac::view

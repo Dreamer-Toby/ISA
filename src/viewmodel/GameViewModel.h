@@ -17,8 +17,11 @@ class GameViewModel {
   model::GameSession& session_;
   common::ScreenState screen_{common::ScreenState::Start};
   std::size_t selectedCharacter_{};
+  int menuIndex_{};
   bool confirmWasDown_{};
   bool pauseWasDown_{};
+  int horizontalWasDown_{};
+  int verticalWasDown_{};
 };
 
 }  // namespace isaac::viewmodel

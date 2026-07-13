@@ -15,13 +15,47 @@ void pressConfirm(isaac::viewmodel::GameViewModel& viewModel) {
   viewModel.update(1.F / 60.F, command);
   viewModel.update(1.F / 60.F, {});
 }
+void pressDown(isaac::viewmodel::GameViewModel& viewModel) {
+  isaac::viewmodel::InputCommand command;
+  command.movement = {0.F, 1.F};
+  viewModel.update(1.F / 60.F, command);
+  viewModel.update(1.F / 60.F, {});
+}
 }  // namespace
 
 int main() {
   using isaac::common::ScreenState;
+
+  {
+    isaac::model::GameSession quickSession;
+    isaac::viewmodel::GameViewModel quickViewModel(quickSession);
+    pressConfirm(quickViewModel);
+    pressDown(quickViewModel);
+    pressConfirm(quickViewModel);
+    check(quickViewModel.displayState().screen == ScreenState::Playing,
+          "quick run starts Isaac without character selection");
+    check(quickSession.snapshot().characterId == "isaac", "quick run selects Isaac");
+  }
+
+  {
+    isaac::model::GameSession rankSession;
+    isaac::viewmodel::GameViewModel rankViewModel(rankSession);
+    pressConfirm(rankViewModel);
+    pressDown(rankViewModel);
+    pressDown(rankViewModel);
+    pressConfirm(rankViewModel);
+    check(rankViewModel.displayState().screen == ScreenState::Rankings, "rankings page opens");
+    isaac::viewmodel::InputCommand back;
+    back.pause = true;
+    rankViewModel.update(1.F / 60.F, back);
+    check(rankViewModel.displayState().screen == ScreenState::MainMenu, "rankings page returns to menu");
+  }
+
   isaac::model::GameSession session;
   isaac::viewmodel::GameViewModel viewModel(session);
   check(viewModel.displayState().screen == ScreenState::Start, "starts at menu");
+  pressConfirm(viewModel);
+  check(viewModel.displayState().screen == ScreenState::MainMenu, "opens paper main menu");
   pressConfirm(viewModel);
   check(viewModel.displayState().screen == ScreenState::CharacterSelect, "opens character select");
   isaac::viewmodel::InputCommand chooseCain;
@@ -52,6 +86,7 @@ int main() {
 
   isaac::model::GameSession winningSession(0.99F);
   isaac::viewmodel::GameViewModel winningViewModel(winningSession);
+  pressConfirm(winningViewModel);
   pressConfirm(winningViewModel);
   pressConfirm(winningViewModel);
   for (int expectedFloor = 1; expectedFloor <= 3; ++expectedFloor) {
