@@ -108,3 +108,58 @@ Real window smoke initially failed with a Cocoa `NSInternalInconsistencyExceptio
 ### Final public-state check
 
 The intended public paths use project-relative references and contain no credentials, private notes or local absolute machine paths. Build products are ignored. The selfpush public-state audit is run again after staging the final report/documentation commit.
+
+## Acceptance Attempt 1
+
+- Verdict: FAIL
+- Requirements checked: complete history and tags from the baseline through `8920431`; C++20/SFML Debug and Release builds; full CTest; sanitizer CTest; architecture target/include/link responsibilities; Model/ViewModel/View/App/Resource code; four-character/six-enemy/four-Boss/three-floor/item/menu/HUD implementation; Wiki research; asset provenance and hashes; stage evidence/log/CHANGELOG; README, ADRs and defense guide; ignored/private/unrelated worktree state.
+- Commands and results: fresh `build/acceptance-debug` configure/build and CTest passed 5/5; fresh `build/acceptance-release` configure/build and CTest passed 5/5; existing sanitizer build rebuilt and CTest passed 5/5; direct architecture check passed; direct asset-provenance check passed for seven PNGs; all seven SHA-256 values match the manifest; the executable opened and remained alive until intentionally interrupted; the public-state audit passed; history contains the staged commits and required tags; `git status` contains only ignored build/checkpoint state plus the preserved untracked prompt.
+- Missing evidence or regressions: (1) measurable criterion 2 requires an effective clear-room-door assertion, but `tests/model/test_main.cpp` only enters from the pre-cleared start room and separately empties an `EnemySystem`; it never proves that an uncleared `GameSession` room blocks a door, becomes cleared after combat, and then permits transition. (2) Criteria 4 and 10 require an actual deterministic/demo flow and manual smoke across menu, selection, combat, clear/open/transition, pickup, shop/chest/secret, Boss, floor changes, ending, pause and failure. `tests/viewmodel/test_flow.cpp` bypasses gameplay with direct `Level::markCurrentCleared()` calls, and Executor feedback explicitly says no human-driven final playthrough occurred. (3) Required directed research does not cover the implemented item/trinket subpages: Yum Heart, Book of Belial, Small Rock, Sad Onion and Lucky Toe have no dedicated Wiki rows with the required extracted/adopted/simplified fields; the single Magdalene row is not item research. (4) The asset policy and Stage 7 plan require locating and integrating the final adopted character/enemy/Boss/item/room/HUD visuals, allowing fallback only after a recorded lookup/download/quality failure. The repository has only one of four character images, one of six enemy images, one generic Boss badge, and no image for any implemented item (`blood-tear.png` is a projectile not present in `ItemCatalog`); there are no per-missing-content lookup failure records. Geometry fallback therefore substitutes for planned final resource work without the required evidence. (5) The in-window HUD only draws hearts and minimap; coins, bombs, keys, active item, floor and room state exist only in the OS window title, not the required HUD. The character-select screen is an undifferentiated panel and exposes no selected character/name/stat indicator, while the flow test selects only the default character. Thus the required visible character selection and complete HUD are not sufficiently implemented/verified. (6) Mission stage rules require a progress screenshot for every stage and prohibit substituting tests/reconstructions for visual evidence when graphics are available. All stage files are authored SVG diagrams; Iterations 1 and 2 explicitly call them reconstructions/faithful representations rather than captures. The application can open in this environment, so the required genuine visual screenshot evidence remains missing.
+- Required corrections: add an integrated clear-to-open regression test; exercise and record the complete required demo path without direct state shortcuts (and add deterministic automated coverage where practical); add the missing implemented-item/trinket Wiki research rows; obtain and manifest appropriate visuals for the configured final roster/items or record each genuine failed lookup before a documented replacement/fallback; render all required HUD fields inside the game view and make the current character choice visibly distinguishable, with tests for non-default selection; replace or supplement the reconstructed stage SVGs with genuine, clearly attributable captures for the relevant tagged/staged states. Re-run Debug, Release, sanitizer, architecture, resource/provenance, public audit and application smoke checks, then append a new Executor attempt to this same feedback file.
+
+## Executor Attempt 2
+
+### Corrections mapped to Acceptance Attempt 1
+
+1. **Integrated clear-to-open:** commit `dc4506b` drives `GameSession::update` into room 1, proves the uncleared room blocks the Boss door, kills the real spawned enemies with real projectiles, observes `roomCleared`, then crosses the now-open door and observes Boss spawn. It does not clear the Level directly.
+2. **No-shortcut complete demo:** commit `9e7eb4e` adds `deterministic_course_demo`. It uses ViewModel/public input only: start menu, non-default Magdalene selection, normal combat, drop collection, shop purchase, chest opening, bomb-revealed secret/trinket, three floors, all four Boss definitions through the 1/2/1 spawn sequence, and victory. There is no call to `markCurrentCleared` in this executable. Pause/defeat remain covered by `viewmodel_course_flow`.
+3. **Item research:** dedicated dated research rows now exist for Yum Heart (`C45`), Book of Belial (`C34`), Small Rock (`C90`), Sad Onion (`C1`) and Lucky Toe (`T42`), each with extracted mechanism, adopted course rule and simplification/conflict note.
+4. **Roster/resource audit:** commit `b1c9075` adds the missing Isaac, Magdalene and Judas icons, so all four playable characters have traced Wiki images. The source manifest now has an explicit per-content lookup result for each of the five missing enemy visuals, all four Boss visuals and all five implemented item/trinket visuals. Those named pages exposed only dynamic placeholders/badges/stat icons; the fallback for each is recorded individually. The existing Fly, generic Boss badge, projectile, room and HUD files remain traced with hashes.
+5. **Visible UI/non-default selection:** the SFML framebuffer now contains bitmap labels for coins, bombs, keys, active item, floor and room state; the OS title is redundant evidence only. Character select renders selected name and HP/SPD/DMG/LUCK. `viewmodel_course_flow` chooses Cain and verifies both visible selection DTO and Model identity; deterministic demo chooses Magdalene.
+6. **Genuine screenshots:** commit `4a33747` adds four PNGs captured from the live SFML window only: start, selection with stats, gameplay/full HUD and pause. `docs/progress/README.md` states exact capture method/date and explicitly says they supplement current corrected release evidence rather than pretending to be historical captures. Old SVGs remain labelled diagrams.
+
+### Verification after all corrections
+
+```text
+Debug configure/build: PASS
+Debug CTest: PASS 6/6
+Release configure/build: PASS
+Release CTest: PASS 6/6
+AppleClang ASan+UBSan configure/build: PASS
+ASan+UBSan CTest: PASS 6/6
+architecture_check: PASS
+asset_provenance: PASS for all committed PNG files
+normal isaac_course_game smoke: opened and remained alive until intentional Ctrl-C
+character-select evidence smoke: opened in frozen evidence state and was captured by CGWindow ID
+```
+
+The six tests are `model_regression_suite`, `viewmodel_course_flow`, `deterministic_course_demo`, `architecture_boundaries`, `resource_cache_and_missing` and `asset_provenance`. The demo prints:
+
+```text
+demo: menu->Magdalene->combat/drop->shop->chest->secret->3 floors->victory
+```
+
+### Changed commits in this correction
+
+| Commit | Purpose |
+|---|---|
+| `dc4506b` | Integrated uncleared combat room / blocked door / clear / transition regression. |
+| `9e7eb4e` | Public-input deterministic full demo, complete in-window HUD and visible/tested non-default selection. |
+| `b1c9075` | Four-character asset completion, five item research rows and per-content fallback audit. |
+| `4a33747` | Genuine live SFML runtime captures and attribution. |
+
+### Remaining scope-controlled notes
+
+- Missing enemy/Boss/item art is still geometry fallback only where the named Wiki page lookup is now individually recorded as unsuccessful; no source was invented.
+- The deterministic course demo is an executable automated smoke, while genuine screenshots prove the actual SFML framebuffer/window path. The user can still perform the README manual sequence.
+- The preserved untracked prompt and ignored checkpoint/build directories remain untouched. Executor did not push and does not issue an Acceptance verdict.
