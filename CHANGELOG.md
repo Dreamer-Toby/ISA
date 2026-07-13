@@ -50,3 +50,10 @@
 - Added end-to-end ViewModel flow tests and finalized regression, provenance and architecture checks.
 - Corrected asset-path ownership into Resource `AssetCatalog` after final architecture review.
 - Completed README, defense material and release verification evidence.
+
+### Acceptance correction
+
+- Added integrated uncleared-room door coverage and a no-shortcut deterministic full course demo.
+- Rendered every HUD field inside the window and exposed current character stats during selection.
+- Added all four character icons, dedicated implemented-item research and per-content failed-asset lookup records.
+- Added genuine SFML window captures for start, selection, gameplay HUD and pause states.

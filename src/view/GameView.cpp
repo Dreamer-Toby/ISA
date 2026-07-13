@@ -64,6 +64,7 @@ GameView::GameView(viewmodel::GameViewModel& viewModel, resource::ResourceManage
     : viewModel_(viewModel), resources_(resources),
       window_(sf::VideoMode({960U, 540U}), "ISA - MVVM course project") {
   window_.setVerticalSyncEnabled(true);
+  window_.setPosition({100, 100});
 }
 
 void GameView::pollEvents() {

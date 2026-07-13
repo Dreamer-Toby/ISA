@@ -138,3 +138,12 @@ Commit hashes are recorded only after the referenced commit exists; stage tags p
 | 8 flow regression tests | `6831161` | — |
 
 The final documentation commit is identified by `v1.0-course-release` after all recorded checks pass; no self-referential hash is invented here.
+
+## Acceptance correction — 2026-07-13
+
+- Objective: address only the six concrete missing-evidence/coverage findings from Acceptance Attempt 1.
+- Prior problem: the original tests separated EnemySystem from door state, flow used direct clear markers, item research/assets were incomplete, HUD text was in the title bar, and SVG diagrams were not real screenshots.
+- Actual change: `dc4506b` integrates real room combat/doors; `9e7eb4e` adds the public-input deterministic demo and bitmap UI/non-default selection; `b1c9075` adds three character icons, five item rows and per-content failed lookup records; the final correction adds live SFML PNG captures.
+- Verification: Debug/Release/ASan CTest, architecture, asset provenance, public audit and application smoke are recorded in Executor Attempt 2.
+- Evidence: `docs/progress/runtime-*.png` and `docs/progress/README.md` explain attribution without rewriting old history.
+- Scope: no new optional feature was added; every change maps directly to an Acceptance correction.
