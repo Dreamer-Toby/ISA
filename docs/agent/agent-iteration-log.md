@@ -15,3 +15,15 @@ Commit hashes are recorded only after the referenced commit exists; stage tags p
 - Next: add the C++20/SFML MVVM shell and automated architecture check.
 - MVVM self-check: no production layers exist yet; documentation consistently specifies View -> ViewModel -> Model and pure Model.
 
+## Iteration 1 — 2026-07-13 11:24 +08:00
+
+- Objective: create the minimum compilable/runnable C++20 + SFML MVVM shell.
+- Prior problem: no build targets, executable, input path, DTO path or enforcement existed.
+- Options: require a machine package or fetch a pinned dependency. Selected `find_package` with pinned SFML 3.0.1 fallback for reproducibility.
+- Actual change: per-layer libraries, SFML window, event mapper, 60 Hz accumulator, pure Model session, ViewModel snapshot, resource cache and checks.
+- Architecture effect: the CMake graph and include scan now enforce the documented dependency direction.
+- Verification: Debug configure/build succeeded; two CTest tests and `architecture_check` passed. The first scan falsely matched `viewmodel/` as `model/`; its pattern was narrowed to actual include directives before this commit.
+- Evidence: `docs/progress/stage-1-window.svg` is an honest reconstruction of the fallback geometry drawn by the Stage 1 View, not a claim of an external asset.
+- Unresolved: gameplay remains the intentional shell; binary Wiki assets remain pending.
+- Next: add character selection, components, shooting/projectiles and HUD.
+- MVVM self-check: Model contains no SFML; View includes only ViewModel/Resource; ViewModel owns no collision/AI/drop rules; App loop only schedules.

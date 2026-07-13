@@ -1,0 +1,17 @@
+file(GLOB_RECURSE MODEL_FILES "${PROJECT_ROOT}/src/model/*")
+file(GLOB_RECURSE VIEWMODEL_FILES "${PROJECT_ROOT}/src/viewmodel/*")
+file(GLOB_RECURSE VIEW_FILES "${PROJECT_ROOT}/src/view/*")
+
+function(reject_matches label pattern)
+  foreach(path IN LISTS ARGN)
+    file(READ "${path}" text)
+    if(text MATCHES "${pattern}")
+      message(FATAL_ERROR "${label}: ${path}")
+    endif()
+  endforeach()
+endfunction()
+
+reject_matches("Model depends on SFML/View/ViewModel" "#[ \t]*include[ \t]*[<\"](SFML|viewmodel/|view/)" ${MODEL_FILES})
+reject_matches("ViewModel depends on View/SFML" "#[ \t]*include[ \t]*[<\"](SFML|view/)" ${VIEWMODEL_FILES})
+reject_matches("View directly depends on Model" "#[ \t]*include[ \t]*[<\"]model/" ${VIEW_FILES})
+message(STATUS "Strict MVVM architecture check passed")
