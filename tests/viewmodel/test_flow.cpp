@@ -24,8 +24,18 @@ int main() {
   check(viewModel.displayState().screen == ScreenState::Start, "starts at menu");
   pressConfirm(viewModel);
   check(viewModel.displayState().screen == ScreenState::CharacterSelect, "opens character select");
+  isaac::viewmodel::InputCommand chooseCain;
+  chooseCain.movement = {1.F, 0.F};
+  viewModel.update(1.F / 60.F, chooseCain);
+  viewModel.update(1.F / 60.F, {});
+  viewModel.update(1.F / 60.F, chooseCain);
+  viewModel.update(1.F / 60.F, {});
+  check(viewModel.displayState().selectionName == "Cain" &&
+        viewModel.displayState().selectionStats.find("SPD") != std::string::npos,
+        "non-default character and stats are visible");
   pressConfirm(viewModel);
   check(viewModel.displayState().screen == ScreenState::Playing, "starts selected character");
+  check(session.snapshot().characterId == "cain", "non-default selected character reaches Model");
   isaac::viewmodel::InputCommand pause;
   pause.pause = true;
   viewModel.update(1.F / 60.F, pause);

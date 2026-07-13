@@ -9,6 +9,54 @@
 #include <algorithm>
 #include <filesystem>
 #include <sstream>
+#include <array>
+#include <cctype>
+#include <string_view>
+#include <unordered_map>
+
+namespace {
+using Glyph = std::array<unsigned char, 7>;
+const Glyph& glyph(char value) {
+  static const std::unordered_map<char, Glyph> font{
+      {'A',{14,17,17,31,17,17,17}}, {'B',{30,17,17,30,17,17,30}}, {'C',{14,17,16,16,16,17,14}},
+      {'D',{30,17,17,17,17,17,30}}, {'E',{31,16,16,30,16,16,31}}, {'F',{31,16,16,30,16,16,16}},
+      {'G',{14,17,16,23,17,17,15}}, {'H',{17,17,17,31,17,17,17}}, {'I',{31,4,4,4,4,4,31}},
+      {'J',{7,2,2,2,18,18,12}}, {'K',{17,18,20,24,20,18,17}}, {'L',{16,16,16,16,16,16,31}},
+      {'M',{17,27,21,21,17,17,17}}, {'N',{17,25,21,19,17,17,17}}, {'O',{14,17,17,17,17,17,14}},
+      {'P',{30,17,17,30,16,16,16}}, {'Q',{14,17,17,17,21,18,13}}, {'R',{30,17,17,30,20,18,17}},
+      {'S',{15,16,16,14,1,1,30}}, {'T',{31,4,4,4,4,4,4}}, {'U',{17,17,17,17,17,17,14}},
+      {'V',{17,17,17,17,17,10,4}}, {'W',{17,17,17,21,21,21,10}}, {'X',{17,17,10,4,10,17,17}},
+      {'Y',{17,17,10,4,4,4,4}}, {'Z',{31,1,2,4,8,16,31}},
+      {'0',{14,17,19,21,25,17,14}}, {'1',{4,12,4,4,4,4,14}}, {'2',{14,17,1,2,4,8,31}},
+      {'3',{30,1,1,14,1,1,30}}, {'4',{2,6,10,18,31,2,2}}, {'5',{31,16,16,30,1,1,30}},
+      {'6',{14,16,16,30,17,17,14}}, {'7',{31,1,2,4,8,8,8}}, {'8',{14,17,17,14,17,17,14}},
+      {'9',{14,17,17,15,1,1,14}}, {'-',{0,0,0,31,0,0,0}}, {'.',{0,0,0,0,0,12,12}},
+  };
+  static const Glyph blank{};
+  const auto found = font.find(static_cast<char>(std::toupper(static_cast<unsigned char>(value))));
+  return found == font.end() ? blank : found->second;
+}
+
+void drawBitmapText(sf::RenderWindow& window, std::string_view text, sf::Vector2f position,
+                    float scale = 2.F, sf::Color color = sf::Color(238, 227, 209)) {
+  float x = position.x;
+  for (char character : text) {
+    if (character == ' ') { x += 4.F * scale; continue; }
+    const auto& rows = glyph(character);
+    for (std::size_t row = 0; row < rows.size(); ++row) {
+      for (int column = 0; column < 5; ++column) {
+        if ((rows[row] & (1U << (4 - column))) == 0) continue;
+        sf::RectangleShape pixel({scale, scale});
+        pixel.setPosition({x + static_cast<float>(column) * scale,
+                           position.y + static_cast<float>(row) * scale});
+        pixel.setFillColor(color);
+        window.draw(pixel);
+      }
+    }
+    x += 6.F * scale;
+  }
+}
+}  // namespace
 
 namespace isaac::view {
 
@@ -71,6 +119,13 @@ void GameView::render() {
     panel.setOutlineThickness(6.F);
     panel.setOutlineColor(sf::Color(210, 185, 145));
     window_.draw(panel);
+    if (display.screen == common::ScreenState::Start) drawBitmapText(window_, "ISA  PRESS ENTER", {300.F, 250.F}, 4.F);
+    if (display.screen == common::ScreenState::CharacterSelect) {
+      drawBitmapText(window_, "CHOOSE " + display.selectionName, {285.F, 210.F}, 3.F);
+      drawBitmapText(window_, display.selectionStats, {265.F, 285.F}, 2.F);
+    }
+    if (display.screen == common::ScreenState::Defeat) drawBitmapText(window_, "DEFEAT", {365.F, 250.F}, 5.F);
+    if (display.screen == common::ScreenState::Victory) drawBitmapText(window_, "VICTORY", {340.F, 250.F}, 5.F);
     window_.display();
     return;
   }
@@ -142,6 +197,12 @@ void GameView::render() {
     shield.setFillColor(sf::Color(120, 180, 210));
     window_.draw(shield);
   }
+  std::ostringstream counters;
+  counters << "COINS " << display.hud.coins << "  BOMBS " << display.hud.bombs
+           << "  KEYS " << display.hud.keys << "  FLOOR " << display.hud.floor;
+  drawBitmapText(window_, counters.str(), {180.F, 12.F}, 2.F);
+  drawBitmapText(window_, "ACTIVE " + display.hud.activeItem + "  " + display.hud.roomState,
+                 {180.F, 38.F}, 1.5F, sf::Color(205, 192, 170));
   for (const auto& roomState : display.minimap) {
     sf::RectangleShape cell({12.F, 8.F});
     cell.setPosition({820.F + 16.F * static_cast<float>(roomState.x),

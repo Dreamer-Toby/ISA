@@ -48,7 +48,7 @@ class Inventory {
  private:
   int coins_{};
   int bombs_{1};
-  int keys_{1};
+  int keys_{2};
   std::string activeItem_{"None"};
   std::vector<std::string> passiveItems_;
   std::string trinket_{"None"};

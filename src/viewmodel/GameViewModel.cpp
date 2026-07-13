@@ -1,5 +1,9 @@
 #include "viewmodel/GameViewModel.h"
 
+#include "model/CharacterCatalog.h"
+
+#include <sstream>
+
 namespace isaac::viewmodel {
 
 void GameViewModel::update(float seconds, const InputCommand& command) {
@@ -37,6 +41,12 @@ void GameViewModel::update(float seconds, const InputCommand& command) {
 DisplayState GameViewModel::displayState() const {
   DisplayState result;
   result.screen = screen_;
+  const auto& selected = model::CharacterCatalog::at(selectedCharacter_);
+  result.selectionName = std::string(selected.displayName);
+  std::ostringstream stats;
+  stats << "HP " << selected.redHearts << " SPD " << static_cast<int>(selected.moveSpeed)
+        << " DMG " << selected.damage << " LUCK " << selected.luck;
+  result.selectionStats = stats.str();
   const auto& state = session_.snapshot();
   result.entities.push_back({common::EntityKind::Player, state.playerPosition, 18.F, state.characterId});
   for (const auto& projectile : state.projectiles) {

@@ -36,6 +36,8 @@ struct MinimapRoomDTO {
 
 struct DisplayState {
   common::ScreenState screen{common::ScreenState::Start};
+  std::string selectionName;
+  std::string selectionStats;
   std::vector<EntityDTO> entities;
   HudDTO hud;
   std::vector<MinimapRoomDTO> minimap;

@@ -67,7 +67,7 @@ int main() {
   check(inventory.bombs() == 0, "secret reveal consumes bomb");
   check(level.enter(0, inventory, false), "can return from secret room");
   check(level.enter(2, inventory, false), "key opens treasure room");
-  check(inventory.keys() == 0, "locked room consumes key");
+  check(inventory.keys() == 1, "locked room consumes exactly one key");
   check(level.enter(0, inventory, false), "room round trip returns to start");
   check(level.rooms().at(4).visited && level.rooms().at(2).visited, "room state persists after round trips");
 
@@ -98,6 +98,7 @@ int main() {
   itemSystem.apply(itemPlayer, ItemCatalog::byId("small_rock"));
   check(itemPlayer.shooting().damage() == baseDamage + 2.F, "passive effects stack");
   itemPlayer.inventory().useKey();
+  itemPlayer.inventory().useKey();
   check(!itemSystem.openChest(itemPlayer), "chest fails without a key after resource is spent");
   itemPlayer.inventory().addKeys(1);
   check(itemSystem.openChest(itemPlayer) && itemPlayer.inventory().keys() == 0, "chest consumes key and grants item");
@@ -111,7 +112,7 @@ int main() {
   economy.addCoins(2);
   check(economy.spendCoins(2) && economy.coins() == 0, "coin consume succeeds atomically");
   check(economy.useBomb() && !economy.useBomb(), "bomb success and failure consumption");
-  check(economy.useKey() && !economy.useKey(), "key success and failure consumption");
+  check(economy.useKey() && economy.useKey() && !economy.useKey(), "key success and failure consumption");
 
   check(BossCatalog::all().size() == 4, "four configured bosses");
   check(BossCatalog::all().back().id == "moms_leg", "final boss is simplified Mom's Leg");

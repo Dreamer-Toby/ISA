@@ -61,7 +61,7 @@ struct SessionSnapshot {
   int shields{};
   int coins{};
   int bombs{1};
-  int keys{1};
+  int keys{2};
   std::string activeItem{"None"};
   std::vector<ProjectileSnapshot> projectiles;
   std::vector<RoomSnapshot> rooms;
