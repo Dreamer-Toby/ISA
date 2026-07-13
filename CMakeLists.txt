@@ -66,7 +66,10 @@ add_custom_target(architecture_check
 if(BUILD_TESTING)
   add_executable(isaac_model_tests tests/model/test_main.cpp)
   target_link_libraries(isaac_model_tests PRIVATE isaac_model)
-  add_test(NAME model_smoke COMMAND isaac_model_tests)
+  add_test(NAME model_regression_suite COMMAND isaac_model_tests)
+  add_executable(isaac_flow_tests tests/viewmodel/test_flow.cpp)
+  target_link_libraries(isaac_flow_tests PRIVATE isaac_viewmodel)
+  add_test(NAME viewmodel_course_flow COMMAND isaac_flow_tests)
   add_test(NAME architecture_boundaries
     COMMAND ${CMAKE_COMMAND} -DPROJECT_ROOT=${CMAKE_SOURCE_DIR}
             -P ${CMAKE_SOURCE_DIR}/tests/architecture/check_architecture.cmake)
