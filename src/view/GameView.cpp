@@ -1,4 +1,5 @@
 #include "view/GameView.h"
+#include "resource/AssetCatalog.h"
 
 #include <SFML/Graphics/CircleShape.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
@@ -51,7 +52,7 @@ void GameView::render() {
   room.setOutlineColor(sf::Color(119, 85, 68));
   window_.draw(room);
 
-  if (const auto doorTexture = resources_.texture("assets/textures/rooms/red-room-door.png")) {
+  if (const auto doorTexture = resources_.texture(resource::AssetCatalog::door())) {
     sf::Sprite door(*doorTexture);
     door.setPosition({871.F, 274.F});
     door.setScale({1.5F, 1.5F});
@@ -60,11 +61,11 @@ void GameView::render() {
 
   for (const auto& entity : display.entities) {
     std::filesystem::path texturePath;
-    if (entity.kind == common::EntityKind::Player && entity.styleId == "cain") texturePath = "assets/textures/characters/cain-icon.png";
-    if (entity.kind == common::EntityKind::Enemy && entity.styleId == "fly") texturePath = "assets/textures/enemies/fly.png";
-    if (entity.kind == common::EntityKind::Boss) texturePath = "assets/textures/bosses/boss-icon.png";
+    if (entity.kind == common::EntityKind::Player && entity.styleId == "cain") texturePath = resource::AssetCatalog::cain();
+    if (entity.kind == common::EntityKind::Enemy && entity.styleId == "fly") texturePath = resource::AssetCatalog::fly();
+    if (entity.kind == common::EntityKind::Boss) texturePath = resource::AssetCatalog::boss();
     if (entity.kind == common::EntityKind::PlayerProjectile || entity.kind == common::EntityKind::EnemyProjectile)
-      texturePath = "assets/textures/items/blood-tear.png";
+      texturePath = resource::AssetCatalog::tear();
     if (!texturePath.empty()) {
       if (const auto texture = resources_.texture(texturePath)) {
         sf::Sprite sprite(*texture);
@@ -88,7 +89,7 @@ void GameView::render() {
   }
 
   for (int i = 0; i < display.hud.redHearts; ++i) {
-    if (const auto texture = resources_.texture("assets/textures/ui/red-heart.png")) {
+    if (const auto texture = resources_.texture(resource::AssetCatalog::redHeart())) {
       sf::Sprite heart(*texture);
       heart.setPosition({18.F + 18.F * static_cast<float>(i), 18.F});
       window_.draw(heart);
@@ -100,7 +101,7 @@ void GameView::render() {
     window_.draw(heart);
   }
   for (int i = 0; i < display.hud.shields; ++i) {
-    if (const auto texture = resources_.texture("assets/textures/ui/shield-heart.png")) {
+    if (const auto texture = resources_.texture(resource::AssetCatalog::shieldHeart())) {
       sf::Sprite shield(*texture);
       shield.setPosition({18.F + 18.F * static_cast<float>(display.hud.redHearts + i), 18.F});
       window_.draw(shield);
