@@ -29,6 +29,16 @@ isaac::model::SessionSnapshot simulateAtRenderRate(int framesPerSecond) {
   }
   return session.snapshot();
 }
+
+void runCombatUntilClear(isaac::model::GameSession& session, int maxFrames = 5000) {
+  for (int frame = 0; frame < maxFrames && !session.snapshot().roomCleared; ++frame) {
+    isaac::model::GameplayInput input;
+    if (!session.snapshot().enemies.empty()) {
+      input.shooting = session.snapshot().enemies.front().position - session.snapshot().playerPosition;
+    }
+    session.update(1.F / 60.F, input);
+  }
+}
 }  // namespace
 
 int main() {
@@ -124,6 +134,23 @@ int main() {
   progression.markCurrentCleared();
   check(progression.addDevilRoom(), "boss clear can add devil room");
   check(progression.advanceFloor() && progression.floorNumber() == 2, "boss death advances floor");
+
+  GameSession integratedRoom;
+  for (int i = 0; i < 220 && integratedRoom.level().currentRoomId() == 0; ++i) {
+    integratedRoom.update(1.F / 60.F, {{1.F, 0.F}, {}});
+  }
+  check(integratedRoom.level().currentRoomId() == 1 && !integratedRoom.snapshot().roomCleared &&
+        !integratedRoom.snapshot().enemies.empty(), "GameSession enters a populated uncleared room");
+  for (int i = 0; i < 300; ++i) integratedRoom.update(1.F / 60.F, {{1.F, 0.F}, {}});
+  check(integratedRoom.level().currentRoomId() == 1, "uncleared GameSession room blocks the boss door");
+  runCombatUntilClear(integratedRoom);
+  check(integratedRoom.snapshot().roomCleared && integratedRoom.snapshot().enemies.empty(),
+        "real projectile combat clears the GameSession room and opens doors");
+  for (int i = 0; i < 300 && integratedRoom.level().currentRoomId() == 1; ++i) {
+    integratedRoom.update(1.F / 60.F, {{1.F, 0.F}, {}});
+  }
+  check(integratedRoom.level().currentRoomId() == 5 && !integratedRoom.snapshot().bosses.empty(),
+        "cleared GameSession room permits transition and spawns the boss");
 
   const auto at30 = simulateAtRenderRate(30);
   const auto at60 = simulateAtRenderRate(60);
