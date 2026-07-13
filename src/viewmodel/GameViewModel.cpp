@@ -46,6 +46,13 @@ DisplayState GameViewModel::displayState() const {
   result.hud.bombs = state.bombs;
   result.hud.keys = state.keys;
   result.hud.activeItem = state.activeItem;
+  result.hud.floor = state.floor;
+  result.hud.roomState = state.roomCleared ? "Cleared" : "Combat";
+  for (const auto& room : state.rooms) {
+    if (room.revealed && (room.visited || room.current)) {
+      result.minimap.push_back({room.type, room.gridX, room.gridY, room.current, room.cleared});
+    }
+  }
   return result;
 }
 

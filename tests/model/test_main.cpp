@@ -1,6 +1,7 @@
 #include "model/CharacterCatalog.h"
 #include "model/Components.h"
 #include "model/GameSession.h"
+#include "model/Level.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -44,6 +45,18 @@ int main() {
   check(session.projectiles().size() == 1, "shoot creates projectile");
   for (int i = 0; i < 120; ++i) session.update(1.F / 60.F, {{}, {}});
   check(session.projectiles().empty(), "expired projectile is destroyed");
+
+  Level level(42U);
+  Inventory inventory;
+  check(level.connected() && level.hasRequiredRoomTypes(), "map is connected with required rooms");
+  check(!level.enter(4, inventory, false), "secret room rejects entry without bomb");
+  check(level.enter(4, inventory, true), "bomb reveals and enters secret room");
+  check(inventory.bombs() == 0, "secret reveal consumes bomb");
+  check(level.enter(0, inventory, false), "can return from secret room");
+  check(level.enter(2, inventory, false), "key opens treasure room");
+  check(inventory.keys() == 0, "locked room consumes key");
+  check(level.enter(0, inventory, false), "room round trip returns to start");
+  check(level.rooms().at(4).visited && level.rooms().at(2).visited, "room state persists after round trips");
 
   const auto at30 = simulateAtRenderRate(30);
   const auto at60 = simulateAtRenderRate(60);

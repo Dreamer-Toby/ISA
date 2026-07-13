@@ -26,11 +26,19 @@ struct HudDTO {
   std::string roomState{"Start room"};
 };
 
+struct MinimapRoomDTO {
+  common::RoomType type{};
+  int x{};
+  int y{};
+  bool current{};
+  bool cleared{};
+};
+
 struct DisplayState {
   common::ScreenState screen{common::ScreenState::Start};
   std::vector<EntityDTO> entities;
   HudDTO hud;
+  std::vector<MinimapRoomDTO> minimap;
 };
 
 }  // namespace isaac::viewmodel
-

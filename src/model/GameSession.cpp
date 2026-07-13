@@ -6,7 +6,7 @@
 
 namespace isaac::model {
 
-GameSession::GameSession() : player_(CharacterCatalog::at(0)) { rebuildSnapshot(); }
+GameSession::GameSession() : player_(CharacterCatalog::at(0)), level_(1337U) { rebuildSnapshot(); }
 
 void GameSession::selectCharacter(std::size_t index) {
   player_ = Player(CharacterCatalog::at(index));
@@ -21,6 +21,23 @@ void GameSession::update(float seconds, const GameplayInput& input) {
   snapshot_.elapsedSeconds += seconds;
   player_.tick(seconds);
   player_.move(input.movement, seconds);
+
+  std::optional<common::Direction> exitDirection;
+  if (player_.position().x <= 60.1F && input.movement.x < 0.F) exitDirection = common::Direction::Left;
+  if (player_.position().x >= 899.9F && input.movement.x > 0.F) exitDirection = common::Direction::Right;
+  if (player_.position().y <= 100.1F && input.movement.y < 0.F) exitDirection = common::Direction::Up;
+  if (player_.position().y >= 479.9F && input.movement.y > 0.F) exitDirection = common::Direction::Down;
+  if (exitDirection) {
+    if (const auto next = level_.neighbor(*exitDirection); next && level_.enter(*next, player_.inventory(), input.useBomb)) {
+      common::Vec2 arrival = player_.position();
+      if (*exitDirection == common::Direction::Left) arrival.x = 890.F;
+      if (*exitDirection == common::Direction::Right) arrival.x = 70.F;
+      if (*exitDirection == common::Direction::Up) arrival.y = 470.F;
+      if (*exitDirection == common::Direction::Down) arrival.y = 110.F;
+      player_.setPosition(arrival);
+      projectiles_.clear();
+    }
+  }
 
   if (input.shooting.lengthSquared() > 0.1F && player_.canShoot()) {
     const auto direction = input.shooting.normalized();
@@ -46,6 +63,14 @@ void GameSession::rebuildSnapshot() {
   snapshot_.projectiles.clear();
   for (const auto& projectile : projectiles_) {
     snapshot_.projectiles.push_back({projectile.position, projectile.friendly});
+  }
+  snapshot_.floor = level_.floorNumber();
+  snapshot_.roomType = level_.currentRoom().type;
+  snapshot_.roomCleared = level_.currentRoom().cleared;
+  snapshot_.rooms.clear();
+  for (const auto& room : level_.rooms()) {
+    snapshot_.rooms.push_back({room.id, room.type, room.gridX, room.gridY, room.visited,
+                               room.revealed, room.id == level_.currentRoomId(), room.cleared});
   }
 }
 

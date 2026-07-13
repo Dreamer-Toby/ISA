@@ -69,6 +69,13 @@ void GameView::render() {
     shield.setFillColor(sf::Color(120, 180, 210));
     window_.draw(shield);
   }
+  for (const auto& roomState : display.minimap) {
+    sf::RectangleShape cell({12.F, 8.F});
+    cell.setPosition({820.F + 16.F * static_cast<float>(roomState.x),
+                      34.F + 12.F * static_cast<float>(roomState.y)});
+    cell.setFillColor(roomState.current ? sf::Color(235, 210, 120) : sf::Color(125, 115, 110));
+    window_.draw(cell);
+  }
   window_.display();
 }
 

@@ -19,3 +19,8 @@
 - Added four configured characters, health/shield, inventory and shooting components.
 - Added movement, projectile lifetime, character selection, pause state and HUD DTOs.
 - Added heart cap, damage/death, projectile and render-rate consistency tests.
+
+### Stage 3 — rooms and minimap
+
+- Added deterministic connected floors with normal, treasure, shop, secret and Boss rooms.
+- Added clear-to-open traversal, key/bomb gates, persistent room visits and minimap DTOs.

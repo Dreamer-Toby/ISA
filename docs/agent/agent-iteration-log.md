@@ -40,3 +40,16 @@ Commit hashes are recorded only after the referenced commit exists; stage tags p
 - Unresolved: enemies and collision arrive in Stage 4; HUD uses shapes until final resource work.
 - Next: deterministic connected room graph, doors, persistence and minimap.
 - MVVM self-check: no SFML in Model; no Model includes in View; no business rule in App/Resource/ViewModel.
+
+## Iteration 3 — 2026-07-13 11:48 +08:00
+
+- Objective: add connected rooms, gates, persistence and minimap.
+- Prior problem: the player was confined to one visual rectangle.
+- Options: a general procedural graph or a small seeded topology. Selected a seeded six-node topology because it guarantees all course room types and remains testable.
+- Actual change: Level/Room graph, adjacency, key/bomb entry, clear requirement, transitions, persistent visited state and minimap projection.
+- Architecture effect: generation and entry costs live in Model; View sees generic minimap DTOs.
+- Verification: connectivity, required types, secret/key consumption and repeated round-trip persistence assertions plus full Debug CTest/architecture scan.
+- Evidence: `docs/progress/stage-3-rooms.svg` is the exact course topology diagram.
+- Unresolved: combat rooms are populated in Stage 4.
+- Next: six enemy definitions, strategies, collision, drops and clear loop.
+- MVVM self-check: Room/Level rules are pure Model; ViewModel contains projection only.
