@@ -92,3 +92,16 @@ Commit hashes are recorded only after the referenced commit exists; stage tags p
 - Unresolved: traced visuals, final robustness checks and defense docs.
 - Next: integrate traceable assets/fallback cache behavior, then release verification.
 - MVVM self-check: Boss AI/state/progression remain Model-only; App loop unchanged.
+
+## Iteration 7 — 2026-07-13 12:42 +08:00
+
+- Objective: replace key fallback shapes with traceable Wiki visuals and verify resource behavior.
+- Prior problem: direct Wiki/static requests returned HTTP 403 and the runtime used only authored geometry.
+- Options: generated replacements or retry authenticated-looking page navigation. The static host succeeded with its source page as referrer, so no generation was needed.
+- Actual change: seven original files, per-file URLs/hashes, runtime sprite integration, nearest-neighbor cache, missing diagnostics and provenance/cache tests.
+- Architecture effect: SFML Texture/Sprite remains only in Resource/View; Model is unchanged.
+- Verification: file type/hash checks, manifest cross-check, cache pointer identity and missing-file diagnostic test.
+- Evidence: `docs/progress/stage-7-visual-assets.svg` embeds the actual committed files.
+- Unresolved: final Debug/Release/sanitizer and course documentation pass.
+- Next: comprehensive release verification and defense guide.
+- MVVM self-check: asset names influence appearance only; no game rule branches on texture state.

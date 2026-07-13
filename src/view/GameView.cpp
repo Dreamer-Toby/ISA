@@ -2,7 +2,11 @@
 
 #include <SFML/Graphics/CircleShape.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
+#include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Window/Keyboard.hpp>
+
+#include <algorithm>
+#include <filesystem>
 
 namespace isaac::view {
 
@@ -47,7 +51,32 @@ void GameView::render() {
   room.setOutlineColor(sf::Color(119, 85, 68));
   window_.draw(room);
 
+  if (const auto doorTexture = resources_.texture("assets/textures/rooms/red-room-door.png")) {
+    sf::Sprite door(*doorTexture);
+    door.setPosition({871.F, 274.F});
+    door.setScale({1.5F, 1.5F});
+    window_.draw(door);
+  }
+
   for (const auto& entity : display.entities) {
+    std::filesystem::path texturePath;
+    if (entity.kind == common::EntityKind::Player && entity.styleId == "cain") texturePath = "assets/textures/characters/cain-icon.png";
+    if (entity.kind == common::EntityKind::Enemy && entity.styleId == "fly") texturePath = "assets/textures/enemies/fly.png";
+    if (entity.kind == common::EntityKind::Boss) texturePath = "assets/textures/bosses/boss-icon.png";
+    if (entity.kind == common::EntityKind::PlayerProjectile || entity.kind == common::EntityKind::EnemyProjectile)
+      texturePath = "assets/textures/items/blood-tear.png";
+    if (!texturePath.empty()) {
+      if (const auto texture = resources_.texture(texturePath)) {
+        sf::Sprite sprite(*texture);
+        const auto size = texture->getSize();
+        sprite.setOrigin({static_cast<float>(size.x) / 2.F, static_cast<float>(size.y) / 2.F});
+        const float scale = (entity.radius * 2.F) / static_cast<float>(std::max(size.x, size.y));
+        sprite.setScale({scale, scale});
+        sprite.setPosition({entity.position.x, entity.position.y});
+        window_.draw(sprite);
+        continue;
+      }
+    }
     sf::CircleShape shape(entity.radius);
     shape.setOrigin({entity.radius, entity.radius});
     shape.setPosition({entity.position.x, entity.position.y});
@@ -59,12 +88,24 @@ void GameView::render() {
   }
 
   for (int i = 0; i < display.hud.redHearts; ++i) {
+    if (const auto texture = resources_.texture("assets/textures/ui/red-heart.png")) {
+      sf::Sprite heart(*texture);
+      heart.setPosition({18.F + 18.F * static_cast<float>(i), 18.F});
+      window_.draw(heart);
+      continue;
+    }
     sf::CircleShape heart(7.F);
     heart.setPosition({18.F + 17.F * static_cast<float>(i), 18.F});
     heart.setFillColor(sf::Color(205, 45, 62));
     window_.draw(heart);
   }
   for (int i = 0; i < display.hud.shields; ++i) {
+    if (const auto texture = resources_.texture("assets/textures/ui/shield-heart.png")) {
+      sf::Sprite shield(*texture);
+      shield.setPosition({18.F + 18.F * static_cast<float>(display.hud.redHearts + i), 18.F});
+      window_.draw(shield);
+      continue;
+    }
     sf::CircleShape shield(7.F);
     shield.setPosition({18.F + 17.F * static_cast<float>(display.hud.redHearts + i), 18.F});
     shield.setFillColor(sf::Color(120, 180, 210));

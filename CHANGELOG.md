@@ -39,3 +39,8 @@
 
 - Added four Boss definitions and timed two-phase state patterns, including Mom's Leg.
 - Added deterministic devil-room chance, three-floor progression, defeat and victory states.
+
+### Stage 7 — traced visuals and resource robustness
+
+- Integrated seven Huiji Wiki images across character, enemy, Boss, item, room and HUD categories.
+- Added nearest-neighbor cached loading, clear missing-resource fallback diagnostics and provenance tests.
