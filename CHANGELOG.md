@@ -29,3 +29,8 @@
 
 - Added six configured enemies composed from movement, attack and drop strategies.
 - Added enemy/projectile/contact collision, death, pickups and room clear behavior.
+
+### Stage 5 — items and economy
+
+- Added active, passive and trinket item categories with Model-owned effects.
+- Added chest key use, shop purchase, passive stacking and secret-room trinket flow.

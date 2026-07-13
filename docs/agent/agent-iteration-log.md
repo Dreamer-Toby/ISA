@@ -66,3 +66,16 @@ Commit hashes are recorded only after the referenced commit exists; stage tags p
 - Unresolved: item effects and special rooms are next.
 - Next: shop/chest/secret interactions and all inventory categories.
 - MVVM self-check: View receives only generic entity DTOs; ViewModel has no strategy/collision/drop implementation.
+
+## Iteration 5 — 2026-07-13 12:12 +08:00
+
+- Objective: close the inventory/economy loop across treasure, shop and secret rooms.
+- Prior problem: resource counters existed but special rooms had no item outcomes.
+- Options: broad item scripting or a fixed course catalog. Selected five definitions and four effect kinds to demonstrate every required category without speculative scripting.
+- Actual change: active healing/damage, stacking passives, luck trinket, chest key cost, shop coin purchase and secret reward.
+- Architecture effect: ItemSystem applies all effects to Model components; View/HUD only display strings and counts.
+- Verification: resource success/failure, passive stacking, chest, shop and trinket assertions plus project checks.
+- Evidence: `docs/progress/stage-5-items-shop.svg` documents the three interaction loops.
+- Unresolved: Boss progression/devil room and ending remain.
+- Next: four Boss state definitions, three-floor progression, defeat and victory.
+- MVVM self-check: item prices/effects and interaction state remain in Model; no SFML or reverse includes introduced.

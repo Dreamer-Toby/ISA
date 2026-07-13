@@ -3,6 +3,7 @@
 #include "model/GameSession.h"
 #include "model/Level.h"
 #include "model/EnemySystem.h"
+#include "model/ItemSystem.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -78,6 +79,28 @@ int main() {
   }
   check(enemySystem.empty(), "enemy damage and death clear encounter");
   check(!drops.empty(), "configured enemy death produces drops");
+
+  ItemSystem itemSystem;
+  Player itemPlayer(CharacterCatalog::at(0));
+  const float baseDamage = itemPlayer.shooting().damage();
+  itemSystem.apply(itemPlayer, ItemCatalog::byId("small_rock"));
+  itemSystem.apply(itemPlayer, ItemCatalog::byId("small_rock"));
+  check(itemPlayer.shooting().damage() == baseDamage + 2.F, "passive effects stack");
+  itemPlayer.inventory().useKey();
+  check(!itemSystem.openChest(itemPlayer), "chest fails without a key after resource is spent");
+  itemPlayer.inventory().addKeys(1);
+  check(itemSystem.openChest(itemPlayer) && itemPlayer.inventory().keys() == 0, "chest consumes key and grants item");
+  check(!itemSystem.buyShopItem(itemPlayer), "shop rejects insufficient coins");
+  itemPlayer.inventory().addCoins(7);
+  check(itemSystem.buyShopItem(itemPlayer) && itemPlayer.inventory().coins() == 2, "shop purchase is atomic");
+  check(itemSystem.takeSecretTrinket(itemPlayer) && itemPlayer.luck() > 0.F, "secret trinket applies luck");
+
+  Inventory economy;
+  check(!economy.spendCoins(1), "coin consume fails when empty");
+  economy.addCoins(2);
+  check(economy.spendCoins(2) && economy.coins() == 0, "coin consume succeeds atomically");
+  check(economy.useBomb() && !economy.useBomb(), "bomb success and failure consumption");
+  check(economy.useKey() && !economy.useKey(), "key success and failure consumption");
 
   const auto at30 = simulateAtRenderRate(30);
   const auto at60 = simulateAtRenderRate(60);

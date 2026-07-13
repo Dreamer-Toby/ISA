@@ -21,7 +21,7 @@ void GameViewModel::update(float seconds, const InputCommand& command) {
 
   if (screen_ == common::ScreenState::Playing) {
     session_.update(seconds, model::GameplayInput{command.movement, command.shooting,
-                                                  command.useBomb, command.useActive});
+                                                  command.useBomb, command.useActive, command.confirm});
   }
 
   if (screen_ == common::ScreenState::CharacterSelect && !command.confirm) {

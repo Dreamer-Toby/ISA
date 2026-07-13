@@ -23,6 +23,8 @@ class Player {
   [[nodiscard]] const ShootComponent& shooting() const { return shooting_; }
   [[nodiscard]] Inventory& inventory() { return inventory_; }
   [[nodiscard]] const Inventory& inventory() const { return inventory_; }
+  void addLuck(float amount) { bonusLuck_ += amount; }
+  [[nodiscard]] float luck() const { return definition_.luck + bonusLuck_; }
 
  private:
   CharacterDefinition definition_;
@@ -31,6 +33,7 @@ class Player {
   ShootComponent shooting_;
   Inventory inventory_;
   float invulnerability_{};
+  float bonusLuck_{};
 };
 
 }  // namespace isaac::model

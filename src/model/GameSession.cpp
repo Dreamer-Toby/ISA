@@ -66,6 +66,12 @@ void GameSession::update(float seconds, const GameplayInput& input) {
   std::erase_if(pickups_, [this](const Pickup& pickup) {
     return (pickup.position - player_.position()).lengthSquared() < 26.F * 26.F;
   });
+  if (input.useActive) items_.useActive(player_);
+  if (input.interact && level_.currentRoom().cleared) {
+    if (level_.currentRoom().type == common::RoomType::Treasure) items_.openChest(player_);
+    if (level_.currentRoom().type == common::RoomType::Shop) items_.buyShopItem(player_);
+  }
+  if (level_.currentRoom().type == common::RoomType::Secret) items_.takeSecretTrinket(player_);
   rebuildSnapshot();
 }
 

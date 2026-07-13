@@ -36,6 +36,7 @@ add_library(isaac_model STATIC
   src/model/Components.cpp
   src/model/EnemySystem.cpp
   src/model/GameSession.cpp
+  src/model/ItemSystem.cpp
   src/model/Level.cpp
   src/model/Player.cpp)
 target_link_libraries(isaac_model PUBLIC isaac_common)

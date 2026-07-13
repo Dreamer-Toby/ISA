@@ -5,6 +5,7 @@
 #include "model/Projectile.h"
 #include "model/Level.h"
 #include "model/EnemySystem.h"
+#include "model/ItemSystem.h"
 
 #include <cstddef>
 #include <string>
@@ -17,6 +18,7 @@ struct GameplayInput {
   common::Vec2 shooting;
   bool useBomb{};
   bool useActive{};
+  bool interact{};
 };
 
 struct ProjectileSnapshot {
@@ -86,6 +88,7 @@ class GameSession {
   Level level_;
   EnemySystem enemies_;
   std::vector<Pickup> pickups_;
+  ItemSystem items_;
   std::vector<Projectile> projectiles_;
   SessionSnapshot snapshot_{};
 };
