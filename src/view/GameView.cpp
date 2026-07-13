@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <sstream>
 
 namespace isaac::view {
 
@@ -43,7 +44,36 @@ viewmodel::InputCommand GameView::inputCommand() const {
 
 void GameView::render() {
   const auto display = viewModel_.displayState();
+  if (display.screen == common::ScreenState::Start) window_.setTitle("ISA - Press Enter to start");
+  else if (display.screen == common::ScreenState::CharacterSelect) window_.setTitle("ISA - Character select: A/D then Enter");
+  else if (display.screen == common::ScreenState::Defeat) window_.setTitle("ISA - Defeat");
+  else if (display.screen == common::ScreenState::Victory) window_.setTitle("ISA - Victory");
+  else {
+    std::ostringstream title;
+    title << "ISA | Floor " << display.hud.floor << " | Coins " << display.hud.coins
+          << " | Bombs " << display.hud.bombs << " | Keys " << display.hud.keys
+          << " | Active " << display.hud.activeItem << " | " << display.hud.roomState;
+    if (display.screen == common::ScreenState::Paused) title << " | PAUSED";
+    window_.setTitle(title.str());
+  }
   window_.clear(sf::Color(24, 18, 28));
+
+  if (display.screen == common::ScreenState::Start ||
+      display.screen == common::ScreenState::CharacterSelect ||
+      display.screen == common::ScreenState::Defeat ||
+      display.screen == common::ScreenState::Victory) {
+    sf::RectangleShape panel({520.F, 260.F});
+    panel.setPosition({220.F, 140.F});
+    if (display.screen == common::ScreenState::Start) panel.setFillColor(sf::Color(88, 57, 70));
+    if (display.screen == common::ScreenState::CharacterSelect) panel.setFillColor(sf::Color(85, 74, 48));
+    if (display.screen == common::ScreenState::Defeat) panel.setFillColor(sf::Color(92, 35, 42));
+    if (display.screen == common::ScreenState::Victory) panel.setFillColor(sf::Color(48, 91, 76));
+    panel.setOutlineThickness(6.F);
+    panel.setOutlineColor(sf::Color(210, 185, 145));
+    window_.draw(panel);
+    window_.display();
+    return;
+  }
 
   sf::RectangleShape room({880.F, 420.F});
   room.setPosition({40.F, 80.F});
@@ -118,6 +148,11 @@ void GameView::render() {
                       34.F + 12.F * static_cast<float>(roomState.y)});
     cell.setFillColor(roomState.current ? sf::Color(235, 210, 120) : sf::Color(125, 115, 110));
     window_.draw(cell);
+  }
+  if (display.screen == common::ScreenState::Paused) {
+    sf::RectangleShape paused({960.F, 540.F});
+    paused.setFillColor(sf::Color(12, 10, 15, 155));
+    window_.draw(paused);
   }
   window_.display();
 }
