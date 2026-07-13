@@ -16,6 +16,11 @@ Access date for every entry below: **2026-07-13**. The Wiki intermittently retur
 | 隐藏房 | https://isaac.huijiwiki.com/wiki/隐藏房 | Secret entrances are revealed using bombs and connect to non-boss rooms. | A bomb at an adjacent normal-room wall reveals the secret room permanently. |
 | 恶魔房 | https://isaac.huijiwiki.com/wiki/恶魔房 | May appear after clearing a boss. | A deterministic injectable roll below 35% creates a devil room; detailed angel/deal rules are omitted. |
 | 布局 | https://isaac.huijiwiki.com/wiki/布局 | Floor/room layout categories. | Use a small connected graph with deterministic seeds rather than original layout pools. |
+| 美味的心 | https://isaac.huijiwiki.com/wiki/C45 | Active healing item associated with Magdalene; restores red-heart health. | `Yum Heart` heals one whole course heart. Original charge/synergy details are omitted. |
+| 彼列之书 | https://isaac.huijiwiki.com/wiki/C34 | Active book grants temporary damage, with the Wiki listing +2 damage in the current room. | `Book of Belial` grants +2 damage when used; room-duration/charge and repeated-use DLC differences are simplified. |
+| 小石头 | https://isaac.huijiwiki.com/wiki/C90 | Passive offensive item whose identity is a damage increase with tear-side tradeoffs in the original. | `Small Rock` stacks +1 damage; original speed/stat side effects are omitted. |
+| 悲伤洋葱 | https://isaac.huijiwiki.com/wiki/C1 | Passive tears/rate increase. | `Sad Onion` multiplies shot interval by 0.85 with a safe lower bound; exact tears formula is simplified. |
+| 幸运脚趾 | https://isaac.huijiwiki.com/wiki/T42 | Trinket described by the Wiki data table as luck up and affecting reward odds. | `Lucky Toe` occupies the trinket slot and adds +1 course luck; detailed machine/drop tables are omitted. |
 
 ## Enemy and boss research matrix
 
@@ -37,4 +42,4 @@ The implemented roster deliberately uses broad behavior references rather than o
 - Original health displays include many heart types. The course version has red hearts plus one shield/soul-heart pool, capped together at 12 hearts.
 - Original devil-room probability depends on many run conditions. The course version uses one injectable 35% roll after a boss.
 - Original maps use large layout pools. The course version guarantees five required room types in a small connected graph on each of three floors.
-
+- Item values differ across editions and use the original game's nonlinear stat formulas. The five dedicated rows above freeze transparent course values rather than mixing editions.

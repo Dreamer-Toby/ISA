@@ -146,7 +146,10 @@ void GameView::render() {
 
   for (const auto& entity : display.entities) {
     std::filesystem::path texturePath;
+    if (entity.kind == common::EntityKind::Player && entity.styleId == "isaac") texturePath = resource::AssetCatalog::isaac();
+    if (entity.kind == common::EntityKind::Player && entity.styleId == "magdalene") texturePath = resource::AssetCatalog::magdalene();
     if (entity.kind == common::EntityKind::Player && entity.styleId == "cain") texturePath = resource::AssetCatalog::cain();
+    if (entity.kind == common::EntityKind::Player && entity.styleId == "judas") texturePath = resource::AssetCatalog::judas();
     if (entity.kind == common::EntityKind::Enemy && entity.styleId == "fly") texturePath = resource::AssetCatalog::fly();
     if (entity.kind == common::EntityKind::Boss) texturePath = resource::AssetCatalog::boss();
     if (entity.kind == common::EntityKind::PlayerProjectile || entity.kind == common::EntityKind::EnemyProjectile)
