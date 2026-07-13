@@ -53,6 +53,7 @@ void GameView::render() {
     shape.setPosition({entity.position.x, entity.position.y});
     if (entity.kind == common::EntityKind::Player) shape.setFillColor(sf::Color(220, 187, 166));
     else if (entity.kind == common::EntityKind::PlayerProjectile) shape.setFillColor(sf::Color(150, 205, 235));
+    else if (entity.kind == common::EntityKind::Pickup) shape.setFillColor(sf::Color(225, 190, 70));
     else shape.setFillColor(sf::Color(128, 48, 55));
     window_.draw(shape);
   }

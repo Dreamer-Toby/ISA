@@ -40,6 +40,12 @@ DisplayState GameViewModel::displayState() const {
                                                    : common::EntityKind::EnemyProjectile,
                                projectile.position, 6.F, "tear"});
   }
+  for (const auto& enemy : state.enemies) {
+    result.entities.push_back({common::EntityKind::Enemy, enemy.position, 16.F, enemy.id});
+  }
+  for (const auto& pickup : state.pickups) {
+    result.entities.push_back({common::EntityKind::Pickup, pickup.position, 8.F, "pickup"});
+  }
   result.hud.redHearts = state.redHearts;
   result.hud.shields = state.shields;
   result.hud.coins = state.coins;

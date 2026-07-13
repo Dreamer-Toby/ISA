@@ -34,6 +34,7 @@ target_include_directories(isaac_common INTERFACE src)
 add_library(isaac_model STATIC
   src/model/CharacterCatalog.cpp
   src/model/Components.cpp
+  src/model/EnemySystem.cpp
   src/model/GameSession.cpp
   src/model/Level.cpp
   src/model/Player.cpp)

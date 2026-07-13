@@ -53,3 +53,16 @@ Commit hashes are recorded only after the referenced commit exists; stage tags p
 - Unresolved: combat rooms are populated in Stage 4.
 - Next: six enemy definitions, strategies, collision, drops and clear loop.
 - MVVM self-check: Room/Level rules are pure Model; ViewModel contains projection only.
+
+## Iteration 4 — 2026-07-13 12:00 +08:00
+
+- Objective: complete ordinary combat rooms with six distinguishable enemies.
+- Prior problem: room traversal had no opposition or clear condition.
+- Options: subclasses per enemy or configured strategy composition. Selected composition to keep behavior data-driven and small.
+- Actual change: six definitions, five movement strategies, three attack strategies, three drops, collisions, invulnerability, pickup collection and clear-to-open integration.
+- Architecture effect: AI, collision and drop selection are confined to Model's EnemySystem.
+- Verification: roster count, projectile hit/destruction, damage/death, drop and clear assertions plus project checks.
+- Evidence: `docs/progress/stage-4-enemies.svg` reflects generic View entities rather than claiming copied artwork.
+- Unresolved: item effects and special rooms are next.
+- Next: shop/chest/secret interactions and all inventory categories.
+- MVVM self-check: View receives only generic entity DTOs; ViewModel has no strategy/collision/drop implementation.

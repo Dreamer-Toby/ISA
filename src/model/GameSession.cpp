@@ -36,6 +36,10 @@ void GameSession::update(float seconds, const GameplayInput& input) {
       if (*exitDirection == common::Direction::Down) arrival.y = 110.F;
       player_.setPosition(arrival);
       projectiles_.clear();
+      pickups_.clear();
+      if (level_.currentRoom().type == common::RoomType::Normal && !level_.currentRoom().cleared) {
+        enemies_.spawnForNormalRoom(level_.currentRoomId(), level_.floorNumber());
+      }
     }
   }
 
@@ -47,6 +51,21 @@ void GameSession::update(float seconds, const GameplayInput& input) {
   }
   for (auto& projectile : projectiles_) projectile.update(seconds);
   std::erase_if(projectiles_, [](const Projectile& projectile) { return !projectile.alive; });
+  enemies_.update(seconds, player_, projectiles_, pickups_);
+  if (level_.currentRoom().type == common::RoomType::Normal &&
+      !level_.currentRoom().cleared && enemies_.empty()) {
+    level_.markCurrentCleared();
+  }
+  for (const auto& pickup : pickups_) {
+    if ((pickup.position - player_.position()).lengthSquared() < 26.F * 26.F) {
+      if (pickup.type == common::PickupType::Coin) player_.inventory().addCoins(1);
+      if (pickup.type == common::PickupType::Bomb) player_.inventory().addBombs(1);
+      if (pickup.type == common::PickupType::Key) player_.inventory().addKeys(1);
+    }
+  }
+  std::erase_if(pickups_, [this](const Pickup& pickup) {
+    return (pickup.position - player_.position()).lengthSquared() < 26.F * 26.F;
+  });
   rebuildSnapshot();
 }
 
@@ -72,6 +91,12 @@ void GameSession::rebuildSnapshot() {
     snapshot_.rooms.push_back({room.id, room.type, room.gridX, room.gridY, room.visited,
                                room.revealed, room.id == level_.currentRoomId(), room.cleared});
   }
+  snapshot_.enemies.clear();
+  for (const auto& enemy : enemies_.enemies()) {
+    snapshot_.enemies.push_back({enemy.position, std::string(EnemyCatalog::all()[enemy.definitionIndex].id)});
+  }
+  snapshot_.pickups.clear();
+  for (const auto& pickup : pickups_) snapshot_.pickups.push_back({pickup.position, pickup.type});
 }
 
 }  // namespace isaac::model

@@ -24,3 +24,8 @@
 
 - Added deterministic connected floors with normal, treasure, shop, secret and Boss rooms.
 - Added clear-to-open traversal, key/bomb gates, persistent room visits and minimap DTOs.
+
+### Stage 4 — enemies and clear loop
+
+- Added six configured enemies composed from movement, attack and drop strategies.
+- Added enemy/projectile/contact collision, death, pickups and room clear behavior.

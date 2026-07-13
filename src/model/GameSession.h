@@ -4,6 +4,7 @@
 #include "model/Player.h"
 #include "model/Projectile.h"
 #include "model/Level.h"
+#include "model/EnemySystem.h"
 
 #include <cstddef>
 #include <string>
@@ -34,6 +35,16 @@ struct RoomSnapshot {
   bool cleared{};
 };
 
+struct EnemySnapshot {
+  common::Vec2 position;
+  std::string id;
+};
+
+struct PickupSnapshot {
+  common::Vec2 position;
+  common::PickupType type{};
+};
+
 struct SessionSnapshot {
   common::Vec2 playerPosition{480.F, 300.F};
   std::string characterId{"isaac"};
@@ -45,6 +56,8 @@ struct SessionSnapshot {
   std::string activeItem{"None"};
   std::vector<ProjectileSnapshot> projectiles;
   std::vector<RoomSnapshot> rooms;
+  std::vector<EnemySnapshot> enemies;
+  std::vector<PickupSnapshot> pickups;
   int floor{1};
   common::RoomType roomType{common::RoomType::Normal};
   bool roomCleared{true};
@@ -64,11 +77,15 @@ class GameSession {
   [[nodiscard]] const std::vector<Projectile>& projectiles() const { return projectiles_; }
   [[nodiscard]] Level& level() { return level_; }
   [[nodiscard]] const Level& level() const { return level_; }
+  [[nodiscard]] EnemySystem& enemySystem() { return enemies_; }
+  [[nodiscard]] const std::vector<Pickup>& pickups() const { return pickups_; }
 
  private:
   void rebuildSnapshot();
   Player player_;
   Level level_;
+  EnemySystem enemies_;
+  std::vector<Pickup> pickups_;
   std::vector<Projectile> projectiles_;
   SessionSnapshot snapshot_{};
 };

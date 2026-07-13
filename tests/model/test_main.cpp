@@ -2,6 +2,7 @@
 #include "model/Components.h"
 #include "model/GameSession.h"
 #include "model/Level.h"
+#include "model/EnemySystem.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -57,6 +58,26 @@ int main() {
   check(inventory.keys() == 0, "locked room consumes key");
   check(level.enter(0, inventory, false), "room round trip returns to start");
   check(level.rooms().at(4).visited && level.rooms().at(2).visited, "room state persists after round trips");
+
+  check(EnemyCatalog::all().size() == 6, "six configured normal enemies");
+  EnemySystem enemySystem;
+  enemySystem.spawnForNormalRoom(1, 1);
+  Player testPlayer(CharacterCatalog::at(0));
+  std::vector<Projectile> hitProjectiles;
+  std::vector<Pickup> drops;
+  auto& target = enemySystem.enemies().front();
+  target.health = 1.F;
+  hitProjectiles.push_back({target.position, {}, 2.F, 1.F, true, true});
+  enemySystem.update(0.F, testPlayer, hitProjectiles, drops);
+  check(enemySystem.enemies().size() >= 1 && hitProjectiles.empty(), "projectile hit damages and is destroyed");
+  while (!enemySystem.enemies().empty()) {
+    auto& remaining = enemySystem.enemies().front();
+    remaining.health = 1.F;
+    hitProjectiles.push_back({remaining.position, {}, 2.F, 1.F, true, true});
+    enemySystem.update(0.F, testPlayer, hitProjectiles, drops);
+  }
+  check(enemySystem.empty(), "enemy damage and death clear encounter");
+  check(!drops.empty(), "configured enemy death produces drops");
 
   const auto at30 = simulateAtRenderRate(30);
   const auto at60 = simulateAtRenderRate(60);
