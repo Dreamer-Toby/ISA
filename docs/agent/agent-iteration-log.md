@@ -27,3 +27,16 @@ Commit hashes are recorded only after the referenced commit exists; stage tags p
 - Unresolved: gameplay remains the intentional shell; binary Wiki assets remain pending.
 - Next: add character selection, components, shooting/projectiles and HUD.
 - MVVM self-check: Model contains no SFML; View includes only ViewModel/Resource; ViewModel owns no collision/AI/drop rules; App loop only schedules.
+
+## Iteration 2 — 2026-07-13 11:38 +08:00
+
+- Objective: deliver the first playable movement/shooting slice with four real character configurations.
+- Prior problem: the shell had only a moving dot and placeholder HUD state.
+- Options: per-character subclasses or a small catalog plus components. Selected catalog/components to meet extension requirements without an unused framework.
+- Actual change: character catalog, Player, health/shield, inventory, shooting, projectile lifecycle, selection/pause transitions, HUD and tests.
+- Architecture effect: combat timing and health rules remain entirely in Model; ViewModel only selects and projects.
+- Verification: Debug build/CTest and architecture check; 30/60/120 simulated render schedules produce equal fixed-step positions and shot counts.
+- Evidence: `docs/progress/stage-2-player-combat.svg` faithfully shows the View fallback shapes.
+- Unresolved: enemies and collision arrive in Stage 4; HUD uses shapes until final resource work.
+- Next: deterministic connected room graph, doors, persistence and minimap.
+- MVVM self-check: no SFML in Model; no Model includes in View; no business rule in App/Resource/ViewModel.

@@ -51,11 +51,25 @@ void GameView::render() {
     sf::CircleShape shape(entity.radius);
     shape.setOrigin({entity.radius, entity.radius});
     shape.setPosition({entity.position.x, entity.position.y});
-    shape.setFillColor(entity.kind == common::EntityKind::Player ? sf::Color(220, 187, 166) : sf::Color(128, 48, 55));
+    if (entity.kind == common::EntityKind::Player) shape.setFillColor(sf::Color(220, 187, 166));
+    else if (entity.kind == common::EntityKind::PlayerProjectile) shape.setFillColor(sf::Color(150, 205, 235));
+    else shape.setFillColor(sf::Color(128, 48, 55));
     window_.draw(shape);
+  }
+
+  for (int i = 0; i < display.hud.redHearts; ++i) {
+    sf::CircleShape heart(7.F);
+    heart.setPosition({18.F + 17.F * static_cast<float>(i), 18.F});
+    heart.setFillColor(sf::Color(205, 45, 62));
+    window_.draw(heart);
+  }
+  for (int i = 0; i < display.hud.shields; ++i) {
+    sf::CircleShape shield(7.F);
+    shield.setPosition({18.F + 17.F * static_cast<float>(display.hud.redHearts + i), 18.F});
+    shield.setFillColor(sf::Color(120, 180, 210));
+    window_.draw(shield);
   }
   window_.display();
 }
 
 }  // namespace isaac::view
-

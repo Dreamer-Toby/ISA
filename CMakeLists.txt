@@ -31,7 +31,11 @@ endif()
 add_library(isaac_common INTERFACE)
 target_include_directories(isaac_common INTERFACE src)
 
-add_library(isaac_model STATIC src/model/GameSession.cpp)
+add_library(isaac_model STATIC
+  src/model/CharacterCatalog.cpp
+  src/model/Components.cpp
+  src/model/GameSession.cpp
+  src/model/Player.cpp)
 target_link_libraries(isaac_model PUBLIC isaac_common)
 target_include_directories(isaac_model PUBLIC src)
 
@@ -63,4 +67,3 @@ if(BUILD_TESTING)
     COMMAND ${CMAKE_COMMAND} -DPROJECT_ROOT=${CMAKE_SOURCE_DIR}
             -P ${CMAKE_SOURCE_DIR}/tests/architecture/check_architecture.cmake)
 endif()
-

@@ -13,3 +13,9 @@
 - Added a pinned SFML 3.0.1 CMake dependency and C++20 layer targets.
 - Added an SFML window, scheduling-only fixed-step loop, commands, DTOs and fallback drawing.
 - Added Model smoke and strict include-boundary checks.
+
+### Stage 2 — player combat vertical slice
+
+- Added four configured characters, health/shield, inventory and shooting components.
+- Added movement, projectile lifetime, character selection, pause state and HUD DTOs.
+- Added heart cap, damage/death, projectile and render-rate consistency tests.
