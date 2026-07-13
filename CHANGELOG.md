@@ -34,3 +34,8 @@
 
 - Added active, passive and trinket item categories with Model-owned effects.
 - Added chest key use, shop purchase, passive stacking and secret-room trinket flow.
+
+### Stage 6 — bosses and ending
+
+- Added four Boss definitions and timed two-phase state patterns, including Mom's Leg.
+- Added deterministic devil-room chance, three-floor progression, defeat and victory states.

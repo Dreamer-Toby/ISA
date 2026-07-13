@@ -6,7 +6,8 @@
 
 namespace isaac::model {
 
-GameSession::GameSession() : player_(CharacterCatalog::at(0)), level_(1337U) { rebuildSnapshot(); }
+GameSession::GameSession(float devilRoomRoll)
+    : player_(CharacterCatalog::at(0)), level_(1337U), devilRoomRoll_(devilRoomRoll) { rebuildSnapshot(); }
 
 void GameSession::selectCharacter(std::size_t index) {
   player_ = Player(CharacterCatalog::at(index));
@@ -40,6 +41,11 @@ void GameSession::update(float seconds, const GameplayInput& input) {
       if (level_.currentRoom().type == common::RoomType::Normal && !level_.currentRoom().cleared) {
         enemies_.spawnForNormalRoom(level_.currentRoomId(), level_.floorNumber());
       }
+      if (level_.currentRoom().type == common::RoomType::Boss && !level_.currentRoom().cleared) {
+        bosses_.spawnForFloor(level_.floorNumber());
+        bossEncounterActive_ = true;
+        bossRewardResolved_ = false;
+      }
     }
   }
 
@@ -52,9 +58,16 @@ void GameSession::update(float seconds, const GameplayInput& input) {
   for (auto& projectile : projectiles_) projectile.update(seconds);
   std::erase_if(projectiles_, [](const Projectile& projectile) { return !projectile.alive; });
   enemies_.update(seconds, player_, projectiles_, pickups_);
+  bosses_.update(seconds, player_, projectiles_);
   if (level_.currentRoom().type == common::RoomType::Normal &&
       !level_.currentRoom().cleared && enemies_.empty()) {
     level_.markCurrentCleared();
+  }
+  if (bossEncounterActive_ && bosses_.empty()) {
+    bossEncounterActive_ = false;
+    level_.markCurrentCleared();
+    if (!bossRewardResolved_ && DevilRoomPolicy::opens(devilRoomRoll_)) level_.addDevilRoom();
+    bossRewardResolved_ = true;
   }
   for (const auto& pickup : pickups_) {
     if ((pickup.position - player_.position()).lengthSquared() < 26.F * 26.F) {
@@ -70,6 +83,15 @@ void GameSession::update(float seconds, const GameplayInput& input) {
   if (input.interact && level_.currentRoom().cleared) {
     if (level_.currentRoom().type == common::RoomType::Treasure) items_.openChest(player_);
     if (level_.currentRoom().type == common::RoomType::Shop) items_.buyShopItem(player_);
+    if (level_.currentRoom().type == common::RoomType::Boss) {
+      if (level_.floorNumber() == 3) {
+        runCompleted_ = true;
+      } else if (level_.advanceFloor()) {
+        player_.setPosition({480.F, 300.F});
+        projectiles_.clear(); pickups_.clear(); enemies_ = EnemySystem{}; bosses_ = BossSystem{};
+        bossRewardResolved_ = false;
+      }
+    }
   }
   if (level_.currentRoom().type == common::RoomType::Secret) items_.takeSecretTrinket(player_);
   rebuildSnapshot();
@@ -85,6 +107,7 @@ void GameSession::rebuildSnapshot() {
   snapshot_.keys = player_.inventory().keys();
   snapshot_.activeItem = player_.inventory().activeItem();
   snapshot_.playerDead = player_.health().dead();
+  snapshot_.runCompleted = runCompleted_;
   snapshot_.projectiles.clear();
   for (const auto& projectile : projectiles_) {
     snapshot_.projectiles.push_back({projectile.position, projectile.friendly});
@@ -103,6 +126,13 @@ void GameSession::rebuildSnapshot() {
   }
   snapshot_.pickups.clear();
   for (const auto& pickup : pickups_) snapshot_.pickups.push_back({pickup.position, pickup.type});
+  snapshot_.bosses.clear();
+  for (const auto& boss : bosses_.bosses()) {
+    snapshot_.bosses.push_back({boss.position, std::string(BossCatalog::all()[boss.definitionIndex].id), boss.phase});
+  }
+  snapshot_.devilRoomAvailable = std::ranges::any_of(level_.rooms(), [](const Room& room) {
+    return room.type == common::RoomType::Devil;
+  });
 }
 
 }  // namespace isaac::model

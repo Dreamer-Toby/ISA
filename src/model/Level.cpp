@@ -82,4 +82,14 @@ bool Level::advanceFloor() {
   return true;
 }
 
+bool Level::addDevilRoom() {
+  if (currentRoom().type != common::RoomType::Boss ||
+      std::ranges::any_of(rooms_, [](const Room& room) { return room.type == common::RoomType::Devil; })) return false;
+  const int id = static_cast<int>(rooms_.size());
+  rooms_.push_back({id, common::RoomType::Devil, rooms_[currentRoom_].gridX,
+                    rooms_[currentRoom_].gridY + 1, true, false, true, false, {currentRoom_}});
+  rooms_[currentRoom_].neighbors.push_back(id);
+  return true;
+}
+
 }  // namespace isaac::model

@@ -4,6 +4,7 @@
 #include "model/Level.h"
 #include "model/EnemySystem.h"
 #include "model/ItemSystem.h"
+#include "model/BossSystem.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -101,6 +102,28 @@ int main() {
   check(economy.spendCoins(2) && economy.coins() == 0, "coin consume succeeds atomically");
   check(economy.useBomb() && !economy.useBomb(), "bomb success and failure consumption");
   check(economy.useKey() && !economy.useKey(), "key success and failure consumption");
+
+  check(BossCatalog::all().size() == 4, "four configured bosses");
+  check(BossCatalog::all().back().id == "moms_leg", "final boss is simplified Mom's Leg");
+  BossSystem bossSystem;
+  bossSystem.spawnForFloor(2);
+  check(bossSystem.bosses().size() == 2, "second floor exposes two distinct bosses");
+  for (auto& boss : bossSystem.bosses()) boss.health = 0.F;
+  std::vector<Projectile> bossProjectiles;
+  bossSystem.update(0.F, testPlayer, bossProjectiles);
+  check(bossSystem.empty(), "boss death resolves encounter");
+  check(DevilRoomPolicy::opens(0.F) && DevilRoomPolicy::opens(0.349F) &&
+        !DevilRoomPolicy::opens(0.35F) && !DevilRoomPolicy::opens(0.99F),
+        "devil room probability boundaries are deterministic");
+
+  Level progression(7U);
+  Inventory progressionInventory;
+  check(progression.enter(1, progressionInventory, false), "enter normal route to boss");
+  progression.markCurrentCleared();
+  check(progression.enter(5, progressionInventory, false), "enter boss room after clear");
+  progression.markCurrentCleared();
+  check(progression.addDevilRoom(), "boss clear can add devil room");
+  check(progression.advanceFloor() && progression.floorNumber() == 2, "boss death advances floor");
 
   const auto at30 = simulateAtRenderRate(30);
   const auto at60 = simulateAtRenderRate(60);

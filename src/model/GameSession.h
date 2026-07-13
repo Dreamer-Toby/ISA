@@ -6,6 +6,7 @@
 #include "model/Level.h"
 #include "model/EnemySystem.h"
 #include "model/ItemSystem.h"
+#include "model/BossSystem.h"
 
 #include <cstddef>
 #include <string>
@@ -47,6 +48,12 @@ struct PickupSnapshot {
   common::PickupType type{};
 };
 
+struct BossSnapshot {
+  common::Vec2 position;
+  std::string id;
+  int phase{};
+};
+
 struct SessionSnapshot {
   common::Vec2 playerPosition{480.F, 300.F};
   std::string characterId{"isaac"};
@@ -60,17 +67,20 @@ struct SessionSnapshot {
   std::vector<RoomSnapshot> rooms;
   std::vector<EnemySnapshot> enemies;
   std::vector<PickupSnapshot> pickups;
+  std::vector<BossSnapshot> bosses;
   int floor{1};
   common::RoomType roomType{common::RoomType::Normal};
   bool roomCleared{true};
   std::size_t totalShots{};
   float elapsedSeconds{};
   bool playerDead{};
+  bool devilRoomAvailable{};
+  bool runCompleted{};
 };
 
 class GameSession {
  public:
-  GameSession();
+  explicit GameSession(float devilRoomRoll = 0.2F);
   void selectCharacter(std::size_t index);
   void update(float seconds, const GameplayInput& input);
   [[nodiscard]] const SessionSnapshot& snapshot() const { return snapshot_; }
@@ -89,6 +99,11 @@ class GameSession {
   EnemySystem enemies_;
   std::vector<Pickup> pickups_;
   ItemSystem items_;
+  BossSystem bosses_;
+  float devilRoomRoll_{};
+  bool bossEncounterActive_{};
+  bool bossRewardResolved_{};
+  bool runCompleted_{};
   std::vector<Projectile> projectiles_;
   SessionSnapshot snapshot_{};
 };

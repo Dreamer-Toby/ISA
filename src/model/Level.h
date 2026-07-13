@@ -34,6 +34,7 @@ class Level {
   bool enter(int roomId, Inventory& inventory, bool useBomb);
   void markCurrentCleared();
   bool advanceFloor();
+  bool addDevilRoom();
 
  private:
   void generateFloor();

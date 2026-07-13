@@ -24,6 +24,10 @@ void GameViewModel::update(float seconds, const InputCommand& command) {
                                                   command.useBomb, command.useActive, command.confirm});
   }
 
+  const auto& snapshot = session_.snapshot();
+  if (screen_ == common::ScreenState::Playing && snapshot.playerDead) screen_ = common::ScreenState::Defeat;
+  if (screen_ == common::ScreenState::Playing && snapshot.runCompleted) screen_ = common::ScreenState::Victory;
+
   if (screen_ == common::ScreenState::CharacterSelect && !command.confirm) {
     if (command.movement.x > 0.5F) selectedCharacter_ = (selectedCharacter_ + 1) % 4;
     if (command.movement.x < -0.5F) selectedCharacter_ = (selectedCharacter_ + 3) % 4;
@@ -42,6 +46,10 @@ DisplayState GameViewModel::displayState() const {
   }
   for (const auto& enemy : state.enemies) {
     result.entities.push_back({common::EntityKind::Enemy, enemy.position, 16.F, enemy.id});
+  }
+  for (const auto& boss : state.bosses) {
+    result.entities.push_back({common::EntityKind::Boss, boss.position,
+                               boss.id == "moms_leg" ? 38.F : 28.F, boss.id});
   }
   for (const auto& pickup : state.pickups) {
     result.entities.push_back({common::EntityKind::Pickup, pickup.position, 8.F, "pickup"});

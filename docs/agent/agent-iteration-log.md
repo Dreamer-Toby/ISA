@@ -79,3 +79,16 @@ Commit hashes are recorded only after the referenced commit exists; stage tags p
 - Unresolved: Boss progression/devil room and ending remain.
 - Next: four Boss state definitions, three-floor progression, defeat and victory.
 - MVVM self-check: item prices/effects and interaction state remain in Model; no SFML or reverse includes introduced.
+
+## Iteration 6 — 2026-07-13 12:25 +08:00
+
+- Objective: finish the three-floor run with four Bosses, devil room, defeat and victory.
+- Prior problem: the map had a Boss room but no Boss encounter or terminal flow.
+- Options: subclass state machines or one explicit pattern-driven state record. Selected the latter to keep four distinct, auditable behaviors.
+- Actual change: Monstro, Duke, Larry Jr. and Mom's Leg definitions; health phases; attacks; deterministic devil rule; floor and screen progression.
+- Architecture effect: all patterns, probability and progression are Model state; View renders generic Boss DTOs.
+- Verification: roster/final identity, floor-two dual spawn, death, 35% probability boundaries, devil insertion and floor advance tests.
+- Evidence: `docs/progress/stage-6-bosses-ending.svg` maps the real encounter ordering.
+- Unresolved: traced visuals, final robustness checks and defense docs.
+- Next: integrate traceable assets/fallback cache behavior, then release verification.
+- MVVM self-check: Boss AI/state/progression remain Model-only; App loop unchanged.
