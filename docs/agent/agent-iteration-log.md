@@ -105,3 +105,36 @@ Commit hashes are recorded only after the referenced commit exists; stage tags p
 - Unresolved: final Debug/Release/sanitizer and course documentation pass.
 - Next: comprehensive release verification and defense guide.
 - MVVM self-check: asset names influence appearance only; no game rule branches on texture state.
+
+## Iteration 8 — 2026-07-13 13:00 +08:00
+
+- Objective: independently exercise the full course flow, correct boundary drift and prepare the release.
+- Prior problem: no end-to-end ViewModel screen test or final defense/verification record; View still contained asset path literals.
+- Options: leave path strings in View because they were visual, or honor the documented Resource catalog boundary. Selected the latter and committed the correction separately as `bc2ef8f`.
+- Actual change: AssetCatalog refactor, menu/pause/defeat/victory flow test, final README/defense/evidence and full build matrix. A real macOS window smoke then exposed a Unicode narrow-title exception; replacing the decorative dash with ASCII fixed startup.
+- Architecture effect: Resource now owns all path mappings; View owns only Sprite/render choices. Model/View/ViewModel dependency contract remains unchanged.
+- Verification: exact Debug/Release/sanitizer commands and results are in `feedback/feedback0.md`; architecture and asset checks are CTest entries.
+- Evidence: `docs/progress/stage-8-final-release.svg`.
+- Unresolved: visual gameplay was not falsely claimed as automated; the real app can be run from the repository root for the documented manual sequence.
+- Next: independent Acceptance review.
+- MVVM self-check: Model has no SFML; View has no Model include; ViewModel has no View/SFML or game-rule algorithms; App loop remains scheduling-only.
+
+## Existing stage evidence
+
+| Stage | Commit | Tag |
+|---|---|---|
+| 0 baseline | `0530df1` | — |
+| 0 architecture | `6496331` | `v0.1-architecture` |
+| 1 shell | `80723b1` | — |
+| 2 combat | `1ffb245` | `v0.2-player-combat` |
+| 3 rooms | `dba8e19` | `v0.3-rooms` |
+| 4 enemies | `9f4bdcb` | `v0.4-enemies` |
+| 5 items | `3e75e7b` | `v0.5-items` |
+| 6 bosses | `c6520c2` | `v0.6-bosses` |
+| 7 assets | `bd0823d` | — |
+| 8 resource-boundary correction | `bc2ef8f` | — |
+| 8 macOS title fix | `0451b4f` | — |
+| 8 complete visible HUD/screens | `04f5c1f` | — |
+| 8 flow regression tests | `6831161` | — |
+
+The final documentation commit is identified by `v1.0-course-release` after all recorded checks pass; no self-referential hash is invented here.

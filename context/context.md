@@ -11,3 +11,12 @@
 - Documentation must include research sources and adopted simplifications, per-asset provenance, MVVM architecture and ADRs, iteration history, progress evidence, README, changelog, and a course-defense guide.
 - Delivery convention: meaningful stages retain separate commits and milestone tags. The whole `goal0` is accepted only after all stages and deliverables are independently verified.
 - Public state must use project-relative paths and contain no usernames, credentials, absolute machine paths, or private operational notes.
+
+## Reproducible commands
+
+- SFML strategy: `find_package(SFML 3)` followed by pinned SFML 3.0.1 FetchContent fallback.
+- Debug: `cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON`.
+- Release: `cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON`.
+- Build/test: `cmake --build <build-dir> --parallel` then `ctest --test-dir <build-dir> --output-on-failure`.
+- Boundary scan: `cmake --build build/debug --target architecture_check`.
+- Run from repository root: `./build/debug/isaac_course_game`.

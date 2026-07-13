@@ -44,3 +44,9 @@
 
 - Integrated seven Huiji Wiki images across character, enemy, Boss, item, room and HUD categories.
 - Added nearest-neighbor cached loading, clear missing-resource fallback diagnostics and provenance tests.
+
+### Stage 8 — course release
+
+- Added end-to-end ViewModel flow tests and finalized regression, provenance and architecture checks.
+- Corrected asset-path ownership into Resource `AssetCatalog` after final architecture review.
+- Completed README, defense material and release verification evidence.

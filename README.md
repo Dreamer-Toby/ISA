@@ -1,26 +1,57 @@
-# ISA — MVVM course roguelike
+# ISA — strict-MVVM course roguelike
 
-This repository contains a bounded, non-profit classroom project inspired by *The Binding of Isaac: Rebirth*. It uses C++20 and SFML with a strict `View -> ViewModel -> Model` dependency direction. External artwork is for classroom demonstration only; provenance is recorded in [the asset manifest](docs/assets/asset-sources.md) and must not be reused commercially.
+ISA is a bounded, room-based C++20/SFML 3 game inspired by *The Binding of Isaac: Rebirth*. It is made only for non-profit classroom teaching and assignment demonstration. External artwork remains the property of its respective creators; each file is traced in [the asset manifest](docs/assets/asset-sources.md) and must not be reused for commercial release.
 
-The planned release contains four characters, six ordinary enemies, four bosses, three floors, combat, room traversal, inventory/economy, shops, treasure and secret rooms, a devil-room roll, HUD, menus, pause, defeat and victory.
+## Implemented gameplay
 
-## Build and run
+- Start, four-character selection (Isaac, Magdalene, Cain, Judas), pause, defeat and victory screens.
+- Fixed-step movement, four-direction tears, enemy projectiles, collision, invulnerability, red hearts and shields (combined cap: 12).
+- Three deterministic connected floors. Each has normal, treasure, shop, secret and Boss rooms, with persistent visits, doors and minimap.
+- Six configured enemies: Fly, Pooter, Spider, Hopper, Gaper and Clotty, composed from movement/attack/drop strategies.
+- Four Bosses: Monstro; Duke of Flies and Larry Jr. together on floor two; simplified Mom's Leg on floor three.
+- Coins, bombs, keys, pickups, chest, shop, hidden entrance, active items, stacking passives and trinkets.
+- A testable 35% post-Boss devil-room roll and a complete three-floor ending.
+- HUD DTOs for red/shield hearts, coins, bombs, keys, active item, minimap, floor and room state.
 
-SFML 3.0.1 is used. CMake first tries an installed SFML 3 and otherwise downloads the pinned release. A network connection is therefore required for the first configure when SFML is absent.
+## Controls
+
+| Action | Key |
+|---|---|
+| Advance menu / interact | Enter |
+| Move | W A S D |
+| Shoot | Arrow keys |
+| Pause / resume | Escape |
+| Use bomb at a secret wall | E |
+| Use active item | Space |
+
+## Build, run and test
+
+Prerequisites: CMake 3.24+, a C++20 compiler and network access on the first configure if SFML 3 is not installed. CMake first tries system SFML 3, then fetches pinned SFML 3.0.1.
 
 ```bash
 cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
 cmake --build build/debug --parallel
 ctest --test-dir build/debug --output-on-failure
 ./build/debug/isaac_course_game
+
+cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+cmake --build build/release --parallel
+ctest --test-dir build/release --output-on-failure
 ```
 
-Controls: `Enter` advances menus, `WASD` moves, arrow keys shoot, `Esc` pauses, `E` uses a bomb and `Space` uses the active item.
+Run from the repository root so the documented `assets/` paths resolve. A missing optional texture produces a diagnostic and the View uses geometry rather than crashing.
 
-## Architecture
+## MVVM overview
 
-`View` translates SFML events into commands and draws DTOs. `ViewModel` coordinates screen state and projects the pure C++ `Model` into render DTOs. The `Model` owns every gameplay rule and has no SFML dependency. See [the architecture design](docs/architecture/mvvm-architecture.md).
+The only primary dependency direction is `View -> ViewModel -> Model`:
 
-## Current limitations
+- Model is pure C++ and owns player, AI, collision, rooms, items, Boss patterns and progression.
+- ViewModel accepts commands, invokes Model and builds immutable display DTOs; it neither renders nor owns rules.
+- View maps SFML input and draws only DTOs, sprites or fallback geometry.
+- Resource owns asset paths/cache; App is only the composition root and fixed-step scheduler.
 
-This is a course-scale interpretation rather than a full clone. Online play, save synchronization, achievements, controller completeness and the original game's full content are intentionally excluded.
+See [the architecture document](docs/architecture/mvvm-architecture.md), [decision records](docs/architecture/decisions/) and [course defense guide](docs/defense/course-defense-guide.md).
+
+## Evidence and limitations
+
+Research is in [wiki-research.md](docs/research/wiki-research.md), staged evidence in [docs/progress](docs/progress/), and genuine iterations in [agent-iteration-log.md](docs/agent/agent-iteration-log.md). This course version intentionally omits the original game's full roster, items, DLC rules, large layout pools, online play, saves, achievements, controller completeness, installers and pixel-perfect balance. It ships only a small traced visual subset and no external audio/font.
