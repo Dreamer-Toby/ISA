@@ -46,3 +46,24 @@
 - Where a named Wiki page did not yield usable final roster art, the View uses documented geometry fallback.
 - External audio and fonts are not shipped; this does not leave a planned core gameplay or verification requirement unmet.
 - The pre-existing incomplete local prompt copy and private checkpoints remain uncommitted and untouched.
+
+## Final presentation extension — 2026-07-13
+
+- Verdict: PASS
+- Midterm baseline: `v1.0-midterm-backup` -> `8b943969535b952e5b275260446706175d8c6dc0`
+- Final branch: `feature/easyisaac-final-replica`
+- Final implementation commit: `fb0520f`
+- Visual reference: [`tianguantg/EasyIsaac` commit `6580ba5`](https://github.com/tianguantg/EasyIsaac/tree/6580ba5ac6af8bcdce065eec41b908636ab1df20)
+
+The extension reproduces the reference's paper start/menu/rank presentation, basement room, EasyX-style masked sprites, HUD, pause scroll and event sounds inside the existing SFML View/Resource boundary. It does not replace SFML with EasyX and does not regress the accepted four-character, six-enemy, four-Boss, three-floor Model.
+
+| Final check | Result |
+|---|---|
+| Debug CTest | 6/6 PASS |
+| Release CTest | 6/6 PASS |
+| ASan+UBSan CTest | 6/6 PASS |
+| Strict MVVM `architecture_check` | PASS |
+| Extended JPG/PNG/MP3/WAV provenance | PASS |
+| Paper menu, character select, combat HUD and pause framebuffer review | PASS |
+
+Final visual evidence is stored as `docs/progress/final-easyisaac-*.png`. The imported subset is recorded per path against the reference commit, including its Unlicense and the upstream README's original-game-asset caveat.

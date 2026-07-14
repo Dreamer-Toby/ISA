@@ -2,9 +2,16 @@
 
 ISA is a bounded, room-based C++20/SFML 3 game inspired by *The Binding of Isaac: Rebirth*. It is made only for non-profit classroom teaching and assignment demonstration. External artwork remains the property of its respective creators; each file is traced in [the asset manifest](docs/assets/asset-sources.md) and must not be reused for commercial release.
 
+## Version roles
+
+- `v1.0-midterm-backup` is the frozen, accepted midterm version.
+- `feature/easyisaac-final-replica` is the final presentation branch. It reproduces the paper menus, basement room, HUD, masked sprites, pause scroll and event sounds of [`tianguantg/EasyIsaac`](https://github.com/tianguantg/EasyIsaac) while retaining this project's larger gameplay loop and strict SFML/MVVM architecture.
+
+The final branch does not depend on EasyX and remains portable beyond Windows. EasyIsaac's paired EasyX color/mask JPEGs are converted to cached alpha textures at runtime by the Resource layer.
+
 ## Implemented gameplay
 
-- Start, four-character selection (Isaac, Magdalene, Cain, Judas), pause, defeat and victory screens.
+- Alternating start page, selectable main menu, rankings, four-character selection (Isaac, Magdalene, Cain, Judas), pause, defeat and victory screens.
 - Fixed-step movement, four-direction tears, enemy projectiles, collision, invulnerability, red hearts and shields (combined cap: 12).
 - Three deterministic connected floors. Each has normal, treasure, shop, secret and Boss rooms, with persistent visits, doors and minimap.
 - Six configured enemies: Fly, Pooter, Spider, Hopper, Gaper and Clotty, composed from movement/attack/drop strategies.
@@ -12,17 +19,21 @@ ISA is a bounded, room-based C++20/SFML 3 game inspired by *The Binding of Isaac
 - Coins, bombs, keys, pickups, chest, shop, hidden entrance, active items, stacking passives and trinkets.
 - A testable 35% post-Boss devil-room roll and a complete three-floor ending.
 - HUD DTOs for red/shield hearts, coins, bombs, keys, active item, minimap, floor and room state.
+- EasyIsaac-style room art, characters, tears, flies, props and feedback sounds with presentation-only animation and hitbox inspection.
 
 ## Controls
 
 | Action | Key |
 |---|---|
-| Advance menu / interact | Enter |
+| Confirm menu / interact | Enter or Space on paper screens |
+| Navigate main menu | W / S |
+| Change character | A / D |
 | Move | W A S D |
 | Shoot | Arrow keys |
 | Pause / resume | Escape |
 | Use bomb at a secret wall | E |
 | Use active item | Space |
+| Toggle hitbox overlay | U |
 
 ## Build, run and test
 
@@ -39,7 +50,7 @@ cmake --build build/release --parallel
 ctest --test-dir build/release --output-on-failure
 ```
 
-Run from the repository root so the documented `assets/` paths resolve. A missing optional texture produces a diagnostic and the View uses geometry rather than crashing.
+Run from the repository root so the documented `assets/` paths resolve. Missing optional textures or sounds produce diagnostics; the View falls back to geometry or continues without audio rather than crashing.
 
 ## MVVM overview
 
@@ -54,4 +65,4 @@ See [the architecture document](docs/architecture/mvvm-architecture.md), [decisi
 
 ## Evidence and limitations
 
-Research is in [wiki-research.md](docs/research/wiki-research.md), staged evidence in [docs/progress](docs/progress/), and genuine iterations in [agent-iteration-log.md](docs/agent/agent-iteration-log.md). This course version intentionally omits the original game's full roster, items, DLC rules, large layout pools, online play, saves, achievements, controller completeness, installers and pixel-perfect balance. It ships only a small traced visual subset and no external audio/font.
+Research is in [wiki-research.md](docs/research/wiki-research.md), the final visual boundary in [easyisaac-visual-parity.md](docs/design/easyisaac-visual-parity.md), staged evidence in [docs/progress](docs/progress/), and genuine iterations in [agent-iteration-log.md](docs/agent/agent-iteration-log.md). This course version intentionally omits the original game's full roster, items, DLC rules, large layout pools, online play, saves, achievements, controller completeness, installers and pixel-perfect balance. It ships only a small, traced EasyIsaac visual/audio subset and no external font.

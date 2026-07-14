@@ -22,11 +22,13 @@ void Player::tick(float seconds) {
   invulnerability_ = std::max(0.F, invulnerability_ - seconds);
 }
 
-void Player::damage(int amount) {
-  if (invulnerability_ > 0.F) return;
+bool Player::damage(int amount) {
+  if (invulnerability_ > 0.F) return false;
+  const int heartsBefore = health_.red() + health_.shields();
   health_.damage(amount);
+  if (health_.red() + health_.shields() == heartsBefore) return false;
   invulnerability_ = 0.7F;
+  return true;
 }
 
 }  // namespace isaac::model
-

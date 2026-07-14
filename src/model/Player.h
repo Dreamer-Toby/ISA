@@ -11,7 +11,7 @@ class Player {
   explicit Player(const CharacterDefinition& definition);
   void move(common::Vec2 direction, float seconds);
   void tick(float seconds);
-  void damage(int amount);
+  bool damage(int amount);
   void resetInvulnerability() { invulnerability_ = 0.F; }
   [[nodiscard]] bool canShoot() { return shooting_.consumeShot(); }
   [[nodiscard]] const CharacterDefinition& definition() const { return definition_; }

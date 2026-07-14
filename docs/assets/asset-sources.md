@@ -15,6 +15,98 @@ All external files below were downloaded on **2026-07-13** from the Huiji Wiki s
 | `assets/textures/ui/red-heart.png` | Health Red 2.png | https://isaac.huijiwiki.com/wiki/HUD | https://huiji-public.huijistatic.com/isaac/uploads/8/85/Health_Red_2.png | Red-heart HUD | Renamed only; native 16×16 draw. |
 | `assets/textures/ui/shield-heart.png` | Health Soul 2.png | https://isaac.huijiwiki.com/wiki/HUD | https://huiji-public.huijistatic.com/isaac/uploads/6/6a/Health_Soul_2.png | Shield/soul-heart HUD | Renamed only; native 16×16 draw. |
 
+## EasyIsaac final-presentation subset
+
+The files listed below were copied byte-for-byte on **2026-07-13** from
+[`tianguantg/EasyIsaac` commit `6580ba5`](https://github.com/tianguantg/EasyIsaac/tree/6580ba5ac6af8bcdce065eec41b908636ab1df20/assets).
+The reference repository publishes its code and bundled files under the
+[Unlicense](licenses/EasyIsaac-UNLICENSE.txt), while its README says that several images and sounds came from
+*The Binding of Isaac*. Consequently, this subset is retained only for the same non-profit classroom demonstration
+stated by this project; it is not a claim of commercial rights to the original game artwork or audio.
+
+| Local group | Original repository path | Use | Processing |
+|---|---|---|---|
+| `assets/easyisaac/panel/` | [`assets/images/panel/`](https://github.com/tianguantg/EasyIsaac/tree/6580ba5ac6af8bcdce065eec41b908636ab1df20/assets/images/panel) | Start/menu/rank paper, room, HUD, pause and ending presentation | Original basename retained; runtime nearest-neighbor scaling. |
+| `assets/easyisaac/character/` | [`assets/images/character/`](https://github.com/tianguantg/EasyIsaac/tree/6580ba5ac6af8bcdce065eec41b908636ab1df20/assets/images/character) | Player body/head animation frames | Original basename retained; paired at runtime to derive alpha. |
+| `assets/easyisaac/bullet/` | [`assets/images/bullet/`](https://github.com/tianguantg/EasyIsaac/tree/6580ba5ac6af8bcdce065eec41b908636ab1df20/assets/images/bullet) | Tear projectile | Original basename retained; paired at runtime to derive alpha. |
+| `assets/easyisaac/monster/` | [`assets/images/monster/`](https://github.com/tianguantg/EasyIsaac/tree/6580ba5ac6af8bcdce065eec41b908636ab1df20/assets/images/monster) | Fly and generic Boss presentation | Original basename retained; paired at runtime to derive alpha. |
+| `assets/easyisaac/obstacle/` | [`assets/images/obstacle/`](https://github.com/tianguantg/EasyIsaac/tree/6580ba5ac6af8bcdce065eec41b908636ab1df20/assets/images/obstacle) | Decorative stone and spike | Original basename retained; paired at runtime to derive alpha. |
+| `assets/easyisaac/prop/` | [`assets/images/prop/`](https://github.com/tianguantg/EasyIsaac/tree/6580ba5ac6af8bcdce065eec41b908636ab1df20/assets/images/prop) | Active/passive item presentation | Original basename retained; paired at runtime to derive alpha. |
+| `assets/easyisaac/drops/` | [`assets/images/drops/`](https://github.com/tianguantg/EasyIsaac/tree/6580ba5ac6af8bcdce065eec41b908636ab1df20/assets/images/drops) | Heart pickup | Original basename retained; paired at runtime to derive alpha. |
+| `assets/easyisaac/sounds/` | [`assets/sounds/`](https://github.com/tianguantg/EasyIsaac/tree/6580ba5ac6af8bcdce065eec41b908636ab1df20/assets/sounds) | Shoot, damage, pickup and defeat feedback | Byte-for-byte subset; decoded and cached by SFML Audio. |
+
+EasyX uses a `_back` color image and `_front` monochrome mask for transparent drawing. The source JPEG bytes are
+unchanged here. `ResourceManager::maskedTexture` combines each pair at runtime by using inverse mask brightness as
+alpha, then caches the resulting SFML texture. The exact imported inventory is:
+
+```text
+assets/easyisaac/bullet/bullet0_back.jpg
+assets/easyisaac/bullet/bullet0_front.jpg
+assets/easyisaac/character/isaac0_back.jpg
+assets/easyisaac/character/isaac0_front.jpg
+assets/easyisaac/character/isaac0_shoot_back.jpg
+assets/easyisaac/character/isaac0_shoot_front.jpg
+assets/easyisaac/character/isaac_walk0_back.jpg
+assets/easyisaac/character/isaac_walk0_front.jpg
+assets/easyisaac/character/isaac_walk0_left_back.jpg
+assets/easyisaac/character/isaac_walk0_left_front.jpg
+assets/easyisaac/character/isaac_walk0_side_back.jpg
+assets/easyisaac/character/isaac_walk0_side_front.jpg
+assets/easyisaac/drops/itemRedHp0_back.jpg
+assets/easyisaac/drops/itemRedHp0_front.jpg
+assets/easyisaac/drops/itemRedHp1_back.jpg
+assets/easyisaac/drops/itemRedHp1_front.jpg
+assets/easyisaac/monster/monster_redfly0_back.jpg
+assets/easyisaac/monster/monster_redfly0_front.jpg
+assets/easyisaac/monster/people_head_back.jpg
+assets/easyisaac/monster/people_head_front.jpg
+assets/easyisaac/obstacle/spine0_back.jpg
+assets/easyisaac/obstacle/spine0_front.jpg
+assets/easyisaac/obstacle/stone0_back.jpg
+assets/easyisaac/obstacle/stone0_front.jpg
+assets/easyisaac/panel/BK0.jpg
+assets/easyisaac/panel/BK1.jpg
+assets/easyisaac/panel/begin0.jpg
+assets/easyisaac/panel/begin1.jpg
+assets/easyisaac/panel/health0_back.jpg
+assets/easyisaac/panel/health0_front.jpg
+assets/easyisaac/panel/health1_back.jpg
+assets/easyisaac/panel/health1_front.jpg
+assets/easyisaac/panel/health2_back.jpg
+assets/easyisaac/panel/health2_front.jpg
+assets/easyisaac/panel/health3_back.jpg
+assets/easyisaac/panel/health3_front.jpg
+assets/easyisaac/panel/health4_back.jpg
+assets/easyisaac/panel/health4_front.jpg
+assets/easyisaac/panel/menu.jpg
+assets/easyisaac/panel/pause0_back.jpg
+assets/easyisaac/panel/pause0_front.jpg
+assets/easyisaac/panel/pause1_back.jpg
+assets/easyisaac/panel/pause1_front.jpg
+assets/easyisaac/panel/propName_back.jpg
+assets/easyisaac/panel/propName_front.jpg
+assets/easyisaac/panel/testament_back.jpg
+assets/easyisaac/panel/testament_front.jpg
+assets/easyisaac/prop/prop0_back.jpg
+assets/easyisaac/prop/prop0_front.jpg
+assets/easyisaac/prop/prop1_back.jpg
+assets/easyisaac/prop/prop1_front.jpg
+assets/easyisaac/prop/prop2_back.jpg
+assets/easyisaac/prop/prop2_front.jpg
+assets/easyisaac/prop/prop3_back.jpg
+assets/easyisaac/prop/prop3_front.jpg
+assets/easyisaac/prop/prop4_back.jpg
+assets/easyisaac/prop/prop4_front.jpg
+assets/easyisaac/prop/prop5_back.jpg
+assets/easyisaac/prop/prop5_front.jpg
+assets/easyisaac/prop/prop6_back.jpg
+assets/easyisaac/prop/prop6_front.jpg
+assets/easyisaac/sounds/dead.mp3
+assets/easyisaac/sounds/getProp.mp3
+assets/easyisaac/sounds/hurt0.mp3
+assets/easyisaac/sounds/shoot.wav
+```
+
 ## Integrity hashes (SHA-256)
 
 ```text

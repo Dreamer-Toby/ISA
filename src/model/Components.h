@@ -61,6 +61,7 @@ class ShootComponent {
   void tick(float seconds) { cooldown_ = std::max(0.F, cooldown_ - seconds); }
   bool consumeShot();
   [[nodiscard]] float damage() const { return damage_; }
+  [[nodiscard]] float shotsPerSecond() const { return 1.F / interval_; }
   [[nodiscard]] float projectileSpeed() const { return projectileSpeed_; }
   void addDamage(float amount) { damage_ = std::clamp(damage_ + amount, 1.F, 20.F); }
   void multiplyInterval(float factor) { interval_ = std::clamp(interval_ * factor, 0.12F, 2.F); }

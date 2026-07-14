@@ -10,7 +10,6 @@ namespace isaac::app {
 class Application {
  public:
   Application();
-  void prepareCharacterSelectEvidence();
   int run();
 
  private:
@@ -18,7 +17,6 @@ class Application {
   viewmodel::GameViewModel viewModel_;
   resource::ResourceManager resources_;
   view::GameView view_;
-  bool evidenceMode_{};
 };
 
 }  // namespace isaac::app

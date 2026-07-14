@@ -36,7 +36,7 @@ class BossCatalog {
 class BossSystem {
  public:
   void spawnForFloor(int floor);
-  void update(float seconds, Player& player, std::vector<Projectile>& projectiles);
+  bool update(float seconds, Player& player, std::vector<Projectile>& projectiles);
   [[nodiscard]] bool empty() const { return bosses_.empty(); }
   [[nodiscard]] const std::vector<Boss>& bosses() const { return bosses_; }
   [[nodiscard]] std::vector<Boss>& bosses() { return bosses_; }

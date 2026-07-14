@@ -1,6 +1,8 @@
 #pragma once
 
 #include <filesystem>
+#include <string>
+#include <string_view>
 
 namespace isaac::resource {
 
@@ -16,6 +18,31 @@ class AssetCatalog {
   static std::filesystem::path door() { return "assets/textures/rooms/red-room-door.png"; }
   static std::filesystem::path redHeart() { return "assets/textures/ui/red-heart.png"; }
   static std::filesystem::path shieldHeart() { return "assets/textures/ui/shield-heart.png"; }
+
+  static std::filesystem::path easyPanel(std::string_view name) {
+    return std::filesystem::path("assets/easyisaac/panel") / std::string(name);
+  }
+  static std::filesystem::path easyCharacter(std::string_view name) {
+    return std::filesystem::path("assets/easyisaac/character") / std::string(name);
+  }
+  static std::filesystem::path easyMonster(std::string_view name) {
+    return std::filesystem::path("assets/easyisaac/monster") / std::string(name);
+  }
+  static std::filesystem::path easyBullet(std::string_view name) {
+    return std::filesystem::path("assets/easyisaac/bullet") / std::string(name);
+  }
+  static std::filesystem::path easyObstacle(std::string_view name) {
+    return std::filesystem::path("assets/easyisaac/obstacle") / std::string(name);
+  }
+  static std::filesystem::path easyProp(std::string_view name) {
+    return std::filesystem::path("assets/easyisaac/prop") / std::string(name);
+  }
+  static std::filesystem::path easyDrop(std::string_view name) {
+    return std::filesystem::path("assets/easyisaac/drops") / std::string(name);
+  }
+  static std::filesystem::path easySound(std::string_view name) {
+    return std::filesystem::path("assets/easyisaac/sounds") / std::string(name);
+  }
 };
 
 }  // namespace isaac::resource
