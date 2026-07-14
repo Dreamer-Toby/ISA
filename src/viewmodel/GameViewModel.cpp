@@ -6,67 +6,94 @@
 
 namespace isaac::viewmodel {
 
-void GameViewModel::update(float seconds, const InputCommand& command) {
-  const bool confirmPressed = command.confirm && !confirmWasDown_;
-  const bool pausePressed = command.pause && !pauseWasDown_;
-  const int horizontal = command.movement.x > 0.5F ? 1 : (command.movement.x < -0.5F ? -1 : 0);
-  const int vertical = command.movement.y > 0.5F ? 1 : (command.movement.y < -0.5F ? -1 : 0);
-  const bool horizontalPressed = horizontal != 0 && horizontalWasDown_ == 0;
-  const bool verticalPressed = vertical != 0 && verticalWasDown_ == 0;
-  confirmWasDown_ = command.confirm;
-  pauseWasDown_ = command.pause;
-  horizontalWasDown_ = horizontal;
-  verticalWasDown_ = vertical;
+GameViewModel::GameViewModel(model::GameSession& session) : session_(session) {
+  commands_.tick = Command<float>([this](float seconds) { executeTick(seconds); });
+  commands_.setInput = Command<RealtimeInput>([this](RealtimeInput input) { realtimeInput_ = input; });
+  commands_.action = Command<UserAction>([this](UserAction action) { pendingActions_.push_back(action); });
+  properties_.display.set(buildDisplayState());
+}
 
-  if (screen_ == common::ScreenState::Start && confirmPressed) {
-    screen_ = common::ScreenState::MainMenu;
-  } else if (screen_ == common::ScreenState::MainMenu) {
-    if (verticalPressed) menuIndex_ = (menuIndex_ + vertical + 4) % 4;
-    if (confirmPressed) {
-      if (menuIndex_ == 0) screen_ = common::ScreenState::CharacterSelect;
-      if (menuIndex_ == 1) {
-        selectedCharacter_ = 0;
+void GameViewModel::executeTick(float seconds) {
+  const auto& before = session_.snapshot();
+  const auto shotsBefore = before.totalShots;
+  const auto heartsBefore = before.redHearts + before.shields;
+  const auto pickupsBefore = before.pickups.size();
+  const auto screenBefore = screen_;
+  bool interact{};
+  bool useBomb{};
+  bool useActive{};
+
+  for (const auto action : pendingActions_) {
+    if (action == UserAction::NavigateUp && screen_ == common::ScreenState::MainMenu) {
+      menuIndex_ = (menuIndex_ + 3) % 4;
+    } else if (action == UserAction::NavigateDown && screen_ == common::ScreenState::MainMenu) {
+      menuIndex_ = (menuIndex_ + 1) % 4;
+    } else if (action == UserAction::NavigateLeft && screen_ == common::ScreenState::CharacterSelect) {
+      selectedCharacter_ = (selectedCharacter_ + 3) % 4;
+    } else if (action == UserAction::NavigateRight && screen_ == common::ScreenState::CharacterSelect) {
+      selectedCharacter_ = (selectedCharacter_ + 1) % 4;
+    } else if (action == UserAction::Confirm) {
+      if (screen_ == common::ScreenState::Start) {
+        screen_ = common::ScreenState::MainMenu;
+      } else if (screen_ == common::ScreenState::MainMenu) {
+        if (menuIndex_ == 0) screen_ = common::ScreenState::CharacterSelect;
+        if (menuIndex_ == 1) {
+          selectedCharacter_ = 0;
+          session_.selectCharacter(selectedCharacter_);
+          screen_ = common::ScreenState::Playing;
+        }
+        if (menuIndex_ == 2) screen_ = common::ScreenState::Rankings;
+        if (menuIndex_ == 3) screen_ = common::ScreenState::Start;
+      } else if (screen_ == common::ScreenState::Rankings) {
+        screen_ = common::ScreenState::MainMenu;
+      } else if (screen_ == common::ScreenState::CharacterSelect) {
         session_.selectCharacter(selectedCharacter_);
         screen_ = common::ScreenState::Playing;
+      } else if (screen_ == common::ScreenState::Playing) {
+        interact = true;
+      } else if (screen_ == common::ScreenState::Defeat || screen_ == common::ScreenState::Victory) {
+        screen_ = common::ScreenState::MainMenu;
       }
-      if (menuIndex_ == 2) screen_ = common::ScreenState::Rankings;
-      if (menuIndex_ == 3) screen_ = common::ScreenState::Start;
+    } else if (action == UserAction::Back) {
+      if (screen_ == common::ScreenState::MainMenu) screen_ = common::ScreenState::Start;
+      else if (screen_ == common::ScreenState::Rankings ||
+               screen_ == common::ScreenState::CharacterSelect) screen_ = common::ScreenState::MainMenu;
+      else if (screen_ == common::ScreenState::Playing) screen_ = common::ScreenState::Paused;
+      else if (screen_ == common::ScreenState::Paused) screen_ = common::ScreenState::Playing;
+    } else if (action == UserAction::UseBomb && screen_ == common::ScreenState::Playing) {
+      useBomb = true;
+    } else if (action == UserAction::UseActive && screen_ == common::ScreenState::Playing) {
+      useActive = true;
     }
-  } else if (screen_ == common::ScreenState::Rankings && (confirmPressed || pausePressed)) {
-    screen_ = common::ScreenState::MainMenu;
-  } else if (screen_ == common::ScreenState::CharacterSelect && confirmPressed) {
-    session_.selectCharacter(selectedCharacter_);
-    screen_ = common::ScreenState::Playing;
-  } else if (screen_ == common::ScreenState::CharacterSelect && pausePressed) {
-    screen_ = common::ScreenState::MainMenu;
-  } else if (screen_ == common::ScreenState::Playing && pausePressed) {
-    screen_ = common::ScreenState::Paused;
-  } else if (screen_ == common::ScreenState::Paused && pausePressed) {
-    screen_ = common::ScreenState::Playing;
-  } else if ((screen_ == common::ScreenState::Defeat || screen_ == common::ScreenState::Victory) &&
-             confirmPressed) {
-    screen_ = common::ScreenState::MainMenu;
   }
+  pendingActions_.clear();
 
   if (screen_ == common::ScreenState::Playing) {
-    session_.update(seconds, model::GameplayInput{command.movement, command.shooting,
-                                                  command.useBomb, command.useActive, command.confirm});
+    session_.update(seconds, model::GameplayInput{realtimeInput_.movement, realtimeInput_.shooting,
+                                                  useBomb, useActive, interact});
   }
 
-  const auto& snapshot = session_.snapshot();
-  if (screen_ == common::ScreenState::Playing && snapshot.playerDead) screen_ = common::ScreenState::Defeat;
-  if (screen_ == common::ScreenState::Playing && snapshot.runCompleted) screen_ = common::ScreenState::Victory;
+  const auto& after = session_.snapshot();
+  if (screen_ == common::ScreenState::Playing && after.playerDead) screen_ = common::ScreenState::Defeat;
+  if (screen_ == common::ScreenState::Playing && after.runCompleted) screen_ = common::ScreenState::Victory;
 
-  if (screen_ == common::ScreenState::CharacterSelect && horizontalPressed && !command.confirm) {
-    if (horizontal > 0) selectedCharacter_ = (selectedCharacter_ + 1) % 4;
-    if (horizontal < 0) selectedCharacter_ = (selectedCharacter_ + 3) % 4;
+  properties_.display.set(buildDisplayState());
+  if (after.totalShots > shotsBefore) signals_.presentation.emit(PresentationEvent::Shot);
+  if (after.redHearts + after.shields < heartsBefore) signals_.presentation.emit(PresentationEvent::Hurt);
+  if (pickupsBefore > 0 && after.pickups.size() < pickupsBefore) {
+    signals_.presentation.emit(PresentationEvent::Pickup);
+  }
+  if (screenBefore != common::ScreenState::Defeat && screen_ == common::ScreenState::Defeat) {
+    signals_.presentation.emit(PresentationEvent::Defeat);
   }
 }
 
-DisplayState GameViewModel::displayState() const {
+DisplayState GameViewModel::buildDisplayState() const {
   DisplayState result;
   result.screen = screen_;
   result.menuIndex = menuIndex_;
+  result.movement = realtimeInput_.movement;
+  result.shooting = realtimeInput_.shooting;
   const auto& selected = model::CharacterCatalog::at(selectedCharacter_);
   result.selectionName = std::string(selected.displayName);
   std::ostringstream stats;

@@ -12,6 +12,8 @@ function(reject_matches label pattern)
 endfunction()
 
 reject_matches("Model depends on SFML/View/ViewModel" "#[ \t]*include[ \t]*[<\"](SFML|viewmodel/|view/)" ${MODEL_FILES})
+reject_matches("Model knows a ViewModel symbol" "viewmodel::|namespace[ \t]+isaac::viewmodel" ${MODEL_FILES})
 reject_matches("ViewModel depends on View/SFML" "#[ \t]*include[ \t]*[<\"](SFML|view/)" ${VIEWMODEL_FILES})
 reject_matches("View directly depends on Model" "#[ \t]*include[ \t]*[<\"]model/" ${VIEW_FILES})
+reject_matches("View bypasses Property/Command/Signal" "displayState\\(|inputCommand\\(|viewModel_\\.update\\(" ${VIEW_FILES})
 message(STATUS "Strict MVVM architecture check passed")

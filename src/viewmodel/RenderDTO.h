@@ -42,6 +42,8 @@ struct MinimapRoomDTO {
 struct DisplayState {
   common::ScreenState screen{common::ScreenState::Start};
   int menuIndex{};
+  common::Vec2 movement;
+  common::Vec2 shooting;
   std::string selectionName;
   std::string selectionStats;
   std::vector<EntityDTO> entities;

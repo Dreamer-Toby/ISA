@@ -3,10 +3,8 @@
 #include "resource/AssetCatalog.h"
 
 #include <SFML/Graphics/CircleShape.hpp>
-#include <SFML/Graphics/Image.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/Sprite.hpp>
-#include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Angle.hpp>
 #include <SFML/Window/Keyboard.hpp>
 
@@ -121,19 +119,22 @@ sf::Color characterTint(std::string_view id) {
   return sf::Color::White;
 }
 
-std::size_t countEntities(const isaac::viewmodel::DisplayState& display, isaac::common::EntityKind kind) {
-  return static_cast<std::size_t>(std::count_if(display.entities.begin(), display.entities.end(),
-      [kind](const auto& entity) { return entity.kind == kind; }));
-}
 }  // namespace
 
 namespace isaac::view {
 
 GameView::GameView(viewmodel::GameViewModel& viewModel, resource::ResourceManager& resources)
     : viewModel_(viewModel), resources_(resources),
-      window_(sf::VideoMode({960U, 640U}), "ISA - EasyIsaac final presentation") {
+      window_(sf::VideoMode({960U, 640U}), "ISA - EasyIsaac final presentation"),
+      display_(viewModel.properties().display.get()) {
   window_.setVerticalSyncEnabled(true);
+  window_.setKeyRepeatEnabled(false);
   window_.setPosition({100, 60});
+
+  displayConnection_ = viewModel_.properties().display.changed().connect(
+      [this](const viewmodel::DisplayState& display) { onDisplayChanged(display); });
+  presentationConnection_ = viewModel_.signals().presentation.connect(
+      [this](viewmodel::PresentationEvent event) { onPresentationEvent(event); });
 
   shootBuffer_ = resources_.soundBuffer(resource::AssetCatalog::easySound("shoot.wav"));
   hurtBuffer_ = resources_.soundBuffer(resource::AssetCatalog::easySound("hurt0.mp3"));
@@ -149,57 +150,61 @@ GameView::GameView(viewmodel::GameViewModel& viewModel, resource::ResourceManage
   if (defeatSound_) defeatSound_->setVolume(60.F);
 }
 
-void GameView::pollEvents() {
-  while (const auto event = window_.pollEvent()) {
-    if (event->is<sf::Event::Closed>()) window_.close();
-    if (const auto* key = event->getIf<sf::Event::KeyPressed>();
-        key && key->code == sf::Keyboard::Key::U) {
-      showHitboxes_ = !showHitboxes_;
-    }
-  }
+GameView::~GameView() {
+  viewModel_.properties().display.changed().disconnect(displayConnection_);
+  viewModel_.signals().presentation.disconnect(presentationConnection_);
 }
 
-viewmodel::InputCommand GameView::inputCommand() const {
-  using Key = sf::Keyboard::Key;
-  viewmodel::InputCommand command;
-  command.movement = {
-      static_cast<float>(sf::Keyboard::isKeyPressed(Key::D)) - static_cast<float>(sf::Keyboard::isKeyPressed(Key::A)),
-      static_cast<float>(sf::Keyboard::isKeyPressed(Key::S)) - static_cast<float>(sf::Keyboard::isKeyPressed(Key::W))};
-  command.shooting = {
-      static_cast<float>(sf::Keyboard::isKeyPressed(Key::Right)) - static_cast<float>(sf::Keyboard::isKeyPressed(Key::Left)),
-      static_cast<float>(sf::Keyboard::isKeyPressed(Key::Down)) - static_cast<float>(sf::Keyboard::isKeyPressed(Key::Up))};
-  const auto screen = viewModel_.displayState().screen;
-  const bool paperScreen = screen != common::ScreenState::Playing && screen != common::ScreenState::Paused;
-  command.confirm = sf::Keyboard::isKeyPressed(Key::Enter) ||
-                    (paperScreen && sf::Keyboard::isKeyPressed(Key::Space));
-  command.pause = sf::Keyboard::isKeyPressed(Key::Escape);
-  command.useBomb = sf::Keyboard::isKeyPressed(Key::E);
-  command.useActive = sf::Keyboard::isKeyPressed(Key::Space);
-  return command;
+void GameView::onDisplayChanged(const viewmodel::DisplayState& display) {
+  if (display.screen != display_.screen) transitionClock_.restart();
+  display_ = display;
 }
 
-void GameView::render() {
-  const auto display = viewModel_.displayState();
-  const float time = animationClock_.getElapsedTime().asSeconds();
-  if (display.screen != previousScreen_) {
-    if (display.screen == common::ScreenState::Defeat && defeatSound_) defeatSound_->play();
-    previousScreen_ = display.screen;
-    transitionClock_.restart();
-  }
-
-  const auto projectiles = countEntities(display, common::EntityKind::PlayerProjectile);
-  const auto pickups = countEntities(display, common::EntityKind::Pickup);
-  const int hearts = display.hud.redHearts + display.hud.shields;
-  if (projectiles > lastProjectileCount_ && shootSound_) shootSound_->play();
-  if (lastHearts_ >= 0 && hearts < lastHearts_) {
+void GameView::onPresentationEvent(viewmodel::PresentationEvent event) {
+  if (event == viewmodel::PresentationEvent::Shot && shootSound_) shootSound_->play();
+  if (event == viewmodel::PresentationEvent::Pickup && pickupSound_) pickupSound_->play();
+  if (event == viewmodel::PresentationEvent::Defeat && defeatSound_) defeatSound_->play();
+  if (event == viewmodel::PresentationEvent::Hurt) {
     damageFlashClock_.restart();
     damageFlashActive_ = true;
     if (hurtSound_) hurtSound_->play();
   }
-  if (lastPickupCount_ > 0 && pickups < lastPickupCount_ && pickupSound_) pickupSound_->play();
-  lastProjectileCount_ = projectiles;
-  lastPickupCount_ = pickups;
-  lastHearts_ = hearts;
+}
+
+void GameView::pollEvents() {
+  using Key = sf::Keyboard::Key;
+  using Action = viewmodel::UserAction;
+  while (const auto event = window_.pollEvent()) {
+    if (event->is<sf::Event::Closed>()) window_.close();
+    if (const auto* key = event->getIf<sf::Event::KeyPressed>()) {
+      if (key->code == Key::U) showHitboxes_ = !showHitboxes_;
+      if (key->code == Key::Enter) viewModel_.commands().action.execute(Action::Confirm);
+      if (key->code == Key::Escape) viewModel_.commands().action.execute(Action::Back);
+      if (key->code == Key::E) viewModel_.commands().action.execute(Action::UseBomb);
+      if (key->code == Key::W) viewModel_.commands().action.execute(Action::NavigateUp);
+      if (key->code == Key::S) viewModel_.commands().action.execute(Action::NavigateDown);
+      if (key->code == Key::A) viewModel_.commands().action.execute(Action::NavigateLeft);
+      if (key->code == Key::D) viewModel_.commands().action.execute(Action::NavigateRight);
+      if (key->code == Key::Space) {
+        const auto action = display_.screen == common::ScreenState::Playing ? Action::UseActive
+                                                                            : Action::Confirm;
+        viewModel_.commands().action.execute(action);
+      }
+    }
+  }
+  viewmodel::RealtimeInput input;
+  input.movement = {
+      static_cast<float>(sf::Keyboard::isKeyPressed(Key::D)) - static_cast<float>(sf::Keyboard::isKeyPressed(Key::A)),
+      static_cast<float>(sf::Keyboard::isKeyPressed(Key::S)) - static_cast<float>(sf::Keyboard::isKeyPressed(Key::W))};
+  input.shooting = {
+      static_cast<float>(sf::Keyboard::isKeyPressed(Key::Right)) - static_cast<float>(sf::Keyboard::isKeyPressed(Key::Left)),
+      static_cast<float>(sf::Keyboard::isKeyPressed(Key::Down)) - static_cast<float>(sf::Keyboard::isKeyPressed(Key::Up))};
+  viewModel_.commands().setInput.execute(input);
+}
+
+void GameView::render() {
+  const auto& display = display_;
+  const float time = animationClock_.getElapsedTime().asSeconds();
 
   window_.clear(sf::Color(20, 12, 14));
 
@@ -283,8 +288,8 @@ void GameView::render() {
                      resource::AssetCatalog::easyObstacle("spine0_front.jpg"),
                      {710.F, 430.F}, 48.F, sf::Color(255, 255, 255, 190));
 
-    const auto shooting = inputCommand().shooting.lengthSquared() > 0.1F;
-    const auto movement = inputCommand().movement;
+    const auto shooting = display.shooting.lengthSquared() > 0.1F;
+    const auto movement = display.movement;
     for (const auto& entity : display.entities) {
       const sf::Vector2f position{entity.position.x, entity.position.y};
       drawShadow(window_, position, std::max(6.F, entity.radius));
@@ -422,12 +427,6 @@ void GameView::render() {
     damageFlashActive_ = false;
   }
   window_.display();
-}
-
-bool GameView::saveScreenshot(const std::filesystem::path& path) {
-  sf::Texture screenshot(window_.getSize());
-  screenshot.update(window_);
-  return screenshot.copyToImage().saveToFile(path);
 }
 
 }  // namespace isaac::view
