@@ -1,8 +1,8 @@
 #pragma once
 
+#include "common/Binding.h"
 #include "common/PresentationTypes.h"
 #include "model/GameSessionInterface.h"
-#include "viewmodel/Binding.h"
 
 #include <vector>
 
@@ -14,17 +14,17 @@ class GameViewModel {
   GameViewModel(const GameViewModel&) = delete;
   GameViewModel& operator=(const GameViewModel&) = delete;
 
-  [[nodiscard]] const Property<presentation::DisplayState>& displayProperty() const {
+  [[nodiscard]] const common::Property<presentation::DisplayState>& displayProperty() const {
     return displayProperty_;
   }
-  [[nodiscard]] const Command<float>& tickCommand() const { return tickCommand_; }
-  [[nodiscard]] const Command<presentation::RealtimeInput>& inputCommand() const {
+  [[nodiscard]] const common::Command<float>& tickCommand() const { return tickCommand_; }
+  [[nodiscard]] const common::Command<presentation::RealtimeInput>& inputCommand() const {
     return inputCommand_;
   }
-  [[nodiscard]] const Command<presentation::UserAction>& actionCommand() const {
+  [[nodiscard]] const common::Command<presentation::UserAction>& actionCommand() const {
     return actionCommand_;
   }
-  [[nodiscard]] const Signal<presentation::PresentationEvent>& presentationSignal() const {
+  [[nodiscard]] const common::Signal<presentation::PresentationEvent>& presentationSignal() const {
     return presentationSignal_;
   }
 
@@ -38,11 +38,11 @@ class GameViewModel {
   int menuIndex_{};
   presentation::RealtimeInput realtimeInput_;
   std::vector<presentation::UserAction> pendingActions_;
-  Property<presentation::DisplayState> displayProperty_;
-  Command<float> tickCommand_;
-  Command<presentation::RealtimeInput> inputCommand_;
-  Command<presentation::UserAction> actionCommand_;
-  Signal<presentation::PresentationEvent> presentationSignal_;
+  common::Property<presentation::DisplayState> displayProperty_;
+  common::Command<float> tickCommand_;
+  common::Command<presentation::RealtimeInput> inputCommand_;
+  common::Command<presentation::UserAction> actionCommand_;
+  common::Signal<presentation::PresentationEvent> presentationSignal_;
 };
 
 }  // namespace isaac::viewmodel

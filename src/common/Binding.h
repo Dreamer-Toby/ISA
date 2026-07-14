@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-namespace isaac::viewmodel {
+namespace isaac::common {
 
 template <typename... Args>
 class Signal {
@@ -70,4 +70,4 @@ class Command {
   Action action_;
 };
 
-}  // namespace isaac::viewmodel
+}  // namespace isaac::common

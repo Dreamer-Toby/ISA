@@ -1,4 +1,5 @@
 file(GLOB_RECURSE MODEL_FILES "${PROJECT_ROOT}/src/model/*")
+file(GLOB_RECURSE COMMON_FILES "${PROJECT_ROOT}/src/common/*")
 file(GLOB_RECURSE VIEWMODEL_FILES "${PROJECT_ROOT}/src/viewmodel/*")
 file(GLOB_RECURSE VIEW_FILES "${PROJECT_ROOT}/src/view/*")
 set(APP_BINDING_FILE "${PROJECT_ROOT}/src/app/Application.cpp")
@@ -20,6 +21,7 @@ function(require_match label pattern path)
 endfunction()
 
 reject_matches("Model depends on SFML/View/ViewModel" "#[ \t]*include[ \t]*[<\"](SFML|viewmodel/|view/)" ${MODEL_FILES})
+reject_matches("Common depends on a concrete layer or SFML" "#[ \t]*include[ \t]*[<\"](SFML|model/|resource/|viewmodel/|view/)" ${COMMON_FILES})
 reject_matches("Model knows a ViewModel symbol" "viewmodel::|namespace[ \t]+isaac::viewmodel" ${MODEL_FILES})
 reject_matches("ViewModel depends on View/SFML" "#[ \t]*include[ \t]*[<\"](SFML|view/)" ${VIEWMODEL_FILES})
 reject_matches("ViewModel includes a concrete Model implementation" "#[ \t]*include[ \t]*[<\"]model/(GameSession|CharacterCatalog|Player)\\.h" ${VIEWMODEL_FILES})

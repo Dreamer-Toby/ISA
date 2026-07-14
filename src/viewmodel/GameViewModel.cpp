@@ -18,10 +18,10 @@ isaac::presentation::CharacterStyle characterStyle(std::string_view id) {
 namespace isaac::viewmodel {
 
 GameViewModel::GameViewModel(model::GameSessionInterface& session) : session_(session) {
-  tickCommand_ = Command<float>([this](float seconds) { executeTick(seconds); });
-  inputCommand_ = Command<presentation::RealtimeInput>(
+  tickCommand_ = common::Command<float>([this](float seconds) { executeTick(seconds); });
+  inputCommand_ = common::Command<presentation::RealtimeInput>(
       [this](presentation::RealtimeInput input) { realtimeInput_ = input; });
-  actionCommand_ = Command<presentation::UserAction>(
+  actionCommand_ = common::Command<presentation::UserAction>(
       [this](presentation::UserAction action) { pendingActions_.push_back(action); });
   displayProperty_.set(buildDisplayState());
 }
