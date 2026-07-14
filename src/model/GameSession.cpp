@@ -3,6 +3,7 @@
 #include "model/CharacterCatalog.h"
 
 #include <algorithm>
+#include <utility>
 
 namespace isaac::model {
 
@@ -12,9 +13,26 @@ GameSession::GameSession(float devilRoomRoll)
 void GameSession::selectCharacter(std::size_t index) {
   player_ = Player(CharacterCatalog::at(index));
   projectiles_.clear();
+  pendingEvents_.clear();
   snapshot_.totalShots = 0;
   snapshot_.elapsedSeconds = 0.F;
   rebuildSnapshot();
+}
+
+std::size_t GameSession::selectableCharacterCount() const {
+  return CharacterCatalog::all().size();
+}
+
+CharacterSummary GameSession::selectableCharacter(std::size_t index) const {
+  const auto& character = CharacterCatalog::at(index);
+  return {std::string(character.id), std::string(character.displayName), character.redHearts,
+          character.moveSpeed, character.damage, character.luck};
+}
+
+std::vector<ModelEvent> GameSession::drainEvents() {
+  auto events = std::move(pendingEvents_);
+  pendingEvents_.clear();
+  return events;
 }
 
 void GameSession::update(float seconds, const GameplayInput& input) {
@@ -54,11 +72,15 @@ void GameSession::update(float seconds, const GameplayInput& input) {
     projectiles_.push_back({player_.position(), direction * player_.shooting().projectileSpeed(),
                             player_.shooting().damage(), 1.6F, true, true});
     ++snapshot_.totalShots;
+    pendingEvents_.push_back(ModelEvent::Shot);
   }
   for (auto& projectile : projectiles_) projectile.update(seconds);
   std::erase_if(projectiles_, [](const Projectile& projectile) { return !projectile.alive; });
-  enemies_.update(seconds, player_, projectiles_, pickups_);
-  bosses_.update(seconds, player_, projectiles_);
+  const bool hurtByEnemy = enemies_.update(seconds, player_, projectiles_, pickups_);
+  const bool hurtByBoss = bosses_.update(seconds, player_, projectiles_);
+  if (hurtByEnemy || hurtByBoss) {
+    pendingEvents_.push_back(ModelEvent::Hurt);
+  }
   if (level_.currentRoom().type == common::RoomType::Normal &&
       !level_.currentRoom().cleared && enemies_.empty()) {
     level_.markCurrentCleared();
@@ -74,6 +96,7 @@ void GameSession::update(float seconds, const GameplayInput& input) {
       if (pickup.type == common::PickupType::Coin) player_.inventory().addCoins(1);
       if (pickup.type == common::PickupType::Bomb) player_.inventory().addBombs(1);
       if (pickup.type == common::PickupType::Key) player_.inventory().addKeys(1);
+      pendingEvents_.push_back(ModelEvent::Pickup);
     }
   }
   std::erase_if(pickups_, [this](const Pickup& pickup) {
@@ -106,6 +129,10 @@ void GameSession::rebuildSnapshot() {
   snapshot_.bombs = player_.inventory().bombs();
   snapshot_.keys = player_.inventory().keys();
   snapshot_.activeItem = player_.inventory().activeItem();
+  snapshot_.moveSpeed = player_.definition().moveSpeed;
+  snapshot_.damage = player_.shooting().damage();
+  snapshot_.shotsPerSecond = player_.shooting().shotsPerSecond();
+  snapshot_.projectileSpeed = player_.shooting().projectileSpeed();
   snapshot_.playerDead = player_.health().dead();
   snapshot_.runCompleted = runCompleted_;
   snapshot_.projectiles.clear();

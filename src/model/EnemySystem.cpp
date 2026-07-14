@@ -37,8 +37,9 @@ void EnemySystem::dropFor(const Enemy& enemy, std::vector<Pickup>& pickups) cons
   pickups.push_back({type, enemy.position});
 }
 
-void EnemySystem::update(float seconds, Player& player, std::vector<Projectile>& projectiles,
+bool EnemySystem::update(float seconds, Player& player, std::vector<Projectile>& projectiles,
                          std::vector<Pickup>& pickups) {
+  bool playerHurt{};
   for (auto& enemy : enemies_) {
     const auto& definition = EnemyCatalog::all()[enemy.definitionIndex];
     enemy.attackTimer -= seconds;
@@ -56,7 +57,9 @@ void EnemySystem::update(float seconds, Player& player, std::vector<Projectile>&
     enemy.position.x = std::clamp(enemy.position.x, 75.F, 885.F);
     enemy.position.y = std::clamp(enemy.position.y, 115.F, 465.F);
 
-    if ((player.position() - enemy.position).lengthSquared() < 30.F * 30.F) player.damage(definition.contactDamage);
+    if ((player.position() - enemy.position).lengthSquared() < 30.F * 30.F) {
+      playerHurt = player.damage(definition.contactDamage) || playerHurt;
+    }
     if (enemy.attackTimer <= 0.F && definition.attack != AttackStrategy::Contact) {
       if (definition.attack == AttackStrategy::AimedShot) {
         projectiles.push_back({enemy.position, toward * 260.F, 1.F, 2.2F, false, true});
@@ -79,13 +82,14 @@ void EnemySystem::update(float seconds, Player& player, std::vector<Projectile>&
         }
       }
     } else if ((projectile.position - player.position()).lengthSquared() < 22.F * 22.F) {
-      player.damage(1);
+      playerHurt = player.damage(1) || playerHurt;
       projectile.alive = false;
     }
   }
   for (const auto& enemy : enemies_) if (enemy.health <= 0.F) dropFor(enemy, pickups);
   std::erase_if(enemies_, [](const Enemy& enemy) { return enemy.health <= 0.F; });
   std::erase_if(projectiles, [](const Projectile& projectile) { return !projectile.alive; });
+  return playerHurt;
 }
 
 }  // namespace isaac::model

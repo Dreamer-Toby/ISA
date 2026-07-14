@@ -112,11 +112,20 @@ void drawShadow(sf::RenderWindow& window, sf::Vector2f position, float radius) {
   window.draw(shadow);
 }
 
-sf::Color characterTint(std::string_view id) {
-  if (id == "magdalene") return sf::Color(255, 178, 178);
-  if (id == "cain") return sf::Color(244, 212, 142);
-  if (id == "judas") return sf::Color(170, 160, 170);
+sf::Color characterTint(isaac::viewmodel::CharacterStyle style) {
+  using Style = isaac::viewmodel::CharacterStyle;
+  if (style == Style::Magdalene) return sf::Color(255, 178, 178);
+  if (style == Style::Cain) return sf::Color(244, 212, 142);
+  if (style == Style::Judas) return sf::Color(170, 160, 170);
   return sf::Color::White;
+}
+
+std::filesystem::path characterPortrait(isaac::viewmodel::CharacterStyle style) {
+  using Style = isaac::viewmodel::CharacterStyle;
+  if (style == Style::Magdalene) return isaac::resource::AssetCatalog::magdalene();
+  if (style == Style::Cain) return isaac::resource::AssetCatalog::cain();
+  if (style == Style::Judas) return isaac::resource::AssetCatalog::judas();
+  return isaac::resource::AssetCatalog::isaac();
 }
 
 }  // namespace
@@ -240,11 +249,7 @@ void GameView::render() {
   } else if (display.screen == common::ScreenState::CharacterSelect) {
     drawPaper();
     drawInkText(window_, "WHO ARE YOU", {330.F, 82.F}, 4.5F, sf::Color(135, 30, 33));
-    std::filesystem::path portrait;
-    if (display.selectionName == "Isaac") portrait = resource::AssetCatalog::isaac();
-    if (display.selectionName == "Magdalene") portrait = resource::AssetCatalog::magdalene();
-    if (display.selectionName == "Cain") portrait = resource::AssetCatalog::cain();
-    if (display.selectionName == "Judas") portrait = resource::AssetCatalog::judas();
+    const auto portrait = characterPortrait(display.selectionStyle);
     if (const auto texture = resources_.texture(portrait)) {
       sf::Sprite sprite(*texture);
       const auto size = texture->getSize();
@@ -301,7 +306,7 @@ void GameView::render() {
         if (movement.x > 0.1F) { body = "isaac_walk0_side_back.jpg"; bodyMask = "isaac_walk0_side_front.jpg"; }
         if (movement.x < -0.1F) { body = "isaac_walk0_left_back.jpg"; bodyMask = "isaac_walk0_left_front.jpg"; }
         const float bob = std::sin(time * 9.F) * (movement.lengthSquared() > 0.1F ? 3.F : 1.F);
-        const auto tint = characterTint(entity.styleId);
+        const auto tint = characterTint(entity.characterStyle);
         drawMaskedSprite(window_, resources_, resource::AssetCatalog::easyCharacter(body),
                          resource::AssetCatalog::easyCharacter(bodyMask), position + sf::Vector2f{0.F, 12.F + bob}, 42.F, tint);
         drawn = drawMaskedSprite(window_, resources_,

@@ -1,12 +1,23 @@
 #include "viewmodel/GameViewModel.h"
 
-#include "model/CharacterCatalog.h"
-
 #include <sstream>
+#include <string_view>
+
+namespace {
+
+isaac::viewmodel::CharacterStyle characterStyle(std::string_view id) {
+  using Style = isaac::viewmodel::CharacterStyle;
+  if (id == "magdalene") return Style::Magdalene;
+  if (id == "cain") return Style::Cain;
+  if (id == "judas") return Style::Judas;
+  return Style::Isaac;
+}
+
+}  // namespace
 
 namespace isaac::viewmodel {
 
-GameViewModel::GameViewModel(model::GameSession& session) : session_(session) {
+GameViewModel::GameViewModel(model::GameSessionInterface& session) : session_(session) {
   commands_.tick = Command<float>([this](float seconds) { executeTick(seconds); });
   commands_.setInput = Command<RealtimeInput>([this](RealtimeInput input) { realtimeInput_ = input; });
   commands_.action = Command<UserAction>([this](UserAction action) { pendingActions_.push_back(action); });
@@ -14,10 +25,6 @@ GameViewModel::GameViewModel(model::GameSession& session) : session_(session) {
 }
 
 void GameViewModel::executeTick(float seconds) {
-  const auto& before = session_.snapshot();
-  const auto shotsBefore = before.totalShots;
-  const auto heartsBefore = before.redHearts + before.shields;
-  const auto pickupsBefore = before.pickups.size();
   const auto screenBefore = screen_;
   bool interact{};
   bool useBomb{};
@@ -29,9 +36,10 @@ void GameViewModel::executeTick(float seconds) {
     } else if (action == UserAction::NavigateDown && screen_ == common::ScreenState::MainMenu) {
       menuIndex_ = (menuIndex_ + 1) % 4;
     } else if (action == UserAction::NavigateLeft && screen_ == common::ScreenState::CharacterSelect) {
-      selectedCharacter_ = (selectedCharacter_ + 3) % 4;
+      const auto count = session_.selectableCharacterCount();
+      selectedCharacter_ = (selectedCharacter_ + count - 1) % count;
     } else if (action == UserAction::NavigateRight && screen_ == common::ScreenState::CharacterSelect) {
-      selectedCharacter_ = (selectedCharacter_ + 1) % 4;
+      selectedCharacter_ = (selectedCharacter_ + 1) % session_.selectableCharacterCount();
     } else if (action == UserAction::Confirm) {
       if (screen_ == common::ScreenState::Start) {
         screen_ = common::ScreenState::MainMenu;
@@ -78,10 +86,10 @@ void GameViewModel::executeTick(float seconds) {
   if (screen_ == common::ScreenState::Playing && after.runCompleted) screen_ = common::ScreenState::Victory;
 
   properties_.display.set(buildDisplayState());
-  if (after.totalShots > shotsBefore) signals_.presentation.emit(PresentationEvent::Shot);
-  if (after.redHearts + after.shields < heartsBefore) signals_.presentation.emit(PresentationEvent::Hurt);
-  if (pickupsBefore > 0 && after.pickups.size() < pickupsBefore) {
-    signals_.presentation.emit(PresentationEvent::Pickup);
+  for (const auto event : session_.drainEvents()) {
+    if (event == model::ModelEvent::Shot) signals_.presentation.emit(PresentationEvent::Shot);
+    if (event == model::ModelEvent::Hurt) signals_.presentation.emit(PresentationEvent::Hurt);
+    if (event == model::ModelEvent::Pickup) signals_.presentation.emit(PresentationEvent::Pickup);
   }
   if (screenBefore != common::ScreenState::Defeat && screen_ == common::ScreenState::Defeat) {
     signals_.presentation.emit(PresentationEvent::Defeat);
@@ -94,28 +102,30 @@ DisplayState GameViewModel::buildDisplayState() const {
   result.menuIndex = menuIndex_;
   result.movement = realtimeInput_.movement;
   result.shooting = realtimeInput_.shooting;
-  const auto& selected = model::CharacterCatalog::at(selectedCharacter_);
-  result.selectionName = std::string(selected.displayName);
+  const auto selected = session_.selectableCharacter(selectedCharacter_);
+  result.selectionName = selected.displayName;
+  result.selectionStyle = characterStyle(selected.id);
   std::ostringstream stats;
   stats << "HP " << selected.redHearts << " SPD " << static_cast<int>(selected.moveSpeed)
         << " DMG " << selected.damage << " LUCK " << selected.luck;
   result.selectionStats = stats.str();
   const auto& state = session_.snapshot();
-  result.entities.push_back({common::EntityKind::Player, state.playerPosition, 18.F, state.characterId});
+  result.entities.push_back({common::EntityKind::Player, state.playerPosition, 18.F,
+                             characterStyle(state.characterId)});
   for (const auto& projectile : state.projectiles) {
     result.entities.push_back({projectile.friendly ? common::EntityKind::PlayerProjectile
                                                    : common::EntityKind::EnemyProjectile,
-                               projectile.position, 6.F, "tear"});
+                               projectile.position, 6.F});
   }
   for (const auto& enemy : state.enemies) {
-    result.entities.push_back({common::EntityKind::Enemy, enemy.position, 16.F, enemy.id});
+    result.entities.push_back({common::EntityKind::Enemy, enemy.position, 16.F});
   }
   for (const auto& boss : state.bosses) {
     result.entities.push_back({common::EntityKind::Boss, boss.position,
-                               boss.id == "moms_leg" ? 38.F : 28.F, boss.id});
+                               boss.id == "moms_leg" ? 38.F : 28.F});
   }
   for (const auto& pickup : state.pickups) {
-    result.entities.push_back({common::EntityKind::Pickup, pickup.position, 8.F, "pickup"});
+    result.entities.push_back({common::EntityKind::Pickup, pickup.position, 8.F});
   }
   result.hud.redHearts = state.redHearts;
   result.hud.shields = state.shields;
@@ -124,10 +134,10 @@ DisplayState GameViewModel::buildDisplayState() const {
   result.hud.keys = state.keys;
   result.hud.activeItem = state.activeItem;
   result.hud.floor = state.floor;
-  result.hud.moveSpeed = session_.player().definition().moveSpeed;
-  result.hud.damage = session_.player().shooting().damage();
-  result.hud.shotsPerSecond = session_.player().definition().shotsPerSecond;
-  result.hud.projectileSpeed = session_.player().shooting().projectileSpeed();
+  result.hud.moveSpeed = state.moveSpeed;
+  result.hud.damage = state.damage;
+  result.hud.shotsPerSecond = state.shotsPerSecond;
+  result.hud.projectileSpeed = state.projectileSpeed;
   result.hud.elapsedSeconds = state.elapsedSeconds;
   result.hud.roomState = state.roomCleared ? "Cleared" : "Combat";
   for (const auto& room : state.rooms) {

@@ -6,6 +6,7 @@
 #include "model/ItemSystem.h"
 #include "model/BossSystem.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
@@ -53,11 +54,58 @@ int main() {
   health.damage(20);
   check(health.dead(), "damage causes death");
 
+  Player damagePlayer(CharacterCatalog::at(0));
+  check(damagePlayer.damage(1), "Player reports damage that changes health");
+  check(!damagePlayer.damage(1), "Player rejects damage during invulnerability");
+
   GameSession session;
   session.update(1.F / 60.F, {{}, {1.F, 0.F}});
   check(session.projectiles().size() == 1, "shoot creates projectile");
+  const auto shotEvents = session.drainEvents();
+  check(std::ranges::find(shotEvents, ModelEvent::Shot) != shotEvents.end(),
+        "shoot records a Model event at the behavior source");
+  check(session.drainEvents().empty(), "Model events drain exactly once");
+  GameSession resetEventSession;
+  resetEventSession.update(1.F / 60.F, {{}, {1.F, 0.F}});
+  resetEventSession.selectCharacter(1);
+  check(resetEventSession.drainEvents().empty(),
+        "selecting a character clears events from the previous run");
   for (int i = 0; i < 120; ++i) session.update(1.F / 60.F, {{}, {}});
   check(session.projectiles().empty(), "expired projectile is destroyed");
+
+  GameSession hurtSession;
+  for (int frame = 0; frame < 220 && hurtSession.level().currentRoomId() == 0; ++frame) {
+    hurtSession.update(1.F / 60.F, {{1.F, 0.F}, {}});
+  }
+  (void)hurtSession.drainEvents();
+  hurtSession.player().resetInvulnerability();
+  hurtSession.enemySystem().enemies().front().position = hurtSession.player().position();
+  hurtSession.update(0.F, {});
+  const auto hurtEvents = hurtSession.drainEvents();
+  check(std::ranges::find(hurtEvents, ModelEvent::Hurt) != hurtEvents.end(),
+        "effective enemy damage records a Hurt event");
+  hurtSession.update(0.F, {});
+  const auto blockedHurtEvents = hurtSession.drainEvents();
+  check(std::ranges::find(blockedHurtEvents, ModelEvent::Hurt) == blockedHurtEvents.end(),
+        "invulnerability prevents a false Hurt event");
+
+  GameSession pickupSession;
+  for (int frame = 0; frame < 220 && pickupSession.level().currentRoomId() == 0; ++frame) {
+    pickupSession.update(1.F / 60.F, {{1.F, 0.F}, {}});
+  }
+  int expectedPickups{};
+  for (auto& enemy : pickupSession.enemySystem().enemies()) {
+    if (EnemyCatalog::all()[enemy.definitionIndex].drop != DropStrategy::None) ++expectedPickups;
+    enemy.position = pickupSession.player().position();
+    enemy.health = 0.F;
+  }
+  (void)pickupSession.drainEvents();
+  pickupSession.update(0.F, {});
+  const auto pickupEvents = pickupSession.drainEvents();
+  check(std::ranges::count(pickupEvents, ModelEvent::Pickup) == expectedPickups,
+        "each collected drop records one Pickup event at its behavior source");
+  check(pickupSession.snapshot().pickups.empty(),
+        "same-tick generated and collected pickups leave no snapshot entity");
 
   Level level(42U);
   Inventory inventory;

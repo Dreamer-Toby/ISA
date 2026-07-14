@@ -8,11 +8,13 @@
 
 namespace isaac::viewmodel {
 
+enum class CharacterStyle { Isaac, Magdalene, Cain, Judas };
+
 struct EntityDTO {
   common::EntityKind kind{};
   common::Vec2 position{};
   float radius{12.F};
-  std::string styleId;
+  CharacterStyle characterStyle{CharacterStyle::Isaac};
 };
 
 struct HudDTO {
@@ -46,6 +48,7 @@ struct DisplayState {
   common::Vec2 shooting;
   std::string selectionName;
   std::string selectionStats;
+  CharacterStyle selectionStyle{CharacterStyle::Isaac};
   std::vector<EntityDTO> entities;
   HudDTO hud;
   std::vector<MinimapRoomDTO> minimap;

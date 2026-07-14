@@ -50,20 +50,14 @@ int main() {
     isaac::model::GameSession signalSession;
     isaac::viewmodel::GameViewModel signalViewModel(signalSession);
     int shotSignals{};
-    int hurtSignals{};
     const auto connection = signalViewModel.signals().presentation.connect(
         [&](isaac::viewmodel::PresentationEvent event) {
           if (event == isaac::viewmodel::PresentationEvent::Shot) ++shotSignals;
-          if (event == isaac::viewmodel::PresentationEvent::Hurt) ++hurtSignals;
         });
     for (int step = 0; step < 3; ++step) act(signalViewModel, UserAction::Confirm);
     signalViewModel.commands().setInput.execute({{}, {1.F, 0.F}});
     tick(signalViewModel);
     check(shotSignals == 1, "shoot command emits one presentation signal");
-    signalViewModel.commands().setInput.execute({});
-    signalSession.player().damage(1);
-    tick(signalViewModel);
-    check(hurtSignals == 1, "health property change emits one hurt signal");
     signalViewModel.signals().presentation.disconnect(connection);
   }
 

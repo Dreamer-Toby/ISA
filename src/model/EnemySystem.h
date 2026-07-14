@@ -47,7 +47,7 @@ class EnemyCatalog {
 class EnemySystem {
  public:
   void spawnForNormalRoom(int roomId, int floor);
-  void update(float seconds, Player& player, std::vector<Projectile>& projectiles,
+  bool update(float seconds, Player& player, std::vector<Projectile>& projectiles,
               std::vector<Pickup>& pickups);
   [[nodiscard]] const std::vector<Enemy>& enemies() const { return enemies_; }
   [[nodiscard]] std::vector<Enemy>& enemies() { return enemies_; }

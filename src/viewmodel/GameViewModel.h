@@ -1,6 +1,6 @@
 #pragma once
 
-#include "model/GameSession.h"
+#include "model/GameSessionInterface.h"
 #include "viewmodel/Binding.h"
 #include "viewmodel/RenderDTO.h"
 
@@ -42,7 +42,7 @@ struct GameSignals {
 
 class GameViewModel {
  public:
-  explicit GameViewModel(model::GameSession& session);
+  explicit GameViewModel(model::GameSessionInterface& session);
   GameViewModel(const GameViewModel&) = delete;
   GameViewModel& operator=(const GameViewModel&) = delete;
 
@@ -54,7 +54,7 @@ class GameViewModel {
   void executeTick(float seconds);
   [[nodiscard]] DisplayState buildDisplayState() const;
 
-  model::GameSession& session_;
+  model::GameSessionInterface& session_;
   common::ScreenState screen_{common::ScreenState::Start};
   std::size_t selectedCharacter_{};
   int menuIndex_{};

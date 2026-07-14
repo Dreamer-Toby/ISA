@@ -31,6 +31,9 @@ endif()
 add_library(isaac_common INTERFACE)
 target_include_directories(isaac_common INTERFACE src)
 
+add_library(isaac_model_interface INTERFACE)
+target_link_libraries(isaac_model_interface INTERFACE isaac_common)
+
 add_library(isaac_model STATIC
   src/model/BossSystem.cpp
   src/model/CharacterCatalog.cpp
@@ -40,11 +43,11 @@ add_library(isaac_model STATIC
   src/model/ItemSystem.cpp
   src/model/Level.cpp
   src/model/Player.cpp)
-target_link_libraries(isaac_model PUBLIC isaac_common)
+target_link_libraries(isaac_model PUBLIC isaac_model_interface)
 target_include_directories(isaac_model PUBLIC src)
 
 add_library(isaac_viewmodel STATIC src/viewmodel/GameViewModel.cpp)
-target_link_libraries(isaac_viewmodel PUBLIC isaac_model isaac_common)
+target_link_libraries(isaac_viewmodel PUBLIC isaac_model_interface)
 target_include_directories(isaac_viewmodel PUBLIC src)
 
 add_library(isaac_resource STATIC src/resource/ResourceManager.cpp)
@@ -68,10 +71,13 @@ if(BUILD_TESTING)
   target_link_libraries(isaac_model_tests PRIVATE isaac_model)
   add_test(NAME model_regression_suite COMMAND isaac_model_tests)
   add_executable(isaac_flow_tests tests/viewmodel/test_flow.cpp)
-  target_link_libraries(isaac_flow_tests PRIVATE isaac_viewmodel)
+  target_link_libraries(isaac_flow_tests PRIVATE isaac_viewmodel isaac_model)
   add_test(NAME viewmodel_course_flow COMMAND isaac_flow_tests)
+  add_executable(isaac_viewmodel_seam_tests tests/viewmodel/test_model_seam.cpp)
+  target_link_libraries(isaac_viewmodel_seam_tests PRIVATE isaac_viewmodel)
+  add_test(NAME viewmodel_model_seam COMMAND isaac_viewmodel_seam_tests)
   add_executable(isaac_course_demo tests/model/course_demo.cpp)
-  target_link_libraries(isaac_course_demo PRIVATE isaac_viewmodel)
+  target_link_libraries(isaac_course_demo PRIVATE isaac_viewmodel isaac_model)
   add_test(NAME deterministic_course_demo COMMAND isaac_course_demo)
   add_test(NAME architecture_boundaries
     COMMAND ${CMAKE_COMMAND} -DPROJECT_ROOT=${CMAKE_SOURCE_DIR}
