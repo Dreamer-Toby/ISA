@@ -112,16 +112,16 @@ void drawShadow(sf::RenderWindow& window, sf::Vector2f position, float radius) {
   window.draw(shadow);
 }
 
-sf::Color characterTint(isaac::viewmodel::CharacterStyle style) {
-  using Style = isaac::viewmodel::CharacterStyle;
+sf::Color characterTint(isaac::presentation::CharacterStyle style) {
+  using Style = isaac::presentation::CharacterStyle;
   if (style == Style::Magdalene) return sf::Color(255, 178, 178);
   if (style == Style::Cain) return sf::Color(244, 212, 142);
   if (style == Style::Judas) return sf::Color(170, 160, 170);
   return sf::Color::White;
 }
 
-std::filesystem::path characterPortrait(isaac::viewmodel::CharacterStyle style) {
-  using Style = isaac::viewmodel::CharacterStyle;
+std::filesystem::path characterPortrait(isaac::presentation::CharacterStyle style) {
+  using Style = isaac::presentation::CharacterStyle;
   if (style == Style::Magdalene) return isaac::resource::AssetCatalog::magdalene();
   if (style == Style::Cain) return isaac::resource::AssetCatalog::cain();
   if (style == Style::Judas) return isaac::resource::AssetCatalog::judas();
@@ -132,18 +132,12 @@ std::filesystem::path characterPortrait(isaac::viewmodel::CharacterStyle style) 
 
 namespace isaac::view {
 
-GameView::GameView(viewmodel::GameViewModel& viewModel, resource::ResourceManager& resources)
-    : viewModel_(viewModel), resources_(resources),
-      window_(sf::VideoMode({960U, 640U}), "ISA - EasyIsaac final presentation"),
-      display_(viewModel.properties().display.get()) {
+GameView::GameView(resource::ResourceManager& resources)
+    : resources_(resources),
+      window_(sf::VideoMode({960U, 640U}), "ISA - EasyIsaac final presentation") {
   window_.setVerticalSyncEnabled(true);
   window_.setKeyRepeatEnabled(false);
   window_.setPosition({100, 60});
-
-  displayConnection_ = viewModel_.properties().display.changed().connect(
-      [this](const viewmodel::DisplayState& display) { onDisplayChanged(display); });
-  presentationConnection_ = viewModel_.signals().presentation.connect(
-      [this](viewmodel::PresentationEvent event) { onPresentationEvent(event); });
 
   shootBuffer_ = resources_.soundBuffer(resource::AssetCatalog::easySound("shoot.wav"));
   hurtBuffer_ = resources_.soundBuffer(resource::AssetCatalog::easySound("hurt0.mp3"));
@@ -159,21 +153,16 @@ GameView::GameView(viewmodel::GameViewModel& viewModel, resource::ResourceManage
   if (defeatSound_) defeatSound_->setVolume(60.F);
 }
 
-GameView::~GameView() {
-  viewModel_.properties().display.changed().disconnect(displayConnection_);
-  viewModel_.signals().presentation.disconnect(presentationConnection_);
-}
-
-void GameView::onDisplayChanged(const viewmodel::DisplayState& display) {
+void GameView::setDisplay(const presentation::DisplayState& display) {
   if (display.screen != display_.screen) transitionClock_.restart();
   display_ = display;
 }
 
-void GameView::onPresentationEvent(viewmodel::PresentationEvent event) {
-  if (event == viewmodel::PresentationEvent::Shot && shootSound_) shootSound_->play();
-  if (event == viewmodel::PresentationEvent::Pickup && pickupSound_) pickupSound_->play();
-  if (event == viewmodel::PresentationEvent::Defeat && defeatSound_) defeatSound_->play();
-  if (event == viewmodel::PresentationEvent::Hurt) {
+void GameView::present(presentation::PresentationEvent event) {
+  if (event == presentation::PresentationEvent::Shot && shootSound_) shootSound_->play();
+  if (event == presentation::PresentationEvent::Pickup && pickupSound_) pickupSound_->play();
+  if (event == presentation::PresentationEvent::Defeat && defeatSound_) defeatSound_->play();
+  if (event == presentation::PresentationEvent::Hurt) {
     damageFlashClock_.restart();
     damageFlashActive_ = true;
     if (hurtSound_) hurtSound_->play();
@@ -182,33 +171,36 @@ void GameView::onPresentationEvent(viewmodel::PresentationEvent event) {
 
 void GameView::pollEvents() {
   using Key = sf::Keyboard::Key;
-  using Action = viewmodel::UserAction;
+  using Action = presentation::UserAction;
+  const auto sendAction = [this](Action action) {
+    if (actionHandler_) actionHandler_(action);
+  };
   while (const auto event = window_.pollEvent()) {
     if (event->is<sf::Event::Closed>()) window_.close();
     if (const auto* key = event->getIf<sf::Event::KeyPressed>()) {
       if (key->code == Key::U) showHitboxes_ = !showHitboxes_;
-      if (key->code == Key::Enter) viewModel_.commands().action.execute(Action::Confirm);
-      if (key->code == Key::Escape) viewModel_.commands().action.execute(Action::Back);
-      if (key->code == Key::E) viewModel_.commands().action.execute(Action::UseBomb);
-      if (key->code == Key::W) viewModel_.commands().action.execute(Action::NavigateUp);
-      if (key->code == Key::S) viewModel_.commands().action.execute(Action::NavigateDown);
-      if (key->code == Key::A) viewModel_.commands().action.execute(Action::NavigateLeft);
-      if (key->code == Key::D) viewModel_.commands().action.execute(Action::NavigateRight);
+      if (key->code == Key::Enter) sendAction(Action::Confirm);
+      if (key->code == Key::Escape) sendAction(Action::Back);
+      if (key->code == Key::E) sendAction(Action::UseBomb);
+      if (key->code == Key::W) sendAction(Action::NavigateUp);
+      if (key->code == Key::S) sendAction(Action::NavigateDown);
+      if (key->code == Key::A) sendAction(Action::NavigateLeft);
+      if (key->code == Key::D) sendAction(Action::NavigateRight);
       if (key->code == Key::Space) {
         const auto action = display_.screen == common::ScreenState::Playing ? Action::UseActive
                                                                             : Action::Confirm;
-        viewModel_.commands().action.execute(action);
+        sendAction(action);
       }
     }
   }
-  viewmodel::RealtimeInput input;
+  presentation::RealtimeInput input;
   input.movement = {
       static_cast<float>(sf::Keyboard::isKeyPressed(Key::D)) - static_cast<float>(sf::Keyboard::isKeyPressed(Key::A)),
       static_cast<float>(sf::Keyboard::isKeyPressed(Key::S)) - static_cast<float>(sf::Keyboard::isKeyPressed(Key::W))};
   input.shooting = {
       static_cast<float>(sf::Keyboard::isKeyPressed(Key::Right)) - static_cast<float>(sf::Keyboard::isKeyPressed(Key::Left)),
       static_cast<float>(sf::Keyboard::isKeyPressed(Key::Down)) - static_cast<float>(sf::Keyboard::isKeyPressed(Key::Up))};
-  viewModel_.commands().setInput.execute(input);
+  if (inputHandler_) inputHandler_(input);
 }
 
 void GameView::render() {

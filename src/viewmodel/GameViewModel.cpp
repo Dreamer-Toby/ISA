@@ -5,8 +5,8 @@
 
 namespace {
 
-isaac::viewmodel::CharacterStyle characterStyle(std::string_view id) {
-  using Style = isaac::viewmodel::CharacterStyle;
+isaac::presentation::CharacterStyle characterStyle(std::string_view id) {
+  using Style = isaac::presentation::CharacterStyle;
   if (id == "magdalene") return Style::Magdalene;
   if (id == "cain") return Style::Cain;
   if (id == "judas") return Style::Judas;
@@ -18,10 +18,12 @@ isaac::viewmodel::CharacterStyle characterStyle(std::string_view id) {
 namespace isaac::viewmodel {
 
 GameViewModel::GameViewModel(model::GameSessionInterface& session) : session_(session) {
-  commands_.tick = Command<float>([this](float seconds) { executeTick(seconds); });
-  commands_.setInput = Command<RealtimeInput>([this](RealtimeInput input) { realtimeInput_ = input; });
-  commands_.action = Command<UserAction>([this](UserAction action) { pendingActions_.push_back(action); });
-  properties_.display.set(buildDisplayState());
+  tickCommand_ = Command<float>([this](float seconds) { executeTick(seconds); });
+  inputCommand_ = Command<presentation::RealtimeInput>(
+      [this](presentation::RealtimeInput input) { realtimeInput_ = input; });
+  actionCommand_ = Command<presentation::UserAction>(
+      [this](presentation::UserAction action) { pendingActions_.push_back(action); });
+  displayProperty_.set(buildDisplayState());
 }
 
 void GameViewModel::executeTick(float seconds) {
@@ -31,6 +33,7 @@ void GameViewModel::executeTick(float seconds) {
   bool useActive{};
 
   for (const auto action : pendingActions_) {
+    using presentation::UserAction;
     if (action == UserAction::NavigateUp && screen_ == common::ScreenState::MainMenu) {
       menuIndex_ = (menuIndex_ + 3) % 4;
     } else if (action == UserAction::NavigateDown && screen_ == common::ScreenState::MainMenu) {
@@ -85,19 +88,25 @@ void GameViewModel::executeTick(float seconds) {
   if (screen_ == common::ScreenState::Playing && after.playerDead) screen_ = common::ScreenState::Defeat;
   if (screen_ == common::ScreenState::Playing && after.runCompleted) screen_ = common::ScreenState::Victory;
 
-  properties_.display.set(buildDisplayState());
+  displayProperty_.set(buildDisplayState());
   for (const auto event : session_.drainEvents()) {
-    if (event == model::ModelEvent::Shot) signals_.presentation.emit(PresentationEvent::Shot);
-    if (event == model::ModelEvent::Hurt) signals_.presentation.emit(PresentationEvent::Hurt);
-    if (event == model::ModelEvent::Pickup) signals_.presentation.emit(PresentationEvent::Pickup);
+    if (event == model::ModelEvent::Shot) {
+      presentationSignal_.emit(presentation::PresentationEvent::Shot);
+    }
+    if (event == model::ModelEvent::Hurt) {
+      presentationSignal_.emit(presentation::PresentationEvent::Hurt);
+    }
+    if (event == model::ModelEvent::Pickup) {
+      presentationSignal_.emit(presentation::PresentationEvent::Pickup);
+    }
   }
   if (screenBefore != common::ScreenState::Defeat && screen_ == common::ScreenState::Defeat) {
-    signals_.presentation.emit(PresentationEvent::Defeat);
+    presentationSignal_.emit(presentation::PresentationEvent::Defeat);
   }
 }
 
-DisplayState GameViewModel::buildDisplayState() const {
-  DisplayState result;
+presentation::DisplayState GameViewModel::buildDisplayState() const {
+  presentation::DisplayState result;
   result.screen = screen_;
   result.menuIndex = menuIndex_;
   result.movement = realtimeInput_.movement;

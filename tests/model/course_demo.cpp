@@ -7,22 +7,22 @@
 namespace {
 constexpr float Step = 1.F / 60.F;
 
-void tick(isaac::viewmodel::GameViewModel& vm, isaac::viewmodel::RealtimeInput input = {}) {
-  vm.commands().setInput.execute(input);
-  vm.commands().tick.execute(Step);
+void tick(isaac::viewmodel::GameViewModel& vm, isaac::presentation::RealtimeInput input = {}) {
+  vm.inputCommand().execute(input);
+  vm.tickCommand().execute(Step);
 }
 
 void pressConfirm(isaac::viewmodel::GameViewModel& vm) {
-  vm.commands().action.execute(isaac::viewmodel::UserAction::Confirm);
+  vm.actionCommand().execute(isaac::presentation::UserAction::Confirm);
   tick(vm);
 }
 
 bool driveToRoom(isaac::model::GameSession& session, isaac::viewmodel::GameViewModel& vm,
                  int roomId, isaac::common::Vec2 movement, bool bomb = false) {
   for (int frame = 0; frame < 500 && session.level().currentRoomId() != roomId; ++frame) {
-    isaac::viewmodel::RealtimeInput input;
+    isaac::presentation::RealtimeInput input;
     input.movement = movement;
-    if (bomb) vm.commands().action.execute(isaac::viewmodel::UserAction::UseBomb);
+    if (bomb) vm.actionCommand().execute(isaac::presentation::UserAction::UseBomb);
     tick(vm, input);
   }
   return session.level().currentRoomId() == roomId;
@@ -30,14 +30,14 @@ bool driveToRoom(isaac::model::GameSession& session, isaac::viewmodel::GameViewM
 
 bool clearCurrentRoom(isaac::model::GameSession& session, isaac::viewmodel::GameViewModel& vm) {
   for (int frame = 0; frame < 20000 && !session.snapshot().roomCleared; ++frame) {
-    isaac::viewmodel::RealtimeInput input;
+    isaac::presentation::RealtimeInput input;
     isaac::common::Vec2 target{};
     if (!session.snapshot().enemies.empty()) target = session.snapshot().enemies.front().position;
     else if (!session.snapshot().bosses.empty()) target = session.snapshot().bosses.front().position;
     const auto toward = (target - session.snapshot().playerPosition).normalized();
     input.shooting = toward.lengthSquared() > 0.1F ? toward : isaac::common::Vec2{1.F, 0.F};
     input.movement = {-toward.y, toward.x};
-    vm.commands().action.execute(isaac::viewmodel::UserAction::UseActive);
+    vm.actionCommand().execute(isaac::presentation::UserAction::UseActive);
     tick(vm, input);
   }
   return session.snapshot().roomCleared && !session.snapshot().playerDead;
@@ -45,7 +45,7 @@ bool clearCurrentRoom(isaac::model::GameSession& session, isaac::viewmodel::Game
 
 void collectPickups(isaac::model::GameSession& session, isaac::viewmodel::GameViewModel& vm) {
   for (int frame = 0; frame < 2000 && !session.snapshot().pickups.empty(); ++frame) {
-    isaac::viewmodel::RealtimeInput input;
+    isaac::presentation::RealtimeInput input;
     input.movement = session.snapshot().pickups.front().position - session.snapshot().playerPosition;
     tick(vm, input);
   }
@@ -68,7 +68,7 @@ int main() {
   isaac::viewmodel::GameViewModel vm(session);
   pressConfirm(vm);
   pressConfirm(vm);
-  vm.commands().action.execute(isaac::viewmodel::UserAction::NavigateRight);
+  vm.actionCommand().execute(isaac::presentation::UserAction::NavigateRight);
   tick(vm);
   pressConfirm(vm);
   REQUIRE(session.snapshot().characterId == "magdalene", "non-default Magdalene selection");
@@ -98,7 +98,7 @@ int main() {
 
   REQUIRE(completeCombatAndBoss(session, vm) && session.level().floorNumber() == 3, "complete floor 2");
   REQUIRE(completeCombatAndBoss(session, vm), "complete floor 3");
-  REQUIRE(vm.properties().display.get().screen == isaac::common::ScreenState::Victory, "victory screen");
+  REQUIRE(vm.displayProperty().get().screen == isaac::common::ScreenState::Victory, "victory screen");
 
   std::cout << "demo: menu->Magdalene->combat/drop->shop->chest->secret->3 floors->victory\n";
   return EXIT_SUCCESS;

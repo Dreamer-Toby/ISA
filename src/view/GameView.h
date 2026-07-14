@@ -1,40 +1,44 @@
 #pragma once
 
+#include "common/PresentationTypes.h"
 #include "resource/ResourceManager.h"
-#include "viewmodel/GameViewModel.h"
 
 #include <SFML/Audio/Sound.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/System/Clock.hpp>
 
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <optional>
+#include <utility>
 
 namespace isaac::view {
 
 class GameView {
  public:
-  GameView(viewmodel::GameViewModel& viewModel, resource::ResourceManager& resources);
-  ~GameView();
+  using ActionHandler = std::function<void(presentation::UserAction)>;
+  using InputHandler = std::function<void(presentation::RealtimeInput)>;
+
+  explicit GameView(resource::ResourceManager& resources);
 
   [[nodiscard]] bool isOpen() const { return window_.isOpen(); }
+  void setActionHandler(ActionHandler handler) { actionHandler_ = std::move(handler); }
+  void setInputHandler(InputHandler handler) { inputHandler_ = std::move(handler); }
+  void setDisplay(const presentation::DisplayState& display);
+  void present(presentation::PresentationEvent event);
   void pollEvents();
   void render();
 
  private:
-  void onDisplayChanged(const viewmodel::DisplayState& display);
-  void onPresentationEvent(viewmodel::PresentationEvent event);
-
-  viewmodel::GameViewModel& viewModel_;
   resource::ResourceManager& resources_;
   sf::RenderWindow window_;
   sf::Clock animationClock_;
   sf::Clock transitionClock_;
   sf::Clock damageFlashClock_;
-  viewmodel::DisplayState display_;
-  std::size_t displayConnection_{};
-  std::size_t presentationConnection_{};
+  presentation::DisplayState display_;
+  ActionHandler actionHandler_;
+  InputHandler inputHandler_;
   bool damageFlashActive_{};
   bool showHitboxes_{};
   std::shared_ptr<sf::SoundBuffer> shootBuffer_;

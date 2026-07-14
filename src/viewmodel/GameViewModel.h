@@ -1,44 +1,12 @@
 #pragma once
 
+#include "common/PresentationTypes.h"
 #include "model/GameSessionInterface.h"
 #include "viewmodel/Binding.h"
-#include "viewmodel/RenderDTO.h"
 
 #include <vector>
 
 namespace isaac::viewmodel {
-
-struct RealtimeInput {
-  common::Vec2 movement;
-  common::Vec2 shooting;
-};
-
-enum class UserAction {
-  Confirm,
-  Back,
-  NavigateUp,
-  NavigateDown,
-  NavigateLeft,
-  NavigateRight,
-  UseBomb,
-  UseActive
-};
-
-enum class PresentationEvent { Shot, Hurt, Pickup, Defeat };
-
-struct GameProperties {
-  Property<DisplayState> display;
-};
-
-struct GameCommands {
-  Command<float> tick;
-  Command<RealtimeInput> setInput;
-  Command<UserAction> action;
-};
-
-struct GameSignals {
-  Signal<PresentationEvent> presentation;
-};
 
 class GameViewModel {
  public:
@@ -46,23 +14,35 @@ class GameViewModel {
   GameViewModel(const GameViewModel&) = delete;
   GameViewModel& operator=(const GameViewModel&) = delete;
 
-  [[nodiscard]] const GameProperties& properties() const { return properties_; }
-  [[nodiscard]] const GameCommands& commands() const { return commands_; }
-  [[nodiscard]] const GameSignals& signals() const { return signals_; }
+  [[nodiscard]] const Property<presentation::DisplayState>& displayProperty() const {
+    return displayProperty_;
+  }
+  [[nodiscard]] const Command<float>& tickCommand() const { return tickCommand_; }
+  [[nodiscard]] const Command<presentation::RealtimeInput>& inputCommand() const {
+    return inputCommand_;
+  }
+  [[nodiscard]] const Command<presentation::UserAction>& actionCommand() const {
+    return actionCommand_;
+  }
+  [[nodiscard]] const Signal<presentation::PresentationEvent>& presentationSignal() const {
+    return presentationSignal_;
+  }
 
  private:
   void executeTick(float seconds);
-  [[nodiscard]] DisplayState buildDisplayState() const;
+  [[nodiscard]] presentation::DisplayState buildDisplayState() const;
 
   model::GameSessionInterface& session_;
   common::ScreenState screen_{common::ScreenState::Start};
   std::size_t selectedCharacter_{};
   int menuIndex_{};
-  RealtimeInput realtimeInput_;
-  std::vector<UserAction> pendingActions_;
-  GameProperties properties_;
-  GameCommands commands_;
-  GameSignals signals_;
+  presentation::RealtimeInput realtimeInput_;
+  std::vector<presentation::UserAction> pendingActions_;
+  Property<presentation::DisplayState> displayProperty_;
+  Command<float> tickCommand_;
+  Command<presentation::RealtimeInput> inputCommand_;
+  Command<presentation::UserAction> actionCommand_;
+  Signal<presentation::PresentationEvent> presentationSignal_;
 };
 
 }  // namespace isaac::viewmodel

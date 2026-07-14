@@ -57,20 +57,20 @@ class FakeGameSession final : public isaac::model::GameSessionInterface {
 
 int main() {
   using isaac::common::ScreenState;
-  using isaac::viewmodel::UserAction;
+  using isaac::presentation::UserAction;
 
   FakeGameSession model;
   isaac::viewmodel::GameViewModel viewModel(model);
   int propertyChanges{};
-  const auto connection = viewModel.properties().display.changed().connect(
-      [&](const isaac::viewmodel::DisplayState&) { ++propertyChanges; });
+  const auto connection = viewModel.displayProperty().changed().connect(
+      [&](const isaac::presentation::DisplayState&) { ++propertyChanges; });
 
   const auto act = [&](UserAction action) {
-    viewModel.commands().action.execute(action);
-    viewModel.commands().tick.execute(Step);
+    viewModel.actionCommand().execute(action);
+    viewModel.tickCommand().execute(Step);
   };
   act(UserAction::Confirm);
-  check(viewModel.properties().display.get().screen == ScreenState::MainMenu,
+  check(viewModel.displayProperty().get().screen == ScreenState::MainMenu,
         "command publishes the display property through the Model seam");
   check(propertyChanges == 1, "display property notifies its subscriber");
 
@@ -79,70 +79,70 @@ int main() {
   check(model.updateCount == 1 && model.selectedCharacter == 0,
         "commands reach the fake Model adapter");
 
-  viewModel.commands().setInput.execute({{1.F, 0.F}, {0.F, -1.F}});
-  viewModel.commands().tick.execute(Step);
+  viewModel.inputCommand().execute({{1.F, 0.F}, {0.F, -1.F}});
+  viewModel.tickCommand().execute(Step);
   check(model.updateCount == 2 && model.lastSeconds == Step &&
             model.lastInput.movement.x == 1.F && model.lastInput.shooting.y == -1.F,
         "realtime input crosses the Model seam");
 
   int firstSubscriber{};
   int secondSubscriber{};
-  const auto firstConnection = viewModel.signals().presentation.connect(
-      [&](isaac::viewmodel::PresentationEvent) { ++firstSubscriber; });
-  const auto secondConnection = viewModel.signals().presentation.connect(
-      [&](isaac::viewmodel::PresentationEvent) { ++secondSubscriber; });
+  const auto firstConnection = viewModel.presentationSignal().connect(
+      [&](isaac::presentation::PresentationEvent) { ++firstSubscriber; });
+  const auto secondConnection = viewModel.presentationSignal().connect(
+      [&](isaac::presentation::PresentationEvent) { ++secondSubscriber; });
   model.events = {isaac::model::ModelEvent::Shot, isaac::model::ModelEvent::Hurt,
                   isaac::model::ModelEvent::Pickup};
-  viewModel.commands().tick.execute(Step);
+  viewModel.tickCommand().execute(Step);
   check(firstSubscriber == 3 && secondSubscriber == 3,
         "Model events become multi-subscriber presentation signals");
-  viewModel.commands().tick.execute(Step);
+  viewModel.tickCommand().execute(Step);
   check(firstSubscriber == 3 && secondSubscriber == 3,
         "drained Model events are not emitted twice");
 
-  viewModel.signals().presentation.disconnect(firstConnection);
+  viewModel.presentationSignal().disconnect(firstConnection);
   model.events = {isaac::model::ModelEvent::Shot};
-  viewModel.commands().tick.execute(Step);
+  viewModel.tickCommand().execute(Step);
   check(firstSubscriber == 3 && secondSubscriber == 4,
         "disconnecting one signal subscriber leaves the other active");
 
-  viewModel.properties().display.changed().disconnect(connection);
-  viewModel.signals().presentation.disconnect(secondConnection);
+  viewModel.displayProperty().changed().disconnect(connection);
+  viewModel.presentationSignal().disconnect(secondConnection);
 
   std::vector<std::string> fatalDamageOrder;
-  const auto fatalPropertyConnection = viewModel.properties().display.changed().connect(
-      [&](const isaac::viewmodel::DisplayState& display) {
+  const auto fatalPropertyConnection = viewModel.displayProperty().changed().connect(
+      [&](const isaac::presentation::DisplayState& display) {
         if (display.screen == ScreenState::Defeat) fatalDamageOrder.emplace_back("property");
       });
-  const auto fatalSignalConnection = viewModel.signals().presentation.connect(
-      [&](isaac::viewmodel::PresentationEvent event) {
-        if (event == isaac::viewmodel::PresentationEvent::Hurt) fatalDamageOrder.emplace_back("hurt");
-        if (event == isaac::viewmodel::PresentationEvent::Defeat) fatalDamageOrder.emplace_back("defeat");
+  const auto fatalSignalConnection = viewModel.presentationSignal().connect(
+      [&](isaac::presentation::PresentationEvent event) {
+        if (event == isaac::presentation::PresentationEvent::Hurt) fatalDamageOrder.emplace_back("hurt");
+        if (event == isaac::presentation::PresentationEvent::Defeat) fatalDamageOrder.emplace_back("defeat");
       });
   model.state.playerDead = true;
   model.events = {isaac::model::ModelEvent::Hurt};
-  viewModel.commands().tick.execute(Step);
+  viewModel.tickCommand().execute(Step);
   check(fatalDamageOrder == std::vector<std::string>{"property", "hurt", "defeat"},
         "fatal damage publishes Property, Hurt, then Defeat in order");
-  viewModel.properties().display.changed().disconnect(fatalPropertyConnection);
-  viewModel.signals().presentation.disconnect(fatalSignalConnection);
+  viewModel.displayProperty().changed().disconnect(fatalPropertyConnection);
+  viewModel.presentationSignal().disconnect(fatalSignalConnection);
 
   FakeGameSession cainModel;
   cainModel.character = {"cain", "Cain", 2, 145.F, 4.2F, 1.F};
   cainModel.state.characterId = "cain";
   isaac::viewmodel::GameViewModel cainViewModel(cainModel);
-  const auto& cainDisplay = cainViewModel.properties().display.get();
-  check(cainDisplay.selectionStyle == isaac::viewmodel::CharacterStyle::Cain &&
-            cainDisplay.entities.front().characterStyle == isaac::viewmodel::CharacterStyle::Cain,
+  const auto& cainDisplay = cainViewModel.displayProperty().get();
+  check(cainDisplay.selectionStyle == isaac::presentation::CharacterStyle::Cain &&
+            cainDisplay.entities.front().characterStyle == isaac::presentation::CharacterStyle::Cain,
         "known Model character IDs become typed presentation styles");
 
   FakeGameSession unknownModel;
   unknownModel.character.id = "unknown";
   unknownModel.state.characterId = "unknown";
   isaac::viewmodel::GameViewModel unknownViewModel(unknownModel);
-  const auto& unknownDisplay = unknownViewModel.properties().display.get();
-  check(unknownDisplay.selectionStyle == isaac::viewmodel::CharacterStyle::Isaac &&
-            unknownDisplay.entities.front().characterStyle == isaac::viewmodel::CharacterStyle::Isaac,
+  const auto& unknownDisplay = unknownViewModel.displayProperty().get();
+  check(unknownDisplay.selectionStyle == isaac::presentation::CharacterStyle::Isaac &&
+            unknownDisplay.entities.front().characterStyle == isaac::presentation::CharacterStyle::Isaac,
         "unknown character IDs use the Isaac presentation fallback");
 
   return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;

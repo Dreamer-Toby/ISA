@@ -55,7 +55,7 @@ target_link_libraries(isaac_resource PUBLIC SFML::Graphics SFML::Audio)
 target_include_directories(isaac_resource PUBLIC src)
 
 add_library(isaac_view STATIC src/view/GameView.cpp)
-target_link_libraries(isaac_view PUBLIC isaac_viewmodel isaac_resource SFML::Graphics SFML::Audio)
+target_link_libraries(isaac_view PUBLIC isaac_common isaac_resource SFML::Graphics SFML::Audio)
 target_include_directories(isaac_view PUBLIC src)
 
 add_executable(isaac_course_game src/app/main.cpp src/app/Application.cpp)

@@ -13,35 +13,35 @@ void check(bool condition, const char* message) {
 }
 
 void tick(isaac::viewmodel::GameViewModel& viewModel) {
-  viewModel.commands().tick.execute(Step);
+  viewModel.tickCommand().execute(Step);
 }
 
-void act(isaac::viewmodel::GameViewModel& viewModel, isaac::viewmodel::UserAction action) {
-  viewModel.commands().action.execute(action);
+void act(isaac::viewmodel::GameViewModel& viewModel, isaac::presentation::UserAction action) {
+  viewModel.actionCommand().execute(action);
   tick(viewModel);
 }
 
-const isaac::viewmodel::DisplayState& display(const isaac::viewmodel::GameViewModel& viewModel) {
-  return viewModel.properties().display.get();
+const isaac::presentation::DisplayState& display(const isaac::viewmodel::GameViewModel& viewModel) {
+  return viewModel.displayProperty().get();
 }
 }  // namespace
 
 int main() {
   using isaac::common::ScreenState;
-  using isaac::viewmodel::UserAction;
+  using isaac::presentation::UserAction;
 
   {
     isaac::model::GameSession bindingSession;
     isaac::viewmodel::GameViewModel bindingViewModel(bindingSession);
     int propertyChanges{};
-    const auto connection = bindingViewModel.properties().display.changed().connect(
-        [&](const isaac::viewmodel::DisplayState&) { ++propertyChanges; });
-    bindingViewModel.commands().action.execute(UserAction::Confirm);
+    const auto connection = bindingViewModel.displayProperty().changed().connect(
+        [&](const isaac::presentation::DisplayState&) { ++propertyChanges; });
+    bindingViewModel.actionCommand().execute(UserAction::Confirm);
     tick(bindingViewModel);
     check(display(bindingViewModel).screen == ScreenState::MainMenu,
           "confirm command publishes the display property");
     check(propertyChanges == 1, "display property notifies its bound view once");
-    bindingViewModel.properties().display.changed().disconnect(connection);
+    bindingViewModel.displayProperty().changed().disconnect(connection);
     tick(bindingViewModel);
     check(propertyChanges == 1, "disconnected view no longer receives property changes");
   }
@@ -50,15 +50,15 @@ int main() {
     isaac::model::GameSession signalSession;
     isaac::viewmodel::GameViewModel signalViewModel(signalSession);
     int shotSignals{};
-    const auto connection = signalViewModel.signals().presentation.connect(
-        [&](isaac::viewmodel::PresentationEvent event) {
-          if (event == isaac::viewmodel::PresentationEvent::Shot) ++shotSignals;
+    const auto connection = signalViewModel.presentationSignal().connect(
+        [&](isaac::presentation::PresentationEvent event) {
+          if (event == isaac::presentation::PresentationEvent::Shot) ++shotSignals;
         });
     for (int step = 0; step < 3; ++step) act(signalViewModel, UserAction::Confirm);
-    signalViewModel.commands().setInput.execute({{}, {1.F, 0.F}});
+    signalViewModel.inputCommand().execute({{}, {1.F, 0.F}});
     tick(signalViewModel);
     check(shotSignals == 1, "shoot command emits one presentation signal");
-    signalViewModel.signals().presentation.disconnect(connection);
+    signalViewModel.presentationSignal().disconnect(connection);
   }
 
   {

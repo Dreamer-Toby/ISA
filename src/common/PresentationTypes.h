@@ -6,7 +6,25 @@
 #include <string>
 #include <vector>
 
-namespace isaac::viewmodel {
+namespace isaac::presentation {
+
+struct RealtimeInput {
+  common::Vec2 movement;
+  common::Vec2 shooting;
+};
+
+enum class UserAction {
+  Confirm,
+  Back,
+  NavigateUp,
+  NavigateDown,
+  NavigateLeft,
+  NavigateRight,
+  UseBomb,
+  UseActive
+};
+
+enum class PresentationEvent { Shot, Hurt, Pickup, Defeat };
 
 enum class CharacterStyle { Isaac, Magdalene, Cain, Judas };
 
@@ -54,4 +72,4 @@ struct DisplayState {
   std::vector<MinimapRoomDTO> minimap;
 };
 
-}  // namespace isaac::viewmodel
+}  // namespace isaac::presentation
