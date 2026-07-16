@@ -19,8 +19,10 @@ Access date for every entry below: **2026-07-13**. The Wiki intermittently retur
 | 美味的心 | https://isaac.huijiwiki.com/wiki/C45 | Active healing item associated with Magdalene; restores red-heart health. | `Yum Heart` heals one whole course heart. Original charge/synergy details are omitted. |
 | 彼列之书 | https://isaac.huijiwiki.com/wiki/C34 | Active book grants temporary damage, with the Wiki listing +2 damage in the current room. | `Book of Belial` grants +2 damage when used; room-duration/charge and repeated-use DLC differences are simplified. |
 | 小石头 | https://isaac.huijiwiki.com/wiki/C90 | Passive offensive item whose identity is a damage increase with tear-side tradeoffs in the original. | `Small Rock` stacks +1 damage; original speed/stat side effects are omitted. |
-| 悲伤洋葱 | https://isaac.huijiwiki.com/wiki/C1 | Passive tears/rate increase. | `Sad Onion` multiplies shot interval by 0.85 with a safe lower bound; exact tears formula is simplified. |
+| 悲伤洋葱 | https://isaac.huijiwiki.com/wiki/C1 | Passive tears/rate increase; the user identified the green `prop5` image as this separate rate item. | `Sad Onion` multiplies shot interval by 0.85 with a safe lower bound; exact tears formula is simplified. |
 | 幸运脚趾 | https://isaac.huijiwiki.com/wiki/T42 | Trinket described by the Wiki data table as luck up and affecting reward odds. | `Lucky Toe` occupies the trinket slot and adds +1 course luck; detailed machine/drop tables are omitted. |
+| 早餐 / Breakfast | User-identified `prop0` milk material | The requested treasure-room health item must visibly exist and restore health. | Adds one red-heart container and heals one whole course heart on pickup. |
+| Wiggle Worm | User-provided `prop6` material | The requested snake-tear item needs a curved projectile path without a fire-rate bonus. | Enables a bounded sine offset around the projectile's forward trajectory and leaves shot interval unchanged. |
 
 ## Enemy and boss research matrix
 
@@ -34,12 +36,12 @@ The implemented roster deliberately uses broad behavior references rather than o
 | Monstro | https://isaac.huijiwiki.com/wiki/萌死戳 | leap/shot rhythm | two timed phases |
 | Duke of Flies | https://isaac.huijiwiki.com/wiki/苍蝇公爵 | summons/protective orbit identity | radial projectiles and faster second phase |
 | Larry Jr. | https://isaac.huijiwiki.com/wiki/小拉里 | segmented charge identity | axis-aligned dash state |
-| Mom | https://isaac.huijiwiki.com/wiki/妈妈 | final stomping attack | simplified Mom's Leg warning/stomp cycle |
+| Mom | https://isaac.huijiwiki.com/wiki/妈妈 | final stomping attack | Historical Stage 6 research only; removed with the requested third-floor deletion. |
 
 ## Conflict decisions
 
 - The Wiki's exact stats vary by edition/DLC. This project uses stable, documented course values and retains only the role identity.
 - Original health displays include many heart types. The course version has red hearts plus one shield/soul-heart pool, capped together at 12 hearts.
 - Original devil-room probability depends on many run conditions. The course version uses one injectable 35% roll after a boss.
-- Original maps use large layout pools. The course version guarantees five required room types in a small connected graph on each of three floors.
-- Item values differ across editions and use the original game's nonlinear stat formulas. The five dedicated rows above freeze transparent course values rather than mixing editions.
+- Original maps use large layout pools. The course version guarantees five required room types in a small connected graph on each of two floors.
+- Item values differ across editions and use the original game's nonlinear stat formulas. The seven dedicated rows above freeze transparent course values rather than mixing editions.

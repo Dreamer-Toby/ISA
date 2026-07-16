@@ -4,19 +4,76 @@
 
 #include <algorithm>
 #include <array>
+#include <random>
+#include <string_view>
 #include <utility>
+
+namespace {
+
+constexpr float PlayerRadius = 18.F;
+constexpr float ProjectileRadius = 6.F;
+constexpr isaac::common::Vec2 TreasureItemPosition{480.F, 300.F};
+constexpr std::array<isaac::model::ObstacleSnapshot, 2> RoomObstacles{{
+    {isaac::common::ObstacleType::Rock, {315.F, 270.F}, 28.F},
+    {isaac::common::ObstacleType::Trap, {710.F, 430.F}, 20.F},
+}};
+
+bool overlaps(isaac::common::Vec2 first, float firstRadius,
+              isaac::common::Vec2 second, float secondRadius) {
+  const float combinedRadius = firstRadius + secondRadius;
+  return (first - second).lengthSquared() < combinedRadius * combinedRadius;
+}
+
+bool overlapsRock(isaac::common::Vec2 position, float radius) {
+  return std::ranges::any_of(RoomObstacles, [position, radius](const auto& obstacle) {
+    return obstacle.type == isaac::common::ObstacleType::Rock &&
+           overlaps(position, radius, obstacle.position, obstacle.radius);
+  });
+}
+
+isaac::common::Vec2 resolveRockOverlap(isaac::common::Vec2 position, float radius) {
+  for (const auto& obstacle : RoomObstacles) {
+    if (obstacle.type != isaac::common::ObstacleType::Rock ||
+        !overlaps(position, radius, obstacle.position, obstacle.radius)) continue;
+    auto direction = (position - obstacle.position).normalized();
+    if (direction.lengthSquared() < 0.1F) direction = {1.F, 0.F};
+    position = obstacle.position + direction * (radius + obstacle.radius);
+  }
+  return position;
+}
+
+}  // namespace
 
 namespace isaac::model {
 
-GameSession::GameSession(float devilRoomRoll)
-    : player_(CharacterCatalog::at(0)), level_(1337U), devilRoomRoll_(devilRoomRoll) { rebuildSnapshot(); }
+GameSession::GameSession(float devilRoomRoll, unsigned treasureSeed)
+    : player_(CharacterCatalog::at(0)), level_(1337U), devilRoomRoll_(devilRoomRoll),
+      treasureRng_(treasureSeed == 0U ? std::random_device{}() : treasureSeed) {
+  chooseTreasureItem();
+  rebuildSnapshot();
+}
+
+void GameSession::chooseTreasureItem() {
+  static constexpr std::array<std::string_view, 3> rewards{
+      "breakfast", "wiggle_worm", "sad_onion"};
+  std::uniform_int_distribution<std::size_t> choose(0, rewards.size() - 1);
+  treasureItemId_ = rewards[choose(treasureRng_)];
+}
 
 void GameSession::selectCharacter(std::size_t index) {
   player_ = Player(CharacterCatalog::at(index));
+  level_ = Level(1337U);
+  enemies_ = EnemySystem{};
+  pickups_.clear();
+  items_ = ItemSystem{};
+  bosses_ = BossSystem{};
+  bossEncounterActive_ = false;
+  bossRewardResolved_ = false;
+  runCompleted_ = false;
   projectiles_.clear();
+  snapshot_ = SessionSnapshot{};
   pendingEvents_.clear();
-  snapshot_.totalShots = 0;
-  snapshot_.elapsedSeconds = 0.F;
+  chooseTreasureItem();
   rebuildSnapshot();
 }
 
@@ -41,6 +98,13 @@ void GameSession::update(float seconds, const GameplayInput& input) {
   snapshot_.elapsedSeconds += seconds;
   player_.tick(seconds);
   player_.move(input.movement, seconds);
+  player_.setPosition(resolveRockOverlap(player_.position(), PlayerRadius));
+
+  const bool hurtByTrap = std::ranges::any_of(RoomObstacles, [this](const auto& obstacle) {
+    return obstacle.type == common::ObstacleType::Trap &&
+           overlaps(player_.position(), PlayerRadius, obstacle.position, obstacle.radius) &&
+           player_.damageHalfHeart();
+  });
 
   std::optional<common::Direction> exitDirection;
   if (player_.position().x <= 60.1F && input.movement.x < 0.F) exitDirection = common::Direction::Left;
@@ -71,15 +135,18 @@ void GameSession::update(float seconds, const GameplayInput& input) {
   if (input.shooting.lengthSquared() > 0.1F && player_.canShoot()) {
     const auto direction = input.shooting.normalized();
     projectiles_.push_back({player_.position(), direction * player_.shooting().projectileSpeed(),
-                            player_.shooting().damage(), 1.6F, true, true});
+                            player_.shooting().damage(), 1.6F, true, true,
+                            player_.shooting().sineProjectiles()});
     ++snapshot_.totalShots;
     pendingEvents_.push_back(ModelEvent::Shot);
   }
   for (auto& projectile : projectiles_) projectile.update(seconds);
-  std::erase_if(projectiles_, [](const Projectile& projectile) { return !projectile.alive; });
+  std::erase_if(projectiles_, [](const Projectile& projectile) {
+    return !projectile.alive || overlapsRock(projectile.position, ProjectileRadius);
+  });
   const bool hurtByEnemy = enemies_.update(seconds, player_, projectiles_, pickups_);
   const bool hurtByBoss = bosses_.update(seconds, player_, projectiles_);
-  if (hurtByEnemy || hurtByBoss) {
+  if (hurtByTrap || hurtByEnemy || hurtByBoss) {
     pendingEvents_.push_back(ModelEvent::Hurt);
   }
   if (level_.currentRoom().type == common::RoomType::Normal &&
@@ -103,18 +170,23 @@ void GameSession::update(float seconds, const GameplayInput& input) {
   std::erase_if(pickups_, [this](const Pickup& pickup) {
     return (pickup.position - player_.position()).lengthSquared() < 26.F * 26.F;
   });
+  if (level_.currentRoom().type == common::RoomType::Treasure && !items_.treasureTaken() &&
+      overlaps(player_.position(), PlayerRadius, TreasureItemPosition, 18.F) &&
+      items_.takeTreasureItem(player_, treasureItemId_)) {
+    pendingEvents_.push_back(ModelEvent::Pickup);
+  }
   if (input.useActive) items_.useActive(player_);
   if (input.interact && level_.currentRoom().cleared) {
-    if (level_.currentRoom().type == common::RoomType::Treasure) items_.openChest(player_);
     if (level_.currentRoom().type == common::RoomType::Shop) items_.buyShopItem(player_);
     if (level_.currentRoom().type == common::RoomType::Boss) {
-      if (level_.floorNumber() == 3) {
+      if (level_.floorNumber() == Level::MaxFloors) {
         runCompleted_ = true;
       } else if (level_.advanceFloor()) {
         player_.setPosition({480.F, 300.F});
         projectiles_.clear(); pickups_.clear(); enemies_ = EnemySystem{}; bosses_ = BossSystem{};
         items_ = ItemSystem{};
         bossRewardResolved_ = false;
+        chooseTreasureItem();
       }
     }
   }
@@ -125,8 +197,11 @@ void GameSession::update(float seconds, const GameplayInput& input) {
 void GameSession::rebuildSnapshot() {
   snapshot_.playerPosition = player_.position();
   snapshot_.characterId = std::string(player_.definition().id);
-  snapshot_.redHearts = player_.health().red();
-  snapshot_.shields = player_.health().shields();
+  snapshot_.heartContainers = player_.health().containers();
+  snapshot_.redHearts = player_.health().redHalfUnits() / 2;
+  snapshot_.redHalfHeart = player_.health().redHalfUnits() % 2 != 0;
+  snapshot_.shields = player_.health().shieldHalfUnits() / 2;
+  snapshot_.shieldHalfHeart = player_.health().shieldHalfUnits() % 2 != 0;
   snapshot_.coins = player_.inventory().coins();
   snapshot_.bombs = player_.inventory().bombs();
   snapshot_.keys = player_.inventory().keys();
@@ -169,11 +244,16 @@ void GameSession::rebuildSnapshot() {
   for (const auto& boss : bosses_.bosses()) {
     snapshot_.bosses.push_back({boss.position, std::string(BossCatalog::all()[boss.definitionIndex].id), boss.phase});
   }
+  snapshot_.obstacles.assign(RoomObstacles.begin(), RoomObstacles.end());
+  snapshot_.treasureItems.clear();
+  if (level_.currentRoom().type == common::RoomType::Treasure && !items_.treasureTaken()) {
+    snapshot_.treasureItems.push_back({TreasureItemPosition, treasureItemId_});
+  }
   snapshot_.devilRoomAvailable = std::ranges::any_of(level_.rooms(), [](const Room& room) {
     return room.type == common::RoomType::Devil;
   });
   snapshot_.roomRewardCollected =
-      (level_.currentRoom().type == common::RoomType::Treasure && items_.chestOpened()) ||
+      (level_.currentRoom().type == common::RoomType::Treasure && items_.treasureTaken()) ||
       (level_.currentRoom().type == common::RoomType::Shop && items_.shopSold()) ||
       (level_.currentRoom().type == common::RoomType::Secret && items_.secretTaken());
 }

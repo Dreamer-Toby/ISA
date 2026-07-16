@@ -62,6 +62,17 @@ struct PickupSnapshot {
   common::PickupType type{};
 };
 
+struct ObstacleSnapshot {
+  common::ObstacleType type{common::ObstacleType::Rock};
+  common::Vec2 position;
+  float radius{};
+};
+
+struct TreasureItemSnapshot {
+  common::Vec2 position;
+  std::string id;
+};
+
 struct BossSnapshot {
   common::Vec2 position;
   std::string id;
@@ -71,8 +82,11 @@ struct BossSnapshot {
 struct SessionSnapshot {
   common::Vec2 playerPosition{480.F, 300.F};
   std::string characterId{"isaac"};
+  int heartContainers{3};
   int redHearts{3};
+  bool redHalfHeart{};
   int shields{};
+  bool shieldHalfHeart{};
   int coins{};
   int bombs{1};
   int keys{2};
@@ -87,6 +101,8 @@ struct SessionSnapshot {
   std::vector<EnemySnapshot> enemies;
   std::vector<PickupSnapshot> pickups;
   std::vector<BossSnapshot> bosses;
+  std::vector<ObstacleSnapshot> obstacles;
+  std::vector<TreasureItemSnapshot> treasureItems;
   int floor{1};
   common::RoomType roomType{common::RoomType::Normal};
   bool roomCleared{true};

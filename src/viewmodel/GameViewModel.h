@@ -36,6 +36,7 @@ class GameViewModel {
   common::ScreenState screen_{common::ScreenState::Start};
   std::size_t selectedCharacter_{};
   int menuIndex_{};
+  int pauseMenuIndex_{};
   presentation::RealtimeInput realtimeInput_;
   std::vector<presentation::UserAction> pendingActions_;
   common::Property<presentation::DisplayState> displayProperty_;

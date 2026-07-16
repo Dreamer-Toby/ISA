@@ -23,6 +23,8 @@ struct Room {
 
 class Level {
  public:
+  static constexpr int MaxFloors = 2;
+
   explicit Level(unsigned seed = 1U);
   [[nodiscard]] int floorNumber() const { return floorIndex_ + 1; }
   [[nodiscard]] int currentRoomId() const { return currentRoom_; }

@@ -70,3 +70,19 @@
 
 - Imported four door images and six character portraits from the user-provided local material library. The View now draws directional normal, treasure, locked, Boss and trapdoor states, plus distinct Cain, Judas and Magdalene heads.
 - Added pure Model door snapshots, contextual ViewModel mission text, per-floor reward reset and regression coverage for hidden, locked, sealed and cleared exits.
+
+### Stage 11 - gameplay feedback correction
+
+- Replaced the four-choice menu with `RUN / RANKINGS / BACK`, made pause selection input-driven, and removed the mission overlay.
+- Promoted the displayed rock and trap into Model-owned physical entities. Rocks block player movement and projectiles; traps deal a true half heart and the HUD renders full, half, empty and shield states from DTOs.
+- Made character selection reset the complete run after defeat, and made Breakfast add/heal health.
+- Added one visible random Breakfast, Wiggle Worm or Sad Onion to each treasure room. Milk Breakfast adds/heals health, Wiggle Worm only enables the sine trajectory, and green Sad Onion independently raises fire rate.
+- Removed floor three and its Mom's Leg encounter; floor two's dual Boss fight now completes the run.
+- Added Model/ViewModel regressions and a two-floor deterministic course demo while preserving the strict MVVM include boundaries.
+
+### Stage 12 - door and treasure identity correction
+
+- Replaced the ordinary-door Red Room outline with the user-selected golden door and baked four lossless directional assets: right is the exact horizontal pixel mirror of left, and up is the exact vertical pixel mirror of down.
+- Normalized treasure, shop and Boss door scaling against the same along-wall span as ordinary doors, so opposite exits no longer render at visibly different sizes.
+- Corrected treasure presentation to `prop0` Breakfast milk, `prop5` Sad Onion fire-rate item and `prop6` Wiggle Worm; kept all item rules in Model and all sprite/direction transforms in View.
+- Added failing-first regressions proving Wiggle Worm does not alter fire rate, Sad Onion is independently collectible, and seeded treasure selection reaches all three rewards.

@@ -10,7 +10,7 @@
 
 namespace isaac::model {
 
-enum class BossPattern { LeapVolley, OrbitBurst, AxisDash, WarningStomp };
+enum class BossPattern { LeapVolley, OrbitBurst, AxisDash };
 
 struct BossDefinition {
   std::string_view id;
@@ -30,7 +30,7 @@ struct Boss {
 
 class BossCatalog {
  public:
-  static const std::array<BossDefinition, 4>& all();
+  static const std::array<BossDefinition, 3>& all();
 };
 
 class BossSystem {

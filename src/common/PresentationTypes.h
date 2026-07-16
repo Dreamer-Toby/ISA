@@ -33,11 +33,15 @@ struct EntityDTO {
   common::Vec2 position{};
   float radius{12.F};
   CharacterStyle characterStyle{CharacterStyle::Isaac};
+  std::string itemId;
 };
 
 struct HudDTO {
+  int heartContainers{3};
   int redHearts{3};
+  bool redHalfHeart{};
   int shields{};
+  bool shieldHalfHeart{};
   int coins{};
   int bombs{1};
   int keys{1};
@@ -66,16 +70,10 @@ struct DoorDTO {
   bool sealed{};
 };
 
-struct ObjectiveDTO {
-  std::string title{"FIND THE FLOOR BOSS"};
-  std::string detail;
-  std::string progress;
-  std::string hint;
-};
-
 struct DisplayState {
   common::ScreenState screen{common::ScreenState::Start};
   int menuIndex{};
+  int pauseMenuIndex{};
   common::Vec2 movement;
   common::Vec2 shooting;
   std::string selectionName;
@@ -85,7 +83,6 @@ struct DisplayState {
   HudDTO hud;
   std::vector<MinimapRoomDTO> minimap;
   std::vector<DoorDTO> doors;
-  ObjectiveDTO objective;
   bool trapdoorVisible{};
 };
 

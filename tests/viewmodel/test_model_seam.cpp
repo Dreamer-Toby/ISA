@@ -1,6 +1,7 @@
 #include "model/GameSessionInterface.h"
 #include "viewmodel/GameViewModel.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -145,26 +146,42 @@ int main() {
             unknownDisplay.entities.front().characterStyle == isaac::presentation::CharacterStyle::Isaac,
         "unknown character IDs use the Isaac presentation fallback");
 
-  FakeGameSession objectiveModel;
-  objectiveModel.state.floor = 1;
-  objectiveModel.state.roomCleared = true;
-  objectiveModel.state.rooms = {
+  FakeGameSession presentationModel;
+  presentationModel.state.floor = 1;
+  presentationModel.state.roomCleared = true;
+  presentationModel.state.rooms = {
       {0, isaac::common::RoomType::Normal, 0, 0, true, true, true, true},
       {1, isaac::common::RoomType::Treasure, -1, 0, false, true, false, true},
       {2, isaac::common::RoomType::Secret, 0, -1, false, false, false, true},
   };
-  objectiveModel.state.doors = {
+  presentationModel.state.doors = {
       {isaac::common::Direction::Left, isaac::common::RoomType::Treasure, true, false, false},
       {isaac::common::Direction::Up, isaac::common::RoomType::Secret, false, true, false},
   };
-  isaac::viewmodel::GameViewModel objectiveViewModel(objectiveModel);
-  const auto& objectiveDisplay = objectiveViewModel.displayProperty().get();
-  check(objectiveDisplay.doors.size() == 1 && objectiveDisplay.doors.front().locked &&
-            objectiveDisplay.doors.front().targetType == isaac::common::RoomType::Treasure,
+  presentationModel.state.obstacles = {
+      {isaac::common::ObstacleType::Rock, {315.F, 270.F}, 28.F},
+      {isaac::common::ObstacleType::Trap, {710.F, 430.F}, 20.F},
+  };
+  presentationModel.state.treasureItems = {{{480.F, 300.F}, "breakfast"}};
+  isaac::viewmodel::GameViewModel presentationViewModel(presentationModel);
+  const auto& presentationDisplay = presentationViewModel.displayProperty().get();
+  check(presentationDisplay.doors.size() == 1 && presentationDisplay.doors.front().locked &&
+            presentationDisplay.doors.front().targetType == isaac::common::RoomType::Treasure,
         "ViewModel hides secret entrances and exposes visible typed door presentation data");
-  check(objectiveDisplay.objective.title == "FIND THE FLOOR BOSS" &&
-            objectiveDisplay.objective.progress.find("ROOMS VISITED 1/2") != std::string::npos,
-        "cleared normal room receives a detailed exploration objective");
+  const auto rock = std::ranges::find_if(presentationDisplay.entities, [](const auto& entity) {
+    return entity.kind == isaac::common::EntityKind::Rock;
+  });
+  const auto trap = std::ranges::find_if(presentationDisplay.entities, [](const auto& entity) {
+    return entity.kind == isaac::common::EntityKind::Trap;
+  });
+  const auto treasure = std::ranges::find_if(presentationDisplay.entities, [](const auto& entity) {
+    return entity.kind == isaac::common::EntityKind::TreasureItem;
+  });
+  check(rock != presentationDisplay.entities.end() && rock->radius == 28.F &&
+            trap != presentationDisplay.entities.end() && trap->radius == 20.F,
+        "modeled rocks and traps cross the ViewModel seam as typed entities");
+  check(treasure != presentationDisplay.entities.end() && treasure->itemId == "breakfast",
+        "treasure item identity crosses the ViewModel seam without exposing Model objects");
 
   FakeGameSession combatModel;
   combatModel.state.roomCleared = false;
@@ -174,9 +191,8 @@ int main() {
   };
   isaac::viewmodel::GameViewModel combatViewModel(combatModel);
   const auto& combatDisplay = combatViewModel.displayProperty().get();
-  check(combatDisplay.doors.front().sealed && combatDisplay.objective.title == "CLEAR THE ROOM" &&
-            combatDisplay.objective.progress.find("ENEMIES LEFT 2") != std::string::npos,
-        "combat objective explains sealed doors and remaining enemies");
+  check(combatDisplay.doors.front().sealed,
+        "combat room exposes sealed doors without a mission-overlay presentation model");
 
   FakeGameSession bossRewardModel;
   bossRewardModel.state.floor = 2;
@@ -185,10 +201,8 @@ int main() {
   bossRewardModel.state.devilRoomAvailable = true;
   isaac::viewmodel::GameViewModel bossRewardViewModel(bossRewardModel);
   const auto& bossRewardDisplay = bossRewardViewModel.displayProperty().get();
-  check(bossRewardDisplay.trapdoorVisible &&
-            bossRewardDisplay.objective.title == "DESCEND TO FLOOR 3" &&
-            bossRewardDisplay.objective.hint.find("DEVIL ROOM") != std::string::npos,
-        "cleared Boss room exposes the trapdoor and next-floor task");
+  check(bossRewardDisplay.trapdoorVisible,
+        "cleared Boss room exposes the trapdoor without the removed mission overlay");
 
   return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

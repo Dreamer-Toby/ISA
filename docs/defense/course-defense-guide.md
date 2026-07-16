@@ -25,23 +25,23 @@ History moves from research/architecture to SFML shell, combat, rooms, enemies, 
 
 ## Why the final version does not switch to EasyX
 
-EasyIsaac is the final visual reference, not the new architecture. EasyX is Windows/Visual-C++ specific, while the accepted project already uses SFML 3 and a testable MVVM boundary. Replacing the renderer would add platform risk and encourage copying the reference's global-state design without improving gameplay. The final branch instead imports a small traced asset subset, converts EasyX's `_back`/`_front` mask pairs to alpha textures inside Resource, and reproduces the paper menus, basement room, HUD and pause composition in `GameView`. Model and ViewModel rules are unchanged except for menu states and additional display-only HUD fields.
+EasyIsaac is the final visual reference, not the new architecture. EasyX is Windows/Visual-C++ specific, while the accepted project already uses SFML 3 and a testable MVVM boundary. Replacing the renderer would add platform risk and encourage copying the reference's global-state design without improving gameplay. The final branch instead imports a small traced asset subset, converts EasyX's `_back`/`_front` mask pairs to alpha textures inside Resource, and reproduces the paper menus, basement room, HUD and pause composition in `GameView`. Later gameplay corrections still follow the same boundary: collision/items/progression stay in Model, input selection stays in ViewModel, and asset choice stays in View.
 
 ## Test strategy
 
-Model assertions cover the 12-heart cap/damage order, death, projectile hit/destruction, clear-gated doors, key/bomb/coin success/failure, passive stacking, shop/chest, secret reveal, Boss/dead/devil/floor boundaries, fixed-seed connectivity and 30/60/120 FPS-equivalent fixed steps. A ViewModel flow test covers main menu, quick run, rankings, selection, pause/resume, HUD, defeat and three-floor victory. Resource tests verify pointer-identical texture/audio caching, differently sized EasyX mask pairs, missing diagnostics and one-to-one provenance. Debug, Release and supported sanitizer builds are recorded in project evidence.
+Model assertions cover the 12-heart cap/damage order, exact half-heart traps, rock/player/projectile collision, complete run reset, visible one-item treasure rooms, three independent treasure effects, sine trajectories, clear-gated doors, economy, secret reveal, Boss/devil/two-floor boundaries, fixed-seed connectivity and 30/60/120 FPS-equivalent fixed steps. A ViewModel flow test covers the three-option main menu, rankings, selection, stable pause selection, pause exit/resume, HUD, defeat/restart and two-floor victory. Resource tests verify pointer-identical texture/audio caching, differently sized EasyX mask pairs, missing diagnostics and one-to-one provenance. Debug and Release builds plus the architecture scan are release gates.
 
 ## Scope simplification
 
-The original game's catalogs, exact DLC formulas, layout pools, angel/deal conditions and heart taxonomy become four characters, six enemies, four Bosses, six-node floors, one 35% devil rule and red/shield hearts. This keeps a closed architecture/gameplay demonstration without pretending to be a full clone.
+The original game's catalogs, exact DLC formulas, layout pools, angel/deal conditions and heart taxonomy become four characters, six enemies, three Bosses, two six-node floors, one 35% devil rule and half-heart-aware red/shield health. This keeps a closed architecture/gameplay demonstration without pretending to be a full clone.
 
 ## Demonstration order
 
 1. Start and choose characters to show configured stat differences.
-2. Move/shoot; pause/resume; show HUD and minimap.
-3. Clear a normal room and observe transition/drop.
-4. Spend key/coin/bomb at chest, shop and hidden entrance; show item state.
-5. Show four Boss definitions and finish floor three against Mom's Leg.
+2. Move/shoot; use both stable pause choices; show HUD and minimap.
+3. Walk into a rock, shoot it, and step on a trap to show physical volume and half-heart damage.
+4. Enter treasure rooms and identify the single milk Breakfast, snake Wiggle Worm or green Sad Onion; demonstrate health, sine-only tears and fire-rate-only effects separately.
+5. Spend coin/bomb at the shop and hidden entrance, then finish the floor-two dual-Boss encounter.
 6. Trigger defeat separately and present deterministic tests/architecture scan.
 
 Likely questions: “Why not ECS?” — unnecessary for this bounded roster. “Does View include Model?” — the scan rejects it. “What if assets are absent?” — Resource reports it and View falls back. “How is randomness tested?” — floors use seeds and devil rooms accept a unit roll.

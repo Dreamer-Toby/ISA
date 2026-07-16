@@ -76,7 +76,8 @@ bool Level::enter(int roomId, Inventory& inventory, bool useBomb) {
 void Level::markCurrentCleared() { rooms_[currentRoom_].cleared = true; }
 
 bool Level::advanceFloor() {
-  if (currentRoom().type != common::RoomType::Boss || !currentRoom().cleared || floorIndex_ >= 2) return false;
+  if (currentRoom().type != common::RoomType::Boss || !currentRoom().cleared ||
+      floorIndex_ >= MaxFloors - 1) return false;
   ++floorIndex_;
   generateFloor();
   return true;

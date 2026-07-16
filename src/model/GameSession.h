@@ -8,13 +8,15 @@
 #include "model/ItemSystem.h"
 #include "model/BossSystem.h"
 
+#include <random>
+#include <string>
 #include <vector>
 
 namespace isaac::model {
 
 class GameSession final : public GameSessionInterface {
  public:
-  explicit GameSession(float devilRoomRoll = 0.2F);
+  explicit GameSession(float devilRoomRoll = 0.2F, unsigned treasureSeed = 0U);
   void selectCharacter(std::size_t index) override;
   void update(float seconds, const GameplayInput& input) override;
   [[nodiscard]] const SessionSnapshot& snapshot() const override { return snapshot_; }
@@ -29,6 +31,7 @@ class GameSession final : public GameSessionInterface {
   [[nodiscard]] EnemySystem& enemySystem() { return enemies_; }
 
  private:
+  void chooseTreasureItem();
   void rebuildSnapshot();
   Player player_;
   Level level_;
@@ -37,6 +40,8 @@ class GameSession final : public GameSessionInterface {
   ItemSystem items_;
   BossSystem bosses_;
   float devilRoomRoll_{};
+  std::mt19937 treasureRng_;
+  std::string treasureItemId_;
   bool bossEncounterActive_{};
   bool bossRewardResolved_{};
   bool runCompleted_{};

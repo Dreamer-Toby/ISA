@@ -143,6 +143,23 @@ Commit hashes are recorded only after the referenced commit exists; stage tags p
 - Unresolved: the local material library contains no external URL or license metadata; the asset manifest records that gap.
 - MVVM self-check: Model remains SFML-free, View includes no Model header, ViewModel adds no traversal or combat rule, and the App loop remains unchanged.
 
+## Iteration 11 — 2026-07-16
+
+- Objective: apply the second visual/gameplay feedback set without weakening strict MVVM.
+- Prior problem: the menu retained Quick Run, the pause sprite alternated by clock time, a mission overlay covered the room, obstacles were View-only decoration, defeat retained run state, Breakfast did not heal, treasure rooms had no visible reward, and a third floor remained.
+- Actual change: a three-option menu and input-owned pause index; no mission DTO/panel; Model obstacle and treasure snapshots; rock collision for player/projectiles; half-heart trap health and HUD sprites; complete run reset; visible treasure rewards; two-floor/three-Boss completion.
+- Architecture effect: GameSession owns collision, damage, random reward, item effects and progression. GameViewModel translates typed snapshots and owns only screen/menu state. GameView selects the existing obstacle, prop and health sprites.
+- Verification: tests were written to fail first, then all seven Debug CTests passed, including strict include boundaries and the deterministic public course demo. Release and short live-window checks are recorded at delivery.
+- MVVM self-check: Model remains SFML-free; View still has no Model include; ViewModel contains no collision, item or progression rules; asset paths remain under Resource `AssetCatalog`.
+
+## Iteration 12 — 2026-07-17
+
+- Objective: correct the ordinary door and separate the three treasure-item identities after visual feedback.
+- Prior problem: the ordinary door used a red Red Room outline; `prop5` was misidentified as Breakfast; Wiggle Worm incorrectly bundled a fire-rate multiplier with its sine trajectory.
+- Actual change: deterministically cropped the user's selected gold-door pixels and baked four direction files; right is a horizontal pixel mirror of left, while up is a vertical pixel mirror of down. Matched special-door and ordinary-door along-wall spans so opposite exits have the same visible size. Mapped milk `prop0` to Breakfast, green `prop5` to Sad Onion and snake `prop6` to Wiggle Worm; expanded the treasure pool to all three.
+- Architecture effect: ItemSystem/GameSession alone own effect and reward rules, GameViewModel continues to pass only item IDs and door DTOs, and GameView/AssetCatalog alone own directional sprite selection.
+- Verification: failing-first Model assertions cover sine-only Wiggle Worm, rate-only Sad Onion and seeded access to all three rewards; Resource tests decode all four door files and compare both mirror pairs pixel by pixel; Debug/Release, provenance and live-window checks are release gates.
+
 ## Existing stage evidence
 
 | Stage | Commit | Tag |

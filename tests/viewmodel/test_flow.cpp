@@ -62,26 +62,18 @@ int main() {
   }
 
   {
-    isaac::model::GameSession quickSession;
-    isaac::viewmodel::GameViewModel quickViewModel(quickSession);
-    act(quickViewModel, UserAction::Confirm);
-    act(quickViewModel, UserAction::NavigateDown);
-    act(quickViewModel, UserAction::Confirm);
-    check(display(quickViewModel).screen == ScreenState::Playing,
-          "quick run starts Isaac without character selection");
-    check(quickSession.snapshot().characterId == "isaac", "quick run selects Isaac");
-  }
-
-  {
     isaac::model::GameSession rankSession;
     isaac::viewmodel::GameViewModel rankViewModel(rankSession);
     act(rankViewModel, UserAction::Confirm);
-    act(rankViewModel, UserAction::NavigateDown);
     act(rankViewModel, UserAction::NavigateDown);
     act(rankViewModel, UserAction::Confirm);
     check(display(rankViewModel).screen == ScreenState::Rankings, "rankings page opens");
     act(rankViewModel, UserAction::Back);
     check(display(rankViewModel).screen == ScreenState::MainMenu, "rankings page returns to menu");
+    act(rankViewModel, UserAction::NavigateDown);
+    act(rankViewModel, UserAction::Confirm);
+    check(display(rankViewModel).screen == ScreenState::Start,
+          "third and final menu option returns to the title");
   }
 
   isaac::model::GameSession session;
@@ -101,21 +93,52 @@ int main() {
   check(session.snapshot().characterId == "cain", "non-default selected character reaches Model");
   act(viewModel, UserAction::Back);
   check(display(viewModel).screen == ScreenState::Paused, "pause screen");
+  check(display(viewModel).pauseMenuIndex == 0, "pause defaults to continue");
+  for (int frame = 0; frame < 120; ++frame) tick(viewModel);
+  check(display(viewModel).pauseMenuIndex == 0,
+        "pause selection remains stable while no input is given");
+  act(viewModel, UserAction::NavigateDown);
+  check(display(viewModel).pauseMenuIndex == 1, "pause down selects exit");
+  act(viewModel, UserAction::NavigateUp);
+  check(display(viewModel).pauseMenuIndex == 0, "pause up selects continue");
+  act(viewModel, UserAction::Confirm);
+  check(display(viewModel).screen == ScreenState::Playing, "pause continue resumes the run");
   act(viewModel, UserAction::Back);
-  check(display(viewModel).screen == ScreenState::Playing, "resume screen");
+  act(viewModel, UserAction::NavigateDown);
+  act(viewModel, UserAction::Confirm);
+  check(display(viewModel).screen == ScreenState::MainMenu, "pause exit returns to the menu");
+  act(viewModel, UserAction::Confirm);
+  act(viewModel, UserAction::Confirm);
+  check(display(viewModel).screen == ScreenState::Playing, "RUN starts a new selected-character run");
   const auto hud = display(viewModel).hud;
   check(hud.redHearts > 0 && hud.floor == 1 && !hud.activeItem.empty(), "HUD exposes required state");
+
+  auto& resetLevel = session.level();
+  check(resetLevel.enter(1, session.player().inventory(), false), "prepare restart regression room");
+  resetLevel.markCurrentCleared();
+  check(resetLevel.enter(5, session.player().inventory(), false), "prepare restart regression boss");
+  resetLevel.markCurrentCleared();
+  check(resetLevel.advanceFloor(), "prepare restart regression second floor");
+  session.player().setPosition({800.F, 420.F});
   session.player().resetInvulnerability();
   session.player().damage(20);
   tick(viewModel);
   check(display(viewModel).screen == ScreenState::Defeat, "death enters defeat screen");
+  act(viewModel, UserAction::Confirm);
+  act(viewModel, UserAction::Confirm);
+  act(viewModel, UserAction::Confirm);
+  check(display(viewModel).screen == ScreenState::Playing && session.snapshot().floor == 1 &&
+            session.level().currentRoomId() == 0 &&
+            (session.snapshot().playerPosition - isaac::common::Vec2{480.F, 300.F}).lengthSquared() < 0.01F &&
+            !session.snapshot().playerDead,
+        "starting after death creates a fresh run instead of restoring the death location");
 
   isaac::model::GameSession winningSession(0.99F);
   isaac::viewmodel::GameViewModel winningViewModel(winningSession);
   act(winningViewModel, UserAction::Confirm);
   act(winningViewModel, UserAction::Confirm);
   act(winningViewModel, UserAction::Confirm);
-  for (int expectedFloor = 1; expectedFloor <= 3; ++expectedFloor) {
+  for (int expectedFloor = 1; expectedFloor <= 2; ++expectedFloor) {
     auto& level = winningSession.level();
     check(level.floorNumber() == expectedFloor, "expected floor in deterministic course flow");
     check(level.enter(1, winningSession.player().inventory(), false), "enter combat route");
@@ -124,6 +147,6 @@ int main() {
     level.markCurrentCleared();
     act(winningViewModel, UserAction::Confirm);
   }
-  check(display(winningViewModel).screen == ScreenState::Victory, "third Boss clear enters victory");
+  check(display(winningViewModel).screen == ScreenState::Victory, "second-floor Boss clear enters victory");
   return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

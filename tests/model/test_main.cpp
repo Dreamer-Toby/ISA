@@ -35,7 +35,10 @@ void runCombatUntilClear(isaac::model::GameSession& session, int maxFrames = 500
   for (int frame = 0; frame < maxFrames && !session.snapshot().roomCleared; ++frame) {
     isaac::model::GameplayInput input;
     if (!session.snapshot().enemies.empty()) {
-      input.shooting = session.snapshot().enemies.front().position - session.snapshot().playerPosition;
+      const auto toward =
+          (session.snapshot().enemies.front().position - session.snapshot().playerPosition).normalized();
+      input.shooting = toward;
+      input.movement = {-toward.y, toward.x};
     }
     session.update(1.F / 60.F, input);
   }
@@ -85,6 +88,67 @@ int main() {
         "selecting a character clears events from the previous run");
   for (int i = 0; i < 120; ++i) session.update(1.F / 60.F, {{}, {}});
   check(session.projectiles().empty(), "expired projectile is destroyed");
+
+  GameSession restartSession;
+  check(restartSession.level().enter(1, restartSession.player().inventory(), false),
+        "restart regression enters the combat route");
+  restartSession.level().markCurrentCleared();
+  check(restartSession.level().enter(5, restartSession.player().inventory(), false),
+        "restart regression enters the boss route");
+  restartSession.level().markCurrentCleared();
+  check(restartSession.level().advanceFloor(), "restart regression reaches floor two");
+  restartSession.player().setPosition({800.F, 420.F});
+  restartSession.player().damage(20);
+  restartSession.selectCharacter(2);
+  check(restartSession.snapshot().floor == 1 && restartSession.level().currentRoomId() == 0 &&
+            (restartSession.snapshot().playerPosition - isaac::common::Vec2{480.F, 300.F}).lengthSquared() < 0.01F &&
+            !restartSession.snapshot().playerDead && restartSession.snapshot().totalShots == 0 &&
+            restartSession.snapshot().elapsedSeconds == 0.F,
+        "character selection resets the complete run after death");
+
+  GameSession obstacleSession;
+  const auto rock = std::ranges::find_if(obstacleSession.snapshot().obstacles, [](const auto& obstacle) {
+    return obstacle.type == isaac::common::ObstacleType::Rock;
+  });
+  const auto trap = std::ranges::find_if(obstacleSession.snapshot().obstacles, [](const auto& obstacle) {
+    return obstacle.type == isaac::common::ObstacleType::Trap;
+  });
+  const bool hasRock = rock != obstacleSession.snapshot().obstacles.end();
+  const bool hasTrap = trap != obstacleSession.snapshot().obstacles.end();
+  check(obstacleSession.snapshot().obstacles.size() == 2 &&
+            hasRock && hasTrap,
+        "room snapshot contains one physical rock and one damaging trap");
+  const auto rockPosition = hasRock ? rock->position : isaac::common::Vec2{};
+  const float rockRadius = hasRock ? rock->radius : 0.F;
+  const auto trapPosition = hasTrap ? trap->position : isaac::common::Vec2{};
+  if (hasRock) {
+    const float contactX = rockPosition.x - rockRadius - 18.F;
+    obstacleSession.player().setPosition({contactX - 2.F, rockPosition.y});
+    for (int frame = 0; frame < 30; ++frame) {
+      obstacleSession.update(1.F / 60.F, {{1.F, 0.F}, {}});
+    }
+    check(obstacleSession.snapshot().playerPosition.x <= contactX + 0.1F,
+          "rock volume blocks player movement");
+
+    GameSession blockedShotSession;
+    blockedShotSession.player().setPosition({rockPosition.x - 100.F, rockPosition.y});
+    blockedShotSession.update(1.F / 60.F, {{}, {1.F, 0.F}});
+    for (int frame = 0; frame < 30; ++frame) blockedShotSession.update(1.F / 60.F, {});
+    check(blockedShotSession.projectiles().empty(), "rock volume destroys colliding projectiles");
+  }
+  if (hasTrap) {
+    GameSession trapSession;
+    trapSession.player().setPosition(trapPosition);
+    const int heartsBefore = trapSession.player().health().totalHalfUnits();
+    trapSession.update(0.F, {});
+    const int heartsAfter = trapSession.player().health().totalHalfUnits();
+    check(heartsAfter == heartsBefore - 1, "trap contact removes exactly half a heart");
+    check(trapSession.snapshot().redHearts == 2 && trapSession.snapshot().redHalfHeart,
+          "half-heart trap damage is preserved in the presentation snapshot");
+    const auto trapEvents = trapSession.drainEvents();
+    check(std::ranges::find(trapEvents, ModelEvent::Hurt) != trapEvents.end(),
+          "trap damage emits the standard Hurt event");
+  }
 
   GameSession hurtSession;
   for (int frame = 0; frame < 220 && hurtSession.level().currentRoomId() == 0; ++frame) {
@@ -158,15 +222,82 @@ int main() {
   itemSystem.apply(itemPlayer, ItemCatalog::byId("small_rock"));
   itemSystem.apply(itemPlayer, ItemCatalog::byId("small_rock"));
   check(itemPlayer.shooting().damage() == baseDamage + 2.F, "passive effects stack");
-  itemPlayer.inventory().useKey();
-  itemPlayer.inventory().useKey();
-  check(!itemSystem.openChest(itemPlayer), "chest fails without a key after resource is spent");
-  itemPlayer.inventory().addKeys(1);
-  check(itemSystem.openChest(itemPlayer) && itemPlayer.inventory().keys() == 0, "chest consumes key and grants item");
+  Player breakfastPlayer(CharacterCatalog::at(0));
+  breakfastPlayer.damage(1);
+  const int redBeforeBreakfast = breakfastPlayer.health().red();
+  const int containersBeforeBreakfast = breakfastPlayer.health().containers();
+  itemSystem.apply(breakfastPlayer, ItemCatalog::byId("breakfast"));
+  check(breakfastPlayer.health().red() == redBeforeBreakfast + 1 &&
+            breakfastPlayer.health().containers() == containersBeforeBreakfast + 1,
+        "Breakfast adds a container and restores a heart");
+  Player wigglePlayer(CharacterCatalog::at(0));
+  const float baseShotsPerSecond = wigglePlayer.shooting().shotsPerSecond();
+  itemSystem.apply(wigglePlayer, ItemCatalog::byId("wiggle_worm"));
+  check(wigglePlayer.shooting().sineProjectiles() &&
+            std::abs(wigglePlayer.shooting().shotsPerSecond() - baseShotsPerSecond) < 0.001F,
+        "Wiggle Worm enables sine tears without changing fire rate");
+  Player onionPlayer(CharacterCatalog::at(0));
+  const float onionBaseShotsPerSecond = onionPlayer.shooting().shotsPerSecond();
+  itemSystem.apply(onionPlayer, ItemCatalog::byId("sad_onion"));
+  check(!onionPlayer.shooting().sineProjectiles() &&
+            onionPlayer.shooting().shotsPerSecond() > onionBaseShotsPerSecond,
+        "Sad Onion raises fire rate without changing projectile trajectory");
+  Projectile sineProjectile{{100.F, 200.F}, {100.F, 0.F}, 1.F, 1.F, true, true, true};
+  sineProjectile.update(0.1F);
+  check(sineProjectile.position.x > 100.F && std::abs(sineProjectile.position.y - 200.F) > 0.1F,
+        "sine projectile follows a curved trajectory");
+  const int keysBeforeTreasure = itemPlayer.inventory().keys();
+  check(itemSystem.takeTreasureItem(itemPlayer, "breakfast") &&
+            itemPlayer.inventory().keys() == keysBeforeTreasure,
+        "treasure pickup grants the selected item without charging a second key");
+  check(!itemSystem.takeTreasureItem(itemPlayer, "wiggle_worm"),
+        "treasure room grants at most one item");
+  ItemSystem onionTreasureSystem;
+  Player onionTreasurePlayer(CharacterCatalog::at(0));
+  check(onionTreasureSystem.takeTreasureItem(onionTreasurePlayer, "sad_onion"),
+        "fire-rate item is a valid treasure-room reward");
   check(!itemSystem.buyShopItem(itemPlayer), "shop rejects insufficient coins");
   itemPlayer.inventory().addCoins(7);
   check(itemSystem.buyShopItem(itemPlayer) && itemPlayer.inventory().coins() == 2, "shop purchase is atomic");
   check(itemSystem.takeSecretTrinket(itemPlayer) && itemPlayer.luck() > 0.F, "secret trinket applies luck");
+
+  GameSession treasureSession(0.2F, 7U);
+  check(treasureSession.level().enter(2, treasureSession.player().inventory(), false),
+        "treasure room opens through its modeled locked door");
+  treasureSession.player().setPosition({890.F, 300.F});
+  treasureSession.update(0.F, {});
+  check(treasureSession.snapshot().treasureItems.size() == 1,
+        "an unclaimed treasure room contains exactly one visible item");
+  if (!treasureSession.snapshot().treasureItems.empty()) {
+    const auto treasure = treasureSession.snapshot().treasureItems.front();
+    check(treasure.id == "breakfast" || treasure.id == "wiggle_worm" ||
+              treasure.id == "sad_onion",
+          "treasure reward is selected from Breakfast, Wiggle Worm, and Sad Onion");
+    treasureSession.player().setPosition(treasure.position);
+    treasureSession.update(0.F, {});
+    check(treasureSession.snapshot().treasureItems.empty() &&
+              treasureSession.snapshot().roomRewardCollected &&
+              treasureSession.player().inventory().passiveItems().size() == 1,
+          "touching the treasure item collects it and removes it from the room");
+  }
+
+  bool sawBreakfast{};
+  bool sawWiggleWorm{};
+  bool sawSadOnion{};
+  for (unsigned seed = 1; seed <= 96; ++seed) {
+    GameSession seededTreasureSession(0.2F, seed);
+    if (!seededTreasureSession.level().enter(
+            2, seededTreasureSession.player().inventory(), false)) continue;
+    seededTreasureSession.player().setPosition({890.F, 300.F});
+    seededTreasureSession.update(0.F, {});
+    if (seededTreasureSession.snapshot().treasureItems.empty()) continue;
+    const auto& id = seededTreasureSession.snapshot().treasureItems.front().id;
+    sawBreakfast = sawBreakfast || id == "breakfast";
+    sawWiggleWorm = sawWiggleWorm || id == "wiggle_worm";
+    sawSadOnion = sawSadOnion || id == "sad_onion";
+  }
+  check(sawBreakfast && sawWiggleWorm && sawSadOnion,
+        "seeded treasure-room selection reaches all three independent rewards");
 
   Inventory economy;
   check(!economy.spendCoins(1), "coin consume fails when empty");
@@ -175,8 +306,8 @@ int main() {
   check(economy.useBomb() && !economy.useBomb(), "bomb success and failure consumption");
   check(economy.useKey() && economy.useKey() && !economy.useKey(), "key success and failure consumption");
 
-  check(BossCatalog::all().size() == 4, "four configured bosses");
-  check(BossCatalog::all().back().id == "moms_leg", "final boss is simplified Mom's Leg");
+  check(BossCatalog::all().size() == 3, "three configured bosses remain in the two-floor run");
+  check(BossCatalog::all().back().id == "larry_jr", "second-floor duo completes the Boss catalog");
   BossSystem bossSystem;
   bossSystem.spawnForFloor(2);
   check(bossSystem.bosses().size() == 2, "second floor exposes two distinct bosses");
@@ -196,6 +327,12 @@ int main() {
   progression.markCurrentCleared();
   check(progression.addDevilRoom(), "boss clear can add devil room");
   check(progression.advanceFloor() && progression.floorNumber() == 2, "boss death advances floor");
+  check(progression.enter(1, progressionInventory, false), "enter second-floor normal route");
+  progression.markCurrentCleared();
+  check(progression.enter(5, progressionInventory, false), "enter second-floor boss room");
+  progression.markCurrentCleared();
+  check(!progression.advanceFloor() && progression.floorNumber() == 2,
+        "second floor is final and a third floor cannot be generated");
 
   GameSession integratedRoom;
   for (int i = 0; i < 220 && integratedRoom.level().currentRoomId() == 0; ++i) {

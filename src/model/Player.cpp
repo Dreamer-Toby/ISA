@@ -23,10 +23,18 @@ void Player::tick(float seconds) {
 }
 
 bool Player::damage(int amount) {
+  return damageHalfUnits(amount * 2);
+}
+
+bool Player::damageHalfHeart() {
+  return damageHalfUnits(1);
+}
+
+bool Player::damageHalfUnits(int amount) {
   if (invulnerability_ > 0.F) return false;
-  const int heartsBefore = health_.red() + health_.shields();
-  health_.damage(amount);
-  if (health_.red() + health_.shields() == heartsBefore) return false;
+  const int heartsBefore = health_.totalHalfUnits();
+  health_.damageHalfUnits(amount);
+  if (health_.totalHalfUnits() == heartsBefore) return false;
   invulnerability_ = 0.7F;
   return true;
 }

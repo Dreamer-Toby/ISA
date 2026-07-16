@@ -17,7 +17,7 @@ These captures are written from the live SFML framebuffer after 30 vsynced frame
 
 | Capture | Actual state shown | Reproduction command |
 |---|---|---|
-| `final-easyisaac-menu.png` | Paper main menu and highlighted classic run | `./build/final-debug/isaac_course_game --capture-main-menu docs/progress/final-easyisaac-menu.png` |
+| `final-easyisaac-menu.png` | Historical paper main-menu capture (the current menu highlights `RUN`) | `./build/final-debug/isaac_course_game --capture-main-menu docs/progress/final-easyisaac-menu.png` |
 | `final-easyisaac-character-select.png` | Paper character selection and stat DTOs | `./build/final-debug/isaac_course_game --capture-character-select docs/progress/final-easyisaac-character-select.png` |
 | `final-easyisaac-gameplay.png` | Combat room, hearts/stats/resources/minimap, player, tear, flies and obstacles | `./build/final-debug/isaac_course_game --capture-gameplay docs/progress/final-easyisaac-gameplay.png` |
 | `final-easyisaac-pause.png` | EasyIsaac pause scroll over the live combat scene | `./build/final-debug/isaac_course_game --capture-pause docs/progress/final-easyisaac-pause.png` |

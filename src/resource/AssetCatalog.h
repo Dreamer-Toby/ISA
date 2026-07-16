@@ -15,7 +15,18 @@ class AssetCatalog {
   static std::filesystem::path fly() { return "assets/textures/enemies/fly.png"; }
   static std::filesystem::path boss() { return "assets/textures/bosses/boss-icon.png"; }
   static std::filesystem::path tear() { return "assets/textures/items/blood-tear.png"; }
-  static std::filesystem::path normalDoor() { return "assets/textures/rooms/red-room-door.png"; }
+  static std::filesystem::path normalDoorUp() {
+    return "assets/textures/rooms/normal-door-up.png";
+  }
+  static std::filesystem::path normalDoorRight() {
+    return "assets/textures/rooms/normal-door-right.png";
+  }
+  static std::filesystem::path normalDoorDown() {
+    return "assets/textures/rooms/normal-door-down.png";
+  }
+  static std::filesystem::path normalDoorLeft() {
+    return "assets/textures/rooms/normal-door-left.png";
+  }
   static std::filesystem::path bossDoor() { return "assets/textures/rooms/boss-door.png"; }
   static std::filesystem::path treasureDoor() { return "assets/textures/rooms/treasure-door.png"; }
   static std::filesystem::path lockedTreasureDoor() {

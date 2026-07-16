@@ -1,6 +1,7 @@
 #include "model/GameSession.h"
 #include "viewmodel/GameViewModel.h"
 
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 
@@ -19,13 +20,25 @@ void pressConfirm(isaac::viewmodel::GameViewModel& vm) {
 
 bool driveToRoom(isaac::model::GameSession& session, isaac::viewmodel::GameViewModel& vm,
                  int roomId, isaac::common::Vec2 movement, bool bomb = false) {
-  for (int frame = 0; frame < 500 && session.level().currentRoomId() != roomId; ++frame) {
+  for (int frame = 0; frame < 2000 && session.level().currentRoomId() != roomId; ++frame) {
     isaac::presentation::RealtimeInput input;
     input.movement = movement;
+    if (std::abs(movement.x) > 0.1F) {
+      const float y = session.snapshot().playerPosition.y;
+      input.movement.y = y > 160.F ? -0.35F : (y < 140.F ? 0.35F : 0.F);
+    }
     if (bomb) vm.actionCommand().execute(isaac::presentation::UserAction::UseBomb);
     tick(vm, input);
   }
-  return session.level().currentRoomId() == roomId;
+  const bool reached = session.level().currentRoomId() == roomId;
+  if (!reached) {
+    const auto position = session.snapshot().playerPosition;
+    std::cerr << "demo detail: room " << session.level().currentRoomId() << " -> " << roomId
+              << " stalled at " << position.x << ',' << position.y
+              << " cleared=" << session.snapshot().roomCleared
+              << " dead=" << session.snapshot().playerDead << '\n';
+  }
+  return reached;
 }
 
 bool clearCurrentRoom(isaac::model::GameSession& session, isaac::viewmodel::GameViewModel& vm) {
@@ -49,6 +62,15 @@ void collectPickups(isaac::model::GameSession& session, isaac::viewmodel::GameVi
     input.movement = session.snapshot().pickups.front().position - session.snapshot().playerPosition;
     tick(vm, input);
   }
+}
+
+bool collectTreasure(isaac::model::GameSession& session, isaac::viewmodel::GameViewModel& vm) {
+  for (int frame = 0; frame < 2000 && !session.snapshot().treasureItems.empty(); ++frame) {
+    isaac::presentation::RealtimeInput input;
+    input.movement = session.snapshot().treasureItems.front().position - session.snapshot().playerPosition;
+    tick(vm, input);
+  }
+  return session.snapshot().roomRewardCollected && session.snapshot().treasureItems.empty();
 }
 
 bool completeCombatAndBoss(isaac::model::GameSession& session, isaac::viewmodel::GameViewModel& vm) {
@@ -82,9 +104,13 @@ int main() {
   REQUIRE(!session.player().inventory().passiveItems().empty(), "buy shop passive");
   REQUIRE(driveToRoom(session, vm, 0, {0.F, -1.F}), "leave shop");
 
+  const int keysBeforeTreasure = session.player().inventory().keys();
   REQUIRE(driveToRoom(session, vm, 2, {-1.F, 0.F}), "enter treasure");
-  pressConfirm(vm);
-  REQUIRE(session.player().inventory().keys() == 0, "open chest with remaining key");
+  const int keysAfterDoor = session.player().inventory().keys();
+  REQUIRE(keysAfterDoor == keysBeforeTreasure - 1, "treasure door consumes one key");
+  REQUIRE(collectTreasure(session, vm), "collect the visible treasure item");
+  REQUIRE(session.player().inventory().keys() == keysAfterDoor,
+          "treasure pickup does not charge a second key");
   REQUIRE(driveToRoom(session, vm, 0, {1.F, 0.F}), "leave treasure");
 
   REQUIRE(driveToRoom(session, vm, 4, {0.F, -1.F}, true), "bomb into secret");
@@ -96,11 +122,10 @@ int main() {
   pressConfirm(vm);
   REQUIRE(session.level().floorNumber() == 2, "advance to floor 2");
 
-  REQUIRE(completeCombatAndBoss(session, vm) && session.level().floorNumber() == 3, "complete floor 2");
-  REQUIRE(completeCombatAndBoss(session, vm), "complete floor 3");
+  REQUIRE(completeCombatAndBoss(session, vm) && session.level().floorNumber() == 2, "complete floor 2");
   REQUIRE(vm.displayProperty().get().screen == isaac::common::ScreenState::Victory, "victory screen");
 
-  std::cout << "demo: menu->Magdalene->combat/drop->shop->chest->secret->3 floors->victory\n";
+  std::cout << "demo: menu->Magdalene->combat/drop->shop->treasure->secret->2 floors->victory\n";
   return EXIT_SUCCESS;
 #undef REQUIRE
 }

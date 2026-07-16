@@ -10,7 +10,7 @@
 ## In scope
 
 1. Alternating paper start screen with a prominent start prompt.
-2. Paper main menu with a red highlighted selection and classic/quick/rank/back choices.
+2. Paper main menu with a red highlighted selection and `RUN / RANKINGS / BACK` choices.
 3. Paper character selection that retains all four configured characters.
 4. Dark basement room art scaled to the existing 960-wide Model coordinate system.
 5. Runtime conversion of the reference's EasyX foreground/background mask pairs into cached SFML alpha textures.
@@ -25,7 +25,7 @@
 
 - Replacing SFML with EasyX or making the final build Windows-only.
 - Copying the reference's global-state architecture, gameplay code, collision rules or single-room limitation.
-- Removing the current four-character, six-enemy, four-Boss, three-floor, item/economy or MVVM implementation.
+- Removing the current four-character, six-enemy, three-Boss, two-floor, item/economy or MVVM implementation.
 - Claiming that third-party game art or audio is newly licensed for commercial redistribution.
 
 ## Acceptance checks
