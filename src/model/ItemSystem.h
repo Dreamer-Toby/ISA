@@ -33,6 +33,7 @@ class ItemSystem {
   bool takeSecretTrinket(Player& player);
   [[nodiscard]] bool chestOpened() const { return chestOpened_; }
   [[nodiscard]] bool shopSold() const { return shopSold_; }
+  [[nodiscard]] bool secretTaken() const { return secretTaken_; }
 
  private:
   bool chestOpened_{};

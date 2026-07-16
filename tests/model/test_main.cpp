@@ -59,6 +59,19 @@ int main() {
   check(!damagePlayer.damage(1), "Player rejects damage during invulnerability");
 
   GameSession session;
+  const auto& startDoors = session.snapshot().doors;
+  check(startDoors.size() == 4, "start room snapshot exposes every modeled exit");
+  const auto treasureDoor = std::ranges::find_if(startDoors, [](const DoorSnapshot& door) {
+    return door.targetType == isaac::common::RoomType::Treasure;
+  });
+  check(treasureDoor != startDoors.end() && treasureDoor->locked && !treasureDoor->hidden &&
+            !treasureDoor->sealed,
+        "treasure door snapshot exposes locked visible open-state details");
+  const auto secretDoor = std::ranges::find_if(startDoors, [](const DoorSnapshot& door) {
+    return door.targetType == isaac::common::RoomType::Secret;
+  });
+  check(secretDoor != startDoors.end() && secretDoor->hidden,
+        "secret entrance remains hidden in the Model snapshot until revealed");
   session.update(1.F / 60.F, {{}, {1.F, 0.F}});
   check(session.projectiles().size() == 1, "shoot creates projectile");
   const auto shotEvents = session.drainEvents();
@@ -190,11 +203,17 @@ int main() {
   }
   check(integratedRoom.level().currentRoomId() == 1 && !integratedRoom.snapshot().roomCleared &&
         !integratedRoom.snapshot().enemies.empty(), "GameSession enters a populated uncleared room");
+  check(std::ranges::all_of(integratedRoom.snapshot().doors,
+                            [](const DoorSnapshot& door) { return door.sealed; }),
+        "all combat-room exits report sealed until the encounter is cleared");
   for (int i = 0; i < 300; ++i) integratedRoom.update(1.F / 60.F, {{1.F, 0.F}, {}});
   check(integratedRoom.level().currentRoomId() == 1, "uncleared GameSession room blocks the boss door");
   runCombatUntilClear(integratedRoom);
   check(integratedRoom.snapshot().roomCleared && integratedRoom.snapshot().enemies.empty(),
         "real projectile combat clears the GameSession room and opens doors");
+  check(std::ranges::none_of(integratedRoom.snapshot().doors,
+                             [](const DoorSnapshot& door) { return door.sealed; }),
+        "clearing combat updates every exit to unsealed");
   for (int i = 0; i < 300 && integratedRoom.level().currentRoomId() == 1; ++i) {
     integratedRoom.update(1.F / 60.F, {{1.F, 0.F}, {}});
   }

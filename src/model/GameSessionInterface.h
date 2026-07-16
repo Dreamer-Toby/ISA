@@ -44,6 +44,14 @@ struct RoomSnapshot {
   bool cleared{};
 };
 
+struct DoorSnapshot {
+  common::Direction direction{common::Direction::Up};
+  common::RoomType targetType{common::RoomType::Normal};
+  bool locked{};
+  bool hidden{};
+  bool sealed{};
+};
+
 struct EnemySnapshot {
   common::Vec2 position;
   std::string id;
@@ -75,6 +83,7 @@ struct SessionSnapshot {
   float projectileSpeed{};
   std::vector<ProjectileSnapshot> projectiles;
   std::vector<RoomSnapshot> rooms;
+  std::vector<DoorSnapshot> doors;
   std::vector<EnemySnapshot> enemies;
   std::vector<PickupSnapshot> pickups;
   std::vector<BossSnapshot> bosses;
@@ -85,6 +94,7 @@ struct SessionSnapshot {
   float elapsedSeconds{};
   bool playerDead{};
   bool devilRoomAvailable{};
+  bool roomRewardCollected{};
   bool runCompleted{};
 };
 

@@ -85,6 +85,24 @@ bool drawTextureFill(sf::RenderWindow& window, isaac::resource::ResourceManager&
   return true;
 }
 
+bool drawTextureSprite(sf::RenderWindow& window, isaac::resource::ResourceManager& resources,
+                       const std::filesystem::path& path, sf::Vector2f position,
+                       float targetHeight, sf::Color tint = sf::Color::White,
+                       float rotationDegrees = 0.F) {
+  const auto texture = resources.texture(path);
+  if (!texture) return false;
+  sf::Sprite sprite(*texture);
+  const auto size = texture->getSize();
+  sprite.setOrigin({static_cast<float>(size.x) / 2.F, static_cast<float>(size.y) / 2.F});
+  const float scale = targetHeight / static_cast<float>(size.y);
+  sprite.setScale({scale, scale});
+  sprite.setPosition(position);
+  sprite.setColor(tint);
+  sprite.setRotation(sf::degrees(rotationDegrees));
+  window.draw(sprite);
+  return true;
+}
+
 bool drawMaskedSprite(sf::RenderWindow& window, isaac::resource::ResourceManager& resources,
                       const std::filesystem::path& colorPath, const std::filesystem::path& maskPath,
                       sf::Vector2f position, float targetHeight, sf::Color tint = sf::Color::White,
@@ -120,12 +138,48 @@ sf::Color characterTint(isaac::presentation::CharacterStyle style) {
   return sf::Color::White;
 }
 
-std::filesystem::path characterPortrait(isaac::presentation::CharacterStyle style) {
+std::filesystem::path characterPortrait(isaac::presentation::CharacterStyle style, bool closed) {
   using Style = isaac::presentation::CharacterStyle;
-  if (style == Style::Magdalene) return isaac::resource::AssetCatalog::magdalene();
-  if (style == Style::Cain) return isaac::resource::AssetCatalog::cain();
-  if (style == Style::Judas) return isaac::resource::AssetCatalog::judas();
+  if (style == Style::Magdalene) return isaac::resource::AssetCatalog::magdalenePortrait(closed);
+  if (style == Style::Cain) return isaac::resource::AssetCatalog::cainPortrait(closed);
+  if (style == Style::Judas) return isaac::resource::AssetCatalog::judasPortrait(closed);
   return isaac::resource::AssetCatalog::isaac();
+}
+
+std::filesystem::path doorTexture(const isaac::presentation::DoorDTO& door) {
+  using isaac::common::RoomType;
+  if (door.targetType == RoomType::Boss) return isaac::resource::AssetCatalog::bossDoor();
+  if (door.targetType == RoomType::Treasure || door.targetType == RoomType::Shop) {
+    return door.locked ? isaac::resource::AssetCatalog::lockedTreasureDoor()
+                       : isaac::resource::AssetCatalog::treasureDoor();
+  }
+  return isaac::resource::AssetCatalog::normalDoor();
+}
+
+struct DoorPose {
+  sf::Vector2f position;
+  float rotationDegrees{};
+};
+
+DoorPose doorPose(isaac::common::Direction direction) {
+  using isaac::common::Direction;
+  if (direction == Direction::Right) return {{865.F, 300.F}, 90.F};
+  if (direction == Direction::Down) return {{480.F, 535.F}, 180.F};
+  if (direction == Direction::Left) return {{95.F, 300.F}, 270.F};
+  return {{480.F, 95.F}, 0.F};
+}
+
+void drawDoorSeal(sf::RenderWindow& window, sf::Vector2f position) {
+  for (const float rotation : {-28.F, 28.F}) {
+    sf::RectangleShape bar({58.F, 7.F});
+    bar.setOrigin({29.F, 3.5F});
+    bar.setPosition(position);
+    bar.setRotation(sf::degrees(rotation));
+    bar.setFillColor(sf::Color(74, 45, 37));
+    bar.setOutlineThickness(1.F);
+    bar.setOutlineColor(sf::Color(28, 16, 17));
+    window.draw(bar);
+  }
 }
 
 }  // namespace
@@ -241,17 +295,9 @@ void GameView::render() {
   } else if (display.screen == common::ScreenState::CharacterSelect) {
     drawPaper();
     drawInkText(window_, "WHO ARE YOU", {330.F, 82.F}, 4.5F, sf::Color(135, 30, 33));
-    const auto portrait = characterPortrait(display.selectionStyle);
-    if (const auto texture = resources_.texture(portrait)) {
-      sf::Sprite sprite(*texture);
-      const auto size = texture->getSize();
-      sprite.setOrigin({static_cast<float>(size.x) / 2.F, static_cast<float>(size.y) / 2.F});
-      const float bob = std::sin(time * 4.F) * 5.F;
-      sprite.setPosition({480.F, 285.F + bob});
-      const float scale = 120.F / static_cast<float>(std::max(size.x, size.y));
-      sprite.setScale({scale, scale});
-      window_.draw(sprite);
-    }
+    const bool blink = std::fmod(time, 3.2F) > 2.95F;
+    drawTextureSprite(window_, resources_, characterPortrait(display.selectionStyle, blink),
+                      {480.F, 285.F + std::sin(time * 4.F) * 5.F}, 120.F);
     drawInkText(window_, "A  <  " + display.selectionName + "  >  D", {285.F, 385.F}, 3.F);
     drawInkText(window_, display.selectionStats, {255.F, 450.F}, 2.F);
     drawInkText(window_, "ENTER TO BEGIN", {345.F, 535.F}, 2.5F, sf::Color(155, 28, 30));
@@ -274,6 +320,36 @@ void GameView::render() {
       room.setPosition({40.F, 70.F});
       room.setFillColor(sf::Color(105, 65, 60));
       window_.draw(room);
+    }
+
+    for (const auto& door : display.doors) {
+      const auto pose = doorPose(door.direction);
+      const auto tint = door.sealed ? sf::Color(105, 82, 80) : sf::Color::White;
+      if (!drawTextureSprite(window_, resources_, doorTexture(door), pose.position, 54.F, tint,
+                             pose.rotationDegrees)) {
+        sf::RectangleShape fallback({64.F, 34.F});
+        fallback.setOrigin({32.F, 17.F});
+        fallback.setPosition(pose.position);
+        fallback.setRotation(sf::degrees(pose.rotationDegrees));
+        fallback.setFillColor(door.sealed ? sf::Color(65, 42, 42) : sf::Color(135, 74, 61));
+        fallback.setOutlineThickness(3.F);
+        fallback.setOutlineColor(sf::Color(35, 20, 22));
+        window_.draw(fallback);
+      }
+      if (door.sealed) drawDoorSeal(window_, pose.position);
+    }
+
+    if (display.trapdoorVisible) {
+      if (!drawTextureSprite(window_, resources_, resource::AssetCatalog::trapdoor(),
+                             {480.F, 385.F}, 54.F)) {
+        sf::RectangleShape fallback({52.F, 42.F});
+        fallback.setOrigin({26.F, 21.F});
+        fallback.setPosition({480.F, 385.F});
+        fallback.setFillColor(sf::Color(32, 22, 22));
+        fallback.setOutlineThickness(4.F);
+        fallback.setOutlineColor(sf::Color(92, 62, 52));
+        window_.draw(fallback);
+      }
     }
 
     drawMaskedSprite(window_, resources_,
@@ -301,10 +377,17 @@ void GameView::render() {
         const auto tint = characterTint(entity.characterStyle);
         drawMaskedSprite(window_, resources_, resource::AssetCatalog::easyCharacter(body),
                          resource::AssetCatalog::easyCharacter(bodyMask), position + sf::Vector2f{0.F, 12.F + bob}, 42.F, tint);
-        drawn = drawMaskedSprite(window_, resources_,
-                     resource::AssetCatalog::easyCharacter(shooting ? "isaac0_shoot_back.jpg" : "isaac0_back.jpg"),
-                     resource::AssetCatalog::easyCharacter(shooting ? "isaac0_shoot_front.jpg" : "isaac0_front.jpg"),
-                     position + sf::Vector2f{0.F, -12.F + bob}, 52.F, tint);
+        if (entity.characterStyle == presentation::CharacterStyle::Isaac) {
+          drawn = drawMaskedSprite(window_, resources_,
+                       resource::AssetCatalog::easyCharacter(shooting ? "isaac0_shoot_back.jpg" : "isaac0_back.jpg"),
+                       resource::AssetCatalog::easyCharacter(shooting ? "isaac0_shoot_front.jpg" : "isaac0_front.jpg"),
+                       position + sf::Vector2f{0.F, -12.F + bob}, 52.F, tint);
+        } else {
+          const bool blink = !shooting && std::fmod(time, 3.2F) > 2.95F;
+          drawn = drawTextureSprite(window_, resources_,
+                                    characterPortrait(entity.characterStyle, blink),
+                                    position + sf::Vector2f{0.F, -12.F + bob}, 52.F);
+        }
       } else if (entity.kind == common::EntityKind::Enemy) {
         const float pulse = 72.F + std::sin(time * 12.F + entity.position.x * 0.03F) * 6.F;
         drawn = drawMaskedSprite(window_, resources_,
@@ -393,6 +476,20 @@ void GameView::render() {
       cell.setOutlineColor(sf::Color(48, 35, 34));
       window_.draw(cell);
     }
+
+    sf::RectangleShape missionPanel({276.F, 132.F});
+    missionPanel.setPosition({670.F, 122.F});
+    missionPanel.setFillColor(sf::Color(24, 13, 17, 176));
+    missionPanel.setOutlineThickness(2.F);
+    missionPanel.setOutlineColor(sf::Color(112, 76, 69, 220));
+    window_.draw(missionPanel);
+    drawInkText(window_, "CURRENT MISSION", {682.F, 131.F}, 1.F, sf::Color(222, 171, 92));
+    drawInkText(window_, display.objective.title, {682.F, 148.F}, 1.5F, sf::Color::White);
+    drawInkText(window_, display.objective.detail, {682.F, 172.F}, 1.F, sf::Color(226, 217, 203));
+    drawInkText(window_, display.objective.progress, {682.F, 190.F}, 1.F, sf::Color(235, 190, 105));
+    drawInkText(window_, display.objective.hint, {682.F, 208.F}, 1.F, sf::Color(197, 184, 174));
+    drawInkText(window_, "WASD MOVE  ARROWS SHOOT", {682.F, 230.F}, 1.F, sf::Color(155, 145, 140));
+    drawInkText(window_, "ENTER ACT  E BOMB  SPACE ITEM", {682.F, 245.F}, 1.F, sf::Color(155, 145, 140));
 
     if (display.screen == common::ScreenState::Paused) {
       sf::RectangleShape dim({960.F, 640.F});

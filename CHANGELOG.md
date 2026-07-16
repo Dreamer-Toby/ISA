@@ -65,3 +65,8 @@
 - Added runtime EasyX mask-pair conversion, cached SFML Audio event effects, transition/damage feedback and optional hitbox inspection.
 - Preserved the strict MVVM dependency direction and the full four-character, six-enemy, four-Boss, three-floor course loop.
 - Added menu/rank/quick-run tests, mask/audio resource tests, complete imported-asset provenance and reproducible final framebuffer captures.
+
+### Stage 10 - illustrated doors and mission guidance
+
+- Imported four door images and six character portraits from the user-provided local material library. The View now draws directional normal, treasure, locked, Boss and trapdoor states, plus distinct Cain, Judas and Magdalene heads.
+- Added pure Model door snapshots, contextual ViewModel mission text, per-floor reward reset and regression coverage for hidden, locked, sealed and cleared exits.

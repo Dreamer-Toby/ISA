@@ -13,25 +13,26 @@ The final branch does not depend on EasyX and remains portable beyond Windows. E
 
 - Alternating start page, selectable main menu, rankings, four-character selection (Isaac, Magdalene, Cain, Judas), pause, defeat and victory screens.
 - Fixed-step movement, four-direction tears, enemy projectiles, collision, invulnerability, red hearts and shields (combined cap: 12).
-- Three deterministic connected floors. Each has normal, treasure, shop, secret and Boss rooms, with persistent visits, doors and minimap.
+- Three deterministic connected floors. Each has normal, treasure, shop, secret and Boss rooms, with persistent visits, illustrated room-specific doors, combat seals and a minimap.
 - Six configured enemies: Fly, Pooter, Spider, Hopper, Gaper and Clotty, composed from movement/attack/drop strategies.
 - Four Bosses: Monstro; Duke of Flies and Larry Jr. together on floor two; simplified Mom's Leg on floor three.
 - Coins, bombs, keys, pickups, chest, shop, hidden entrance, active items, stacking passives and trinkets.
 - A testable 35% post-Boss devil-room roll and a complete three-floor ending.
 - HUD DTOs for red/shield hearts, coins, bombs, keys, active item, minimap, floor and room state.
+- A context-sensitive mission panel explains the current room goal, remaining enemies or Bosses, reward cost, next action and core controls.
 - EasyIsaac-style room art, characters, tears, flies, props and feedback sounds with presentation-only animation and hitbox inspection.
 
 ## Controls
 
 | Action | Key |
 |---|---|
-| Confirm menu / interact | Enter or Space on paper screens |
+| Confirm menu / interact / descend | Enter or Space on paper screens |
 | Navigate main menu | W / S |
 | Change character | A / D |
 | Move | W A S D |
 | Shoot | Arrow keys |
 | Pause / resume | Escape |
-| Use bomb at a secret wall | E |
+| Search a wall with one bomb | Hold movement into the wall and press E |
 | Use active item | Space |
 | Toggle hitbox overlay | U |
 

@@ -1,5 +1,6 @@
 #include "resource/ResourceManager.h"
 
+#include <array>
 #include <cstdlib>
 #include <filesystem>
 
@@ -19,6 +20,24 @@ int main() {
   const auto mismatchedSizePair = resources.maskedTexture(
       easyRoot / "panel/health0_back.jpg", easyRoot / "panel/health0_front.jpg");
   if (!mismatchedSizePair || resources.textureCount() != 3) return EXIT_FAILURE;
+
+  const auto assetRoot = std::filesystem::path(ISAAC_SOURCE_DIR) / "assets/textures";
+  constexpr std::array<const char*, 10> localMaterialAssets{
+      "rooms/boss-door.png",
+      "rooms/treasure-door.png",
+      "rooms/locked-treasure-door.png",
+      "rooms/trapdoor.png",
+      "characters/cain-portrait.png",
+      "characters/cain-portrait-closed.png",
+      "characters/judas-portrait.png",
+      "characters/judas-portrait-closed.png",
+      "characters/magdalene-portrait.png",
+      "characters/magdalene-portrait-closed.png",
+  };
+  for (const auto* asset : localMaterialAssets) {
+    if (!resources.texture(assetRoot / asset)) return EXIT_FAILURE;
+  }
+  if (resources.textureCount() != 13) return EXIT_FAILURE;
 
   const auto soundFirst = resources.soundBuffer(easyRoot / "sounds/shoot.wav");
   const auto soundSecond = resources.soundBuffer(easyRoot / "sounds/shoot.wav");

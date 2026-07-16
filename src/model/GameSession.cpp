@@ -3,6 +3,7 @@
 #include "model/CharacterCatalog.h"
 
 #include <algorithm>
+#include <array>
 #include <utility>
 
 namespace isaac::model {
@@ -112,6 +113,7 @@ void GameSession::update(float seconds, const GameplayInput& input) {
       } else if (level_.advanceFloor()) {
         player_.setPosition({480.F, 300.F});
         projectiles_.clear(); pickups_.clear(); enemies_ = EnemySystem{}; bosses_ = BossSystem{};
+        items_ = ItemSystem{};
         bossRewardResolved_ = false;
       }
     }
@@ -147,6 +149,16 @@ void GameSession::rebuildSnapshot() {
     snapshot_.rooms.push_back({room.id, room.type, room.gridX, room.gridY, room.visited,
                                room.revealed, room.id == level_.currentRoomId(), room.cleared});
   }
+  snapshot_.doors.clear();
+  constexpr std::array directions{common::Direction::Up, common::Direction::Right,
+                                  common::Direction::Down, common::Direction::Left};
+  for (const auto direction : directions) {
+    const auto neighbor = level_.neighbor(direction);
+    if (!neighbor) continue;
+    const auto& target = level_.rooms().at(*neighbor);
+    snapshot_.doors.push_back(
+        {direction, target.type, target.locked, !target.revealed, !level_.currentRoom().cleared});
+  }
   snapshot_.enemies.clear();
   for (const auto& enemy : enemies_.enemies()) {
     snapshot_.enemies.push_back({enemy.position, std::string(EnemyCatalog::all()[enemy.definitionIndex].id)});
@@ -160,6 +172,10 @@ void GameSession::rebuildSnapshot() {
   snapshot_.devilRoomAvailable = std::ranges::any_of(level_.rooms(), [](const Room& room) {
     return room.type == common::RoomType::Devil;
   });
+  snapshot_.roomRewardCollected =
+      (level_.currentRoom().type == common::RoomType::Treasure && items_.chestOpened()) ||
+      (level_.currentRoom().type == common::RoomType::Shop && items_.shopSold()) ||
+      (level_.currentRoom().type == common::RoomType::Secret && items_.secretTaken());
 }
 
 }  // namespace isaac::model

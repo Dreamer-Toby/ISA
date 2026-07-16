@@ -133,6 +133,16 @@ Commit hashes are recorded only after the referenced commit exists; stage tags p
 - Next: run the final build matrix, record the delivery commit and push the final branch without changing the midterm tag.
 - MVVM self-check: no Model SFML include, no View Model include, no asset-path rule outside Resource, and capture preparation still advances through ViewModel commands.
 
+## Iteration 10 - 2026-07-15
+
+- Objective: make room exits visible and tell the player what to do in each room.
+- Prior problem: `AssetCatalog` registered one door image, but `GameView` drew no doors. The HUD only reported `Combat` or `Cleared`.
+- Actual change: imported four door images and six blinking character portraits from the local material library; added directional door rendering, combat seals, a Boss trapdoor and room-specific mission text with costs, progress and controls.
+- Architecture effect: Model snapshots carry direction, target type, lock, hidden and seal state. ViewModel filters hidden exits and writes presentation text. View owns texture choice, rotation, animation and fallback geometry.
+- Verification: Model tests cover hidden, locked and sealed exits. ViewModel seam tests cover door filtering and combat/Boss objectives. Resource tests decode all ten imported PNGs. A live macOS SFML run checked character selection, wall alignment and mission readability.
+- Unresolved: the local material library contains no external URL or license metadata; the asset manifest records that gap.
+- MVVM self-check: Model remains SFML-free, View includes no Model header, ViewModel adds no traversal or combat rule, and the App loop remains unchanged.
+
 ## Existing stage evidence
 
 | Stage | Commit | Tag |

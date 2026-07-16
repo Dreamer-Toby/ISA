@@ -15,7 +15,25 @@ class AssetCatalog {
   static std::filesystem::path fly() { return "assets/textures/enemies/fly.png"; }
   static std::filesystem::path boss() { return "assets/textures/bosses/boss-icon.png"; }
   static std::filesystem::path tear() { return "assets/textures/items/blood-tear.png"; }
-  static std::filesystem::path door() { return "assets/textures/rooms/red-room-door.png"; }
+  static std::filesystem::path normalDoor() { return "assets/textures/rooms/red-room-door.png"; }
+  static std::filesystem::path bossDoor() { return "assets/textures/rooms/boss-door.png"; }
+  static std::filesystem::path treasureDoor() { return "assets/textures/rooms/treasure-door.png"; }
+  static std::filesystem::path lockedTreasureDoor() {
+    return "assets/textures/rooms/locked-treasure-door.png";
+  }
+  static std::filesystem::path trapdoor() { return "assets/textures/rooms/trapdoor.png"; }
+  static std::filesystem::path cainPortrait(bool closed) {
+    return closed ? "assets/textures/characters/cain-portrait-closed.png"
+                  : "assets/textures/characters/cain-portrait.png";
+  }
+  static std::filesystem::path judasPortrait(bool closed) {
+    return closed ? "assets/textures/characters/judas-portrait-closed.png"
+                  : "assets/textures/characters/judas-portrait.png";
+  }
+  static std::filesystem::path magdalenePortrait(bool closed) {
+    return closed ? "assets/textures/characters/magdalene-portrait-closed.png"
+                  : "assets/textures/characters/magdalene-portrait.png";
+  }
   static std::filesystem::path redHeart() { return "assets/textures/ui/red-heart.png"; }
   static std::filesystem::path shieldHeart() { return "assets/textures/ui/shield-heart.png"; }
 

@@ -59,6 +59,20 @@ struct MinimapRoomDTO {
   bool cleared{};
 };
 
+struct DoorDTO {
+  common::Direction direction{common::Direction::Up};
+  common::RoomType targetType{common::RoomType::Normal};
+  bool locked{};
+  bool sealed{};
+};
+
+struct ObjectiveDTO {
+  std::string title{"FIND THE FLOOR BOSS"};
+  std::string detail;
+  std::string progress;
+  std::string hint;
+};
+
 struct DisplayState {
   common::ScreenState screen{common::ScreenState::Start};
   int menuIndex{};
@@ -70,6 +84,9 @@ struct DisplayState {
   std::vector<EntityDTO> entities;
   HudDTO hud;
   std::vector<MinimapRoomDTO> minimap;
+  std::vector<DoorDTO> doors;
+  ObjectiveDTO objective;
+  bool trapdoorVisible{};
 };
 
 }  // namespace isaac::presentation

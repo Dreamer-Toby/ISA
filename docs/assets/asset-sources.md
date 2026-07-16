@@ -1,6 +1,6 @@
 # Asset source manifest
 
-All external files below were downloaded on **2026-07-13** from the Huiji Wiki static host for non-profit classroom demonstration. Direct requests initially returned HTTP 403; retrying with the corresponding Wiki page as the HTTP referrer succeeded. No image was generated. Files are loaded with nearest-neighbor scaling (`Texture::setSmooth(false)`) and fall back to View geometry with a diagnostic if missing.
+The project downloaded the Wiki files in the first table on **2026-07-13** for non-profit classroom demonstration. Direct requests returned HTTP 403; a retry with the matching Wiki page as the HTTP referrer succeeded. The project generated no replacement images. `ResourceManager` loads each file with nearest-neighbor scaling (`Texture::setSmooth(false)`), and the View draws fallback geometry when a file is missing.
 
 | Local path | Original file | Source page | Original URL | Use | Processing |
 |---|---|---|---|---|---|
@@ -14,6 +14,23 @@ All external files below were downloaded on **2026-07-13** from the Huiji Wiki s
 | `assets/textures/rooms/red-room-door.png` | Red Room Door outline.png | https://isaac.huijiwiki.com/wiki/房间 | https://huiji-public.huijistatic.com/isaac/uploads/9/97/Red_Room_Door_outline.png | Room door visual | Renamed only; runtime nearest-neighbor scale. |
 | `assets/textures/ui/red-heart.png` | Health Red 2.png | https://isaac.huijiwiki.com/wiki/HUD | https://huiji-public.huijistatic.com/isaac/uploads/8/85/Health_Red_2.png | Red-heart HUD | Renamed only; native 16×16 draw. |
 | `assets/textures/ui/shield-heart.png` | Health Soul 2.png | https://isaac.huijiwiki.com/wiki/HUD | https://huiji-public.huijistatic.com/isaac/uploads/6/6a/Health_Soul_2.png | Shield/soul-heart HUD | Renamed only; native 16×16 draw. |
+
+## User-provided local material library
+
+The user added the source files below to `以撒的结合素材库/` on **2026-07-15**. The files came without an external URL or license record. This project keeps them inside the non-profit classroom demo; add the original source and license before redistributing them. The import copied each PNG byte for byte into the existing `assets/textures/` structure.
+
+| Local path | User-provided source file | Use | Processing |
+|---|---|---|---|
+| `assets/textures/rooms/boss-door.png` | `以撒的结合素材库/门/Bossroom.png` | Boss-room exits | Renamed and copied byte for byte; runtime rotation and nearest-neighbor scale. |
+| `assets/textures/rooms/treasure-door.png` | `以撒的结合素材库/门/Itemroomdoor.png` | Open treasure/shop exits | Renamed and copied byte for byte; runtime rotation and nearest-neighbor scale. |
+| `assets/textures/rooms/locked-treasure-door.png` | `以撒的结合素材库/门/Lockeditemroomdoor.png` | Key-locked treasure/shop exits | Renamed and copied byte for byte; runtime rotation and nearest-neighbor scale. |
+| `assets/textures/rooms/trapdoor.png` | `以撒的结合素材库/门/Secret_Trap_Door.png` | Post-Boss floor exit | Renamed and copied byte for byte; runtime nearest-neighbor scale. |
+| `assets/textures/characters/cain-portrait.png` | `以撒的结合素材库/人物/该隐.png` | Cain selection and gameplay head | Renamed and copied byte for byte; runtime nearest-neighbor scale. |
+| `assets/textures/characters/cain-portrait-closed.png` | `以撒的结合素材库/人物/该隐_闭眼.png` | Cain blink frame | Renamed and copied byte for byte; runtime nearest-neighbor scale. |
+| `assets/textures/characters/judas-portrait.png` | `以撒的结合素材库/人物/犹大.png` | Judas selection and gameplay head | Renamed and copied byte for byte; runtime nearest-neighbor scale. |
+| `assets/textures/characters/judas-portrait-closed.png` | `以撒的结合素材库/人物/犹大_闭眼.png` | Judas blink frame | Renamed and copied byte for byte; runtime nearest-neighbor scale. |
+| `assets/textures/characters/magdalene-portrait.png` | `以撒的结合素材库/人物/犹大拉.png` | Magdalene selection and gameplay head | Mapped to the existing Magdalene roster entry, renamed and copied byte for byte. |
+| `assets/textures/characters/magdalene-portrait-closed.png` | `以撒的结合素材库/人物/犹大拉_闭眼.png` | Magdalene blink frame | Mapped to the existing Magdalene roster entry, renamed and copied byte for byte. |
 
 ## EasyIsaac final-presentation subset
 
@@ -110,6 +127,16 @@ assets/easyisaac/sounds/shoot.wav
 ## Integrity hashes (SHA-256)
 
 ```text
+e0f16223e6bc52cb6cef75f578bb7b239f4a198f3803012a5a45e2b4b8808d0b  assets/textures/rooms/boss-door.png
+1b3bd858d0ca68350a545f4059af8086293680479f0f2e7b0a5b9dc4ee6d8c1e  assets/textures/rooms/treasure-door.png
+b7503b7b367537809781618fedf890198f4ff5d893aee1d2519ae2fa129db8f8  assets/textures/rooms/locked-treasure-door.png
+a6127a34b98e4794de991a9bd6bfae7aaa57fc9b90f556266fc304333d6a9c71  assets/textures/rooms/trapdoor.png
+fc80d9a941e2369e52f2bc46217eec46f45e725dc495a7964e20ddcff59c5bc9  assets/textures/characters/cain-portrait.png
+5f12efb8e786d3afb6802b7e4fbad16d240c5a0f9594c146e0658f881e9f9b07  assets/textures/characters/cain-portrait-closed.png
+dc036c0def876455f3a82399a0fd3c11a41a796c380954f16d13406ca39a9a9f  assets/textures/characters/judas-portrait.png
+8f5ea5e8c45396157b08c71d22c447d5f764e20819add6b8841b761483f5cabb  assets/textures/characters/judas-portrait-closed.png
+a8813e423162ce1699c0ff782bd22404b922789d8a7ce8aa57a3fea9f57e4f57  assets/textures/characters/magdalene-portrait.png
+d4e993b852633f6b5526b2e0e28a28ddae9156151d368f2ea442068f1e8927d7  assets/textures/characters/magdalene-portrait-closed.png
 0d10cbfdbb51fd70012e27f623a405786ad23653f25545266e2c4d6265d55971  assets/textures/bosses/boss-icon.png
 34fed097f41f39f2167f163bd3f07d0b1c4f33de1f2129c91a12a681c279dd6f  assets/textures/characters/cain-icon.png
 faa050b48b134d8864ca9297a1a6afb96a645be37aeb82ddb2c3d97518fae78a  assets/textures/enemies/fly.png

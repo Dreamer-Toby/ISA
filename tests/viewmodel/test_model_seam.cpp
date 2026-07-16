@@ -145,5 +145,50 @@ int main() {
             unknownDisplay.entities.front().characterStyle == isaac::presentation::CharacterStyle::Isaac,
         "unknown character IDs use the Isaac presentation fallback");
 
+  FakeGameSession objectiveModel;
+  objectiveModel.state.floor = 1;
+  objectiveModel.state.roomCleared = true;
+  objectiveModel.state.rooms = {
+      {0, isaac::common::RoomType::Normal, 0, 0, true, true, true, true},
+      {1, isaac::common::RoomType::Treasure, -1, 0, false, true, false, true},
+      {2, isaac::common::RoomType::Secret, 0, -1, false, false, false, true},
+  };
+  objectiveModel.state.doors = {
+      {isaac::common::Direction::Left, isaac::common::RoomType::Treasure, true, false, false},
+      {isaac::common::Direction::Up, isaac::common::RoomType::Secret, false, true, false},
+  };
+  isaac::viewmodel::GameViewModel objectiveViewModel(objectiveModel);
+  const auto& objectiveDisplay = objectiveViewModel.displayProperty().get();
+  check(objectiveDisplay.doors.size() == 1 && objectiveDisplay.doors.front().locked &&
+            objectiveDisplay.doors.front().targetType == isaac::common::RoomType::Treasure,
+        "ViewModel hides secret entrances and exposes visible typed door presentation data");
+  check(objectiveDisplay.objective.title == "FIND THE FLOOR BOSS" &&
+            objectiveDisplay.objective.progress.find("ROOMS VISITED 1/2") != std::string::npos,
+        "cleared normal room receives a detailed exploration objective");
+
+  FakeGameSession combatModel;
+  combatModel.state.roomCleared = false;
+  combatModel.state.enemies = {{{300.F, 300.F}, "fly"}, {{500.F, 300.F}, "pooter"}};
+  combatModel.state.doors = {
+      {isaac::common::Direction::Right, isaac::common::RoomType::Boss, false, false, true},
+  };
+  isaac::viewmodel::GameViewModel combatViewModel(combatModel);
+  const auto& combatDisplay = combatViewModel.displayProperty().get();
+  check(combatDisplay.doors.front().sealed && combatDisplay.objective.title == "CLEAR THE ROOM" &&
+            combatDisplay.objective.progress.find("ENEMIES LEFT 2") != std::string::npos,
+        "combat objective explains sealed doors and remaining enemies");
+
+  FakeGameSession bossRewardModel;
+  bossRewardModel.state.floor = 2;
+  bossRewardModel.state.roomType = isaac::common::RoomType::Boss;
+  bossRewardModel.state.roomCleared = true;
+  bossRewardModel.state.devilRoomAvailable = true;
+  isaac::viewmodel::GameViewModel bossRewardViewModel(bossRewardModel);
+  const auto& bossRewardDisplay = bossRewardViewModel.displayProperty().get();
+  check(bossRewardDisplay.trapdoorVisible &&
+            bossRewardDisplay.objective.title == "DESCEND TO FLOOR 3" &&
+            bossRewardDisplay.objective.hint.find("DEVIL ROOM") != std::string::npos,
+        "cleared Boss room exposes the trapdoor and next-floor task");
+
   return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -1,5 +1,6 @@
 #include "viewmodel/GameViewModel.h"
 
+#include <algorithm>
 #include <sstream>
 #include <string_view>
 
@@ -11,6 +12,97 @@ isaac::presentation::CharacterStyle characterStyle(std::string_view id) {
   if (id == "cain") return Style::Cain;
   if (id == "judas") return Style::Judas;
   return Style::Isaac;
+}
+
+std::string roomName(isaac::common::RoomType type) {
+  using isaac::common::RoomType;
+  if (type == RoomType::Treasure) return "TREASURE";
+  if (type == RoomType::Shop) return "SHOP";
+  if (type == RoomType::Secret) return "SECRET";
+  if (type == RoomType::Boss) return "BOSS";
+  if (type == RoomType::Devil) return "DEVIL";
+  return "NORMAL";
+}
+
+isaac::presentation::ObjectiveDTO buildObjective(const isaac::model::SessionSnapshot& state) {
+  using isaac::common::RoomType;
+  isaac::presentation::ObjectiveDTO objective;
+
+  if (!state.roomCleared) {
+    if (state.roomType == RoomType::Boss) {
+      objective.title = state.bosses.size() > 1 ? "DEFEAT BOTH BOSSES" : "DEFEAT THE BOSS";
+      objective.detail = "KEEP MOVING AND SHOOT WITH ARROW KEYS";
+      objective.progress = "BOSSES LEFT " + std::to_string(state.bosses.size());
+    } else {
+      objective.title = "CLEAR THE ROOM";
+      objective.detail = "DEFEAT EVERY ENEMY TO UNSEAL DOORS";
+      objective.progress = "ENEMIES LEFT " + std::to_string(state.enemies.size());
+    }
+    objective.hint = "WASD DODGE - ARROW KEYS SHOOT";
+    return objective;
+  }
+
+  if (state.roomType == RoomType::Boss) {
+    objective.title = state.floor == 3 ? "COMPLETE THE RUN"
+                                       : "DESCEND TO FLOOR " + std::to_string(state.floor + 1);
+    objective.detail = state.floor == 3 ? "PRESS ENTER TO FINISH THE RUN"
+                                        : "PRESS ENTER TO USE THE TRAPDOOR";
+    objective.progress = state.floor == 3 ? "FINAL BOSS DEFEATED" : "FLOOR BOSS DEFEATED";
+    objective.hint = state.devilRoomAvailable ? "OPTIONAL DEVIL ROOM IS NOW OPEN"
+                                              : "TRAPDOOR READY IN THIS ROOM";
+    return objective;
+  }
+
+  if (state.roomType == RoomType::Treasure) {
+    objective.title = state.roomRewardCollected ? "TREASURE COLLECTED" : "CLAIM THE TREASURE";
+    objective.detail = state.roomRewardCollected ? "SAD ONION INCREASED YOUR TEAR RATE"
+                                                  : "PRESS ENTER TO OPEN THE CHEST";
+    objective.progress = state.roomRewardCollected
+                             ? "ROOM REWARD COMPLETE"
+                             : "COST 1 KEY - YOU HAVE " + std::to_string(state.keys);
+    objective.hint = "FOLLOW AN OPEN DOOR TO CONTINUE";
+    return objective;
+  }
+
+  if (state.roomType == RoomType::Shop) {
+    objective.title = state.roomRewardCollected ? "SHOP ITEM PURCHASED" : "BUY THE SHOP ITEM";
+    objective.detail = state.roomRewardCollected ? "SMALL ROCK INCREASED YOUR DAMAGE"
+                                                  : "PRESS ENTER TO BUY SMALL ROCK";
+    objective.progress = state.roomRewardCollected
+                             ? "ROOM REWARD COMPLETE"
+                             : "COST 5 COINS - YOU HAVE " + std::to_string(state.coins);
+    objective.hint = "DEFEATED ENEMIES MAY DROP COINS";
+    return objective;
+  }
+
+  if (state.roomType == RoomType::Secret) {
+    objective.title = "SECRET ROOM FOUND";
+    objective.detail = state.roomRewardCollected ? "LUCKY TOE WAS COLLECTED"
+                                                  : "ENTER THE ROOM TO CLAIM LUCKY TOE";
+    objective.progress = state.roomRewardCollected ? "SECRET REWARD COMPLETE" : "REWARD WAITING";
+    objective.hint = "RETURN THROUGH THE OPEN DOOR";
+    return objective;
+  }
+
+  if (state.roomType == RoomType::Devil) {
+    objective.title = "DEVIL ROOM DISCOVERED";
+    objective.detail = "EXPLORE IT THEN RETURN TO THE BOSS ROOM";
+    objective.progress = "OPTIONAL ROOM FOUND";
+    objective.hint = "USE THE BOSS TRAPDOOR TO CONTINUE";
+    return objective;
+  }
+
+  const auto revealedRooms = std::ranges::count_if(
+      state.rooms, [](const isaac::model::RoomSnapshot& room) { return room.revealed; });
+  const auto visitedRooms = std::ranges::count_if(state.rooms, [](const isaac::model::RoomSnapshot& room) {
+    return room.revealed && (room.visited || room.current);
+  });
+  objective.title = "FIND THE FLOOR BOSS";
+  objective.detail = "CLEAR ROOMS - GOLD DOORS USE 1 KEY";
+  objective.progress = "ROOMS VISITED " + std::to_string(visitedRooms) + "/" +
+                       std::to_string(revealedRooms);
+  objective.hint = "PUSH A WALL AND PRESS E TO SEARCH";
+  return objective;
 }
 
 }  // namespace
@@ -148,12 +240,19 @@ presentation::DisplayState GameViewModel::buildDisplayState() const {
   result.hud.shotsPerSecond = state.shotsPerSecond;
   result.hud.projectileSpeed = state.projectileSpeed;
   result.hud.elapsedSeconds = state.elapsedSeconds;
-  result.hud.roomState = state.roomCleared ? "Cleared" : "Combat";
+  result.hud.roomState = roomName(state.roomType) + (state.roomCleared ? " - CLEARED" : " - COMBAT");
   for (const auto& room : state.rooms) {
     if (room.revealed && (room.visited || room.current)) {
       result.minimap.push_back({room.type, room.gridX, room.gridY, room.current, room.cleared});
     }
   }
+  for (const auto& door : state.doors) {
+    if (!door.hidden) {
+      result.doors.push_back({door.direction, door.targetType, door.locked, door.sealed});
+    }
+  }
+  result.objective = buildObjective(state);
+  result.trapdoorVisible = state.roomType == common::RoomType::Boss && state.roomCleared;
   return result;
 }
 
