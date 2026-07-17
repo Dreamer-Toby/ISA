@@ -176,6 +176,15 @@ Commit hashes are recorded only after the referenced commit exists; stage tags p
 - Architecture effect: EnemySystem owns drop identity, ItemSystem owns health/stat effects, GameSession owns cross-floor reward state, and Level owns the four-node topology. View continues to render only typed DTOs and existing assets.
 - Verification: failing-first Model assertions cover Breakfast drops, exact four-room counts, both allowed first-floor rewards, a present non-repeating second-floor reward and no fifth room after Boss clear. The deterministic two-floor demo exercises both treasure rooms and monster drops.
 
+## Iteration 15 — 2026-07-17
+
+- Objective: make successful completion visibly distinct from defeat.
+- Root cause: ViewModel already emitted `ScreenState::Victory`, but GameView rendered Victory and Defeat through the same death-testament asset; changing only the overlaid title left the underlying death message visible.
+- Actual change: added a small View-owned ending presentation mapping, retained the testament only for Defeat, and rendered a dedicated victory card with explicit completion text for Victory.
+- Architecture effect: the Model and ViewModel terminal-state rules are unchanged; only View presentation metadata and rendering changed.
+- Verification: a failing-first presentation test distinguishes both terminal states, followed by the complete CTest suite and a live SFML capture of the Victory screen.
+- MVVM self-check: GameView consumes only `ScreenState` and display DTO data; no gameplay rule or Model dependency moved into View.
+
 ## Existing stage evidence
 
 | Stage | Commit | Tag |

@@ -100,3 +100,8 @@
 - Restricted treasure rooms to Sad Onion and Wiggle Worm. Floor one selects one with the run seed; floor two always supplies the other, so both floors contain one visible, non-repeating reward.
 - Reduced every floor to exactly four connected rooms: start, one monster room, one treasure room and one Boss room. Removed runtime shop, secret and devil-room generation.
 - Removed the obsolete devil-room roll/API, kept gameplay rules in Model, and added failing-first coverage for drop effects, exact room counts, per-floor treasure presence and cross-floor non-repetition.
+
+### Stage 15 - distinct victory settlement
+
+- Split the shared defeat/victory presentation so a completed run now shows a dedicated `VICTORY` card instead of the death-testament artwork.
+- Kept the defeat testament unchanged and added a presentation regression covering both terminal states.

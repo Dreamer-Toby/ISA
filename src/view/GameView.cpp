@@ -1,5 +1,7 @@
 #include "view/GameView.h"
 
+#include "view/EndingPresentation.h"
+
 #include "resource/AssetCatalog.h"
 
 #include <SFML/Graphics/CircleShape.hpp>
@@ -320,15 +322,36 @@ void GameView::render() {
     drawInkText(window_, "ENTER TO BEGIN", {345.F, 535.F}, 2.5F, sf::Color(155, 28, 30));
   } else if (display.screen == common::ScreenState::Defeat || display.screen == common::ScreenState::Victory) {
     drawPaper();
-    drawMaskedSprite(window_, resources_,
-                     resource::AssetCatalog::easyPanel("testament_back.jpg"),
-                     resource::AssetCatalog::easyPanel("testament_front.jpg"),
-                     {480.F, 320.F}, 500.F);
-    drawInkText(window_, display.screen == common::ScreenState::Defeat ? "DEAR DIARY" : "RUN COMPLETE",
-                {335.F, 145.F}, 4.F, sf::Color(135, 24, 27));
+    const auto ending = endingPresentation(display.screen);
     std::ostringstream result;
-    result << "FLOOR " << display.hud.floor << "  TIME " << static_cast<int>(display.hud.elapsedSeconds) << "S";
-    drawInkText(window_, result.str(), {330.F, 390.F}, 2.5F);
+    result << "FLOOR " << display.hud.floor << "  TIME "
+           << static_cast<int>(display.hud.elapsedSeconds) << "S";
+    if (ending.usesDefeatTestament) {
+      drawMaskedSprite(window_, resources_,
+                       resource::AssetCatalog::easyPanel("testament_back.jpg"),
+                       resource::AssetCatalog::easyPanel("testament_front.jpg"),
+                       {480.F, 320.F}, 500.F);
+      drawInkText(window_, ending.title, {335.F, 145.F}, 4.F, sf::Color(135, 24, 27));
+      drawInkText(window_, result.str(), {330.F, 390.F}, 2.5F);
+    } else {
+      sf::RectangleShape victoryCard({660.F, 470.F});
+      victoryCard.setPosition({150.F, 80.F});
+      victoryCard.setFillColor(sf::Color(239, 229, 207, 225));
+      victoryCard.setOutlineThickness(5.F);
+      victoryCard.setOutlineColor(sf::Color(157, 111, 42));
+      window_.draw(victoryCard);
+
+      sf::RectangleShape rule({500.F, 4.F});
+      rule.setPosition({230.F, 200.F});
+      rule.setFillColor(sf::Color(157, 111, 42));
+      window_.draw(rule);
+
+      drawInkText(window_, ending.title, {375.F, 115.F}, 5.F, sf::Color(151, 74, 27));
+      drawInkText(window_, ending.subtitle, {305.F, 235.F}, 3.F, sf::Color(94, 69, 48));
+      drawInkText(window_, "2 FLOORS CLEARED", {345.F, 305.F}, 2.8F,
+                  sf::Color(94, 69, 48));
+      drawInkText(window_, result.str(), {330.F, 375.F}, 2.5F);
+    }
     drawInkText(window_, "ENTER FOR MENU", {345.F, 480.F}, 2.5F);
   } else {
     const auto background = display.hud.floor % 2 == 0 ? "BK1.jpg" : "BK0.jpg";

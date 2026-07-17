@@ -86,6 +86,9 @@ if(BUILD_TESTING)
   target_link_libraries(isaac_resource_tests PRIVATE isaac_resource)
   target_compile_definitions(isaac_resource_tests PRIVATE ISAAC_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
   add_test(NAME resource_cache_and_missing COMMAND isaac_resource_tests)
+  add_executable(isaac_ending_presentation_tests tests/view/test_ending_presentation.cpp)
+  target_link_libraries(isaac_ending_presentation_tests PRIVATE isaac_common)
+  add_test(NAME distinct_victory_presentation COMMAND isaac_ending_presentation_tests)
   add_test(NAME asset_provenance
     COMMAND ${CMAKE_COMMAND} -DPROJECT_ROOT=${CMAKE_SOURCE_DIR}
             -P ${CMAKE_SOURCE_DIR}/tests/assets/check_assets.cmake)
