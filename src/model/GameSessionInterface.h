@@ -109,7 +109,6 @@ struct SessionSnapshot {
   std::size_t totalShots{};
   float elapsedSeconds{};
   bool playerDead{};
-  bool devilRoomAvailable{};
   bool roomRewardCollected{};
   bool runCompleted{};
 };

@@ -168,6 +168,14 @@ Commit hashes are recorded only after the referenced commit exists; stage tags p
 - Architecture effect: GameSession and ItemSystem continue to own reward and health rules; GameViewModel only translates snapshots; GameView and Resource own target-type texture selection and sprite orientation.
 - Verification: failing-first Breakfast/resource tests, exact gold mirror checks, item-sprite decoding, complete-session treasure DTO coverage, Debug/Release CTest, provenance and live-window inspection are release gates.
 
+## Iteration 14 — 2026-07-17
+
+- Objective: align monster milk drops with Breakfast behavior, guarantee complementary treasure rewards, and reduce each floor to the requested four-room route.
+- Root cause: View drew every normal drop as `prop0` milk while Model still treated those drops as coins, bombs or keys; the treasure pool still contained Breakfast and selected each floor independently; Level still generated shop/secret rooms and could append a devil room after a Boss.
+- Actual change: normal drop strategies now produce a passive Breakfast pickup, whose Model effect adds one container and heals one whole heart. Treasure selection is limited to Sad Onion/Wiggle Worm: the first floor is seeded and the second chooses its complement. Level now generates only start, monster, treasure and Boss rooms, and the obsolete devil-room mutation path was removed.
+- Architecture effect: EnemySystem owns drop identity, ItemSystem owns health/stat effects, GameSession owns cross-floor reward state, and Level owns the four-node topology. View continues to render only typed DTOs and existing assets.
+- Verification: failing-first Model assertions cover Breakfast drops, exact four-room counts, both allowed first-floor rewards, a present non-repeating second-floor reward and no fifth room after Boss clear. The deterministic two-floor demo exercises both treasure rooms and monster drops.
+
 ## Existing stage evidence
 
 | Stage | Commit | Tag |

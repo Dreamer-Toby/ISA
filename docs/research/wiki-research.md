@@ -9,19 +9,19 @@ Access date for every entry below: **2026-07-13**. The Wiki intermittently retur
 | 抹大拉 | https://isaac.huijiwiki.com/wiki/抹大拉 | High health and low movement speed; healing active item association. | Magdalene starts with four hearts, moves slowly and carries Yum Heart. |
 | 犹大 | https://isaac.huijiwiki.com/wiki/犹大 | Low-health, high-damage identity and coin association. | Judas starts with one heart, high damage and three coins. |
 | 成就（以撒/人物索引） | https://isaac.huijiwiki.com/wiki/成就 | Character roster and unlock context. | Isaac is the balanced baseline; unlock rules are omitted. |
-| 掉落物 | https://isaac.huijiwiki.com/wiki/掉落物 | Coins buy goods, bombs damage/open secret entrances, keys open locked doors/chests. | Each resource is an integer; use fails atomically when insufficient. |
+| 掉落物 | https://isaac.huijiwiki.com/wiki/掉落物 | Coins, bombs, keys and pickups have distinct roles in the original. | The simplified active map keeps keys for treasure doors; displayed monster milk drops are Breakfast pickups. |
 | HUD | https://isaac.huijiwiki.com/wiki/HUD | Health, active item, coins, bombs, keys and map are grouped in the HUD. | Show red hearts, shields, all resources, active item, minimap, floor and room state. |
-| 房间 | https://isaac.huijiwiki.com/wiki/房间 | Named special-room taxonomy and door relationships. | Every floor has normal, treasure, shop, secret and boss rooms. |
-| 商店 | https://isaac.huijiwiki.com/wiki/商店 | Shop is normally locked and contains coin-priced goods. | Shop entry consumes one key; one passive item costs 5 coins. |
-| 隐藏房 | https://isaac.huijiwiki.com/wiki/隐藏房 | Secret entrances are revealed using bombs and connect to non-boss rooms. | A bomb at an adjacent normal-room wall reveals the secret room permanently. |
-| 恶魔房 | https://isaac.huijiwiki.com/wiki/恶魔房 | May appear after clearing a boss. | A deterministic injectable roll below 35% creates a devil room; detailed angel/deal rules are omitted. |
-| 布局 | https://isaac.huijiwiki.com/wiki/布局 | Floor/room layout categories. | Use a small connected graph with deterministic seeds rather than original layout pools. |
+| 房间 | https://isaac.huijiwiki.com/wiki/房间 | Named special-room taxonomy and door relationships. | Every floor is fixed to one start, one monster, one treasure and one boss room. |
+| 商店 | https://isaac.huijiwiki.com/wiki/商店 | Shop is normally locked and contains coin-priced goods. | Historical research only; shops are omitted from the active four-room layout. |
+| 隐藏房 | https://isaac.huijiwiki.com/wiki/隐藏房 | Secret entrances are revealed using bombs and connect to non-boss rooms. | Historical research only; secret rooms are omitted from the active four-room layout. |
+| 恶魔房 | https://isaac.huijiwiki.com/wiki/恶魔房 | May appear after clearing a boss. | Historical research only; devil rooms are omitted so the floor remains exactly four rooms. |
+| 布局 | https://isaac.huijiwiki.com/wiki/布局 | Floor/room layout categories. | Use one fixed four-node connected graph rather than the original layout pools. |
 | 美味的心 | https://isaac.huijiwiki.com/wiki/C45 | Active healing item associated with Magdalene; restores red-heart health. | `Yum Heart` heals one whole course heart. Original charge/synergy details are omitted. |
 | 彼列之书 | https://isaac.huijiwiki.com/wiki/C34 | Active book grants temporary damage, with the Wiki listing +2 damage in the current room. | `Book of Belial` grants +2 damage when used; room-duration/charge and repeated-use DLC differences are simplified. |
 | 小石头 | https://isaac.huijiwiki.com/wiki/C90 | Passive offensive item whose identity is a damage increase with tear-side tradeoffs in the original. | `Small Rock` stacks +1 damage; original speed/stat side effects are omitted. |
 | 悲伤洋葱 | https://isaac.huijiwiki.com/wiki/C1 | Passive tears/rate increase; the user identified the green `prop5` image as this separate rate item. | `Sad Onion` multiplies shot interval by 0.85 with a safe lower bound; exact tears formula is simplified. |
 | 幸运脚趾 | https://isaac.huijiwiki.com/wiki/T42 | Trinket described by the Wiki data table as luck up and affecting reward odds. | `Lucky Toe` occupies the trinket slot and adds +1 course luck; detailed machine/drop tables are omitted. |
-| 早餐 / Breakfast | User-identified `prop0` milk material | The requested treasure-room health item must visibly exist and increase maximum health. | Adds one red-heart container without changing current red health. |
+| 早餐 / Breakfast | User-identified `prop0` milk material | A displayed monster milk drop must behave as the health-up item it depicts. | Adds one red-heart container and heals one whole red heart on pickup. |
 | Wiggle Worm | User-provided `prop6` material | The requested snake-tear item needs a curved projectile path without a fire-rate bonus. | Enables a bounded sine offset around the projectile's forward trajectory and leaves shot interval unchanged. |
 
 ## Enemy and boss research matrix
@@ -42,6 +42,6 @@ The implemented roster deliberately uses broad behavior references rather than o
 
 - The Wiki's exact stats vary by edition/DLC. This project uses stable, documented course values and retains only the role identity.
 - Original health displays include many heart types. The course version has red hearts plus one shield/soul-heart pool, capped together at 12 hearts.
-- Original devil-room probability depends on many run conditions. The course version uses one injectable 35% roll after a boss.
-- Original maps use large layout pools. The course version guarantees five required room types in a small connected graph on each of two floors.
+- Original devil-room probability depends on many run conditions. The course version omits devil rooms to preserve the requested exact four-room floor.
+- Original maps use large layout pools. The course version uses one fixed four-node connected graph on each of two floors.
 - Item values differ across editions and use the original game's nonlinear stat formulas. The seven dedicated rows above freeze transparent course values rather than mixing editions.

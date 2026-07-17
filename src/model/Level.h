@@ -25,7 +25,7 @@ class Level {
  public:
   static constexpr int MaxFloors = 2;
 
-  explicit Level(unsigned seed = 1U);
+  Level();
   [[nodiscard]] int floorNumber() const { return floorIndex_ + 1; }
   [[nodiscard]] int currentRoomId() const { return currentRoom_; }
   [[nodiscard]] const Room& currentRoom() const { return rooms_.at(currentRoom_); }
@@ -36,11 +36,9 @@ class Level {
   bool enter(int roomId, Inventory& inventory, bool useBomb);
   void markCurrentCleared();
   bool advanceFloor();
-  bool addDevilRoom();
 
  private:
   void generateFloor();
-  unsigned seed_{};
   int floorIndex_{};
   int currentRoom_{};
   std::vector<Room> rooms_;

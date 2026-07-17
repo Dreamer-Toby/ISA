@@ -25,7 +25,7 @@ On **2026-07-17** the user supplied `codex-clipboard-aa0204a7-0a57-47c6-9865-552
 | `assets/textures/rooms/treasure-door-up.png` | `codex-clipboard-aa0204a7-0a57-47c6-9865-552146fa73ad.png` | Up exit leading to a treasure room | Exact vertical pixel mirror of `treasure-door-down.png`. |
 | `assets/textures/rooms/treasure-door-left.png` | `codex-clipboard-aa0204a7-0a57-47c6-9865-552146fa73ad.png` | Left exit leading to a treasure room | Exact clockwise quarter-turn of `treasure-door-down.png`. |
 | `assets/textures/rooms/treasure-door-right.png` | `codex-clipboard-aa0204a7-0a57-47c6-9865-552146fa73ad.png` | Right exit leading to a treasure room | Exact horizontal pixel mirror of `treasure-door-left.png`. |
-| `assets/textures/rooms/wood-door.png` | Built-in image edit of the previous door draft | Ordinary, shop, secret and devil-room exits | Precise material edit to dark walnut, dull iron and an open black tunnel; flat chroma-key background converted to alpha; runtime direction rotation and nearest-neighbor scaling. |
+| `assets/textures/rooms/wood-door.png` | Built-in image edit of the previous door draft | Non-treasure, non-Boss exits in the four-room layout | Precise material edit to dark walnut, dull iron and an open black tunnel; flat chroma-key background converted to alpha; runtime direction rotation and nearest-neighbor scaling. |
 
 ## User-provided local material library
 

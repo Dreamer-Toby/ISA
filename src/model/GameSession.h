@@ -16,7 +16,7 @@ namespace isaac::model {
 
 class GameSession final : public GameSessionInterface {
  public:
-  explicit GameSession(float devilRoomRoll = 0.2F, unsigned treasureSeed = 0U);
+  explicit GameSession(unsigned treasureSeed = 0U);
   void selectCharacter(std::size_t index) override;
   void update(float seconds, const GameplayInput& input) override;
   [[nodiscard]] const SessionSnapshot& snapshot() const override { return snapshot_; }
@@ -39,11 +39,9 @@ class GameSession final : public GameSessionInterface {
   std::vector<Pickup> pickups_;
   ItemSystem items_;
   BossSystem bosses_;
-  float devilRoomRoll_{};
   std::mt19937 treasureRng_;
   std::string treasureItemId_;
   bool bossEncounterActive_{};
-  bool bossRewardResolved_{};
   bool runCompleted_{};
   std::vector<Projectile> projectiles_;
   SessionSnapshot snapshot_{};

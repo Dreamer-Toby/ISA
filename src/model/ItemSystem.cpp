@@ -26,8 +26,10 @@ void ItemSystem::apply(Player& player, const ItemDefinition& item) const {
   if (item.category == ItemCategory::Active) player.inventory().setActiveItem(std::string(item.displayName));
   if (item.category == ItemCategory::Passive) {
     player.inventory().addPassiveItem(std::string(item.displayName));
-    if (item.effect == ItemEffect::HealthUp)
+    if (item.effect == ItemEffect::HealthUp) {
       player.health().addContainer(static_cast<int>(item.amount));
+      player.health().healRed(static_cast<int>(item.amount));
+    }
     if (item.effect == ItemEffect::DamageUp) player.shooting().addDamage(item.amount);
     if (item.effect == ItemEffect::TearsUp) player.shooting().multiplyInterval(item.amount);
     if (item.effect == ItemEffect::SineTears) player.shooting().enableSineProjectiles();
@@ -53,7 +55,7 @@ bool ItemSystem::useActive(Player& player) const {
 
 bool ItemSystem::takeTreasureItem(Player& player, std::string_view itemId) {
   if (treasureTaken_ ||
-      (itemId != "breakfast" && itemId != "wiggle_worm" && itemId != "sad_onion")) return false;
+      (itemId != "wiggle_worm" && itemId != "sad_onion")) return false;
   treasureTaken_ = true;
   apply(player, ItemCatalog::byId(itemId));
   return true;

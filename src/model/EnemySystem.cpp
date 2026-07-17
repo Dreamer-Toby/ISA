@@ -7,12 +7,12 @@ namespace isaac::model {
 
 const std::array<EnemyDefinition, 6>& EnemyCatalog::all() {
   static constexpr std::array<EnemyDefinition, 6> definitions{{
-      {"fly", "Fly", 5.F, 72.F, 1, MoveStrategy::Chase, AttackStrategy::Contact, DropStrategy::Coin},
+      {"fly", "Fly", 5.F, 72.F, 1, MoveStrategy::Chase, AttackStrategy::Contact, DropStrategy::Breakfast},
       {"pooter", "Pooter", 7.F, 55.F, 1, MoveStrategy::KeepDistance, AttackStrategy::AimedShot, DropStrategy::None},
-      {"spider", "Spider", 6.F, 95.F, 1, MoveStrategy::Wander, AttackStrategy::Contact, DropStrategy::Bomb},
+      {"spider", "Spider", 6.F, 95.F, 1, MoveStrategy::Wander, AttackStrategy::Contact, DropStrategy::Breakfast},
       {"hopper", "Hopper", 9.F, 82.F, 1, MoveStrategy::Dash, AttackStrategy::Contact, DropStrategy::None},
-      {"gaper", "Gaper", 12.F, 62.F, 1, MoveStrategy::Chase, AttackStrategy::Contact, DropStrategy::Key},
-      {"clotty", "Clotty", 14.F, 0.F, 1, MoveStrategy::Stationary, AttackStrategy::RadialShot, DropStrategy::Coin},
+      {"gaper", "Gaper", 12.F, 62.F, 1, MoveStrategy::Chase, AttackStrategy::Contact, DropStrategy::Breakfast},
+      {"clotty", "Clotty", 14.F, 0.F, 1, MoveStrategy::Stationary, AttackStrategy::RadialShot, DropStrategy::Breakfast},
   }};
   return definitions;
 }
@@ -31,10 +31,7 @@ void EnemySystem::spawnForNormalRoom(int roomId, int floor) {
 void EnemySystem::dropFor(const Enemy& enemy, std::vector<Pickup>& pickups) const {
   const auto drop = EnemyCatalog::all()[enemy.definitionIndex].drop;
   if (drop == DropStrategy::None) return;
-  common::PickupType type = common::PickupType::Coin;
-  if (drop == DropStrategy::Bomb) type = common::PickupType::Bomb;
-  if (drop == DropStrategy::Key) type = common::PickupType::Key;
-  pickups.push_back({type, enemy.position});
+  pickups.push_back({common::PickupType::Passive, enemy.position});
 }
 
 bool EnemySystem::update(float seconds, Player& player, std::vector<Projectile>& projectiles,

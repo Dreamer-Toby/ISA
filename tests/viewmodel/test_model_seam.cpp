@@ -162,7 +162,7 @@ int main() {
       {isaac::common::ObstacleType::Rock, {315.F, 270.F}, 28.F},
       {isaac::common::ObstacleType::Trap, {710.F, 430.F}, 20.F},
   };
-  presentationModel.state.treasureItems = {{{480.F, 300.F}, "breakfast"}};
+  presentationModel.state.treasureItems = {{{480.F, 300.F}, "wiggle_worm"}};
   isaac::viewmodel::GameViewModel presentationViewModel(presentationModel);
   const auto& presentationDisplay = presentationViewModel.displayProperty().get();
   check(presentationDisplay.doors.size() == 1 && presentationDisplay.doors.front().locked &&
@@ -180,7 +180,7 @@ int main() {
   check(rock != presentationDisplay.entities.end() && rock->radius == 28.F &&
             trap != presentationDisplay.entities.end() && trap->radius == 20.F,
         "modeled rocks and traps cross the ViewModel seam as typed entities");
-  check(treasure != presentationDisplay.entities.end() && treasure->itemId == "breakfast",
+  check(treasure != presentationDisplay.entities.end() && treasure->itemId == "wiggle_worm",
         "treasure item identity crosses the ViewModel seam without exposing Model objects");
 
   FakeGameSession combatModel;
@@ -198,7 +198,6 @@ int main() {
   bossRewardModel.state.floor = 2;
   bossRewardModel.state.roomType = isaac::common::RoomType::Boss;
   bossRewardModel.state.roomCleared = true;
-  bossRewardModel.state.devilRoomAvailable = true;
   isaac::viewmodel::GameViewModel bossRewardViewModel(bossRewardModel);
   const auto& bossRewardDisplay = bossRewardViewModel.displayProperty().get();
   check(bossRewardDisplay.trapdoorVisible,

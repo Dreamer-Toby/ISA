@@ -73,12 +73,30 @@ bool collectTreasure(isaac::model::GameSession& session, isaac::viewmodel::GameV
   return session.snapshot().roomRewardCollected && session.snapshot().treasureItems.empty();
 }
 
-bool completeCombatAndBoss(isaac::model::GameSession& session, isaac::viewmodel::GameViewModel& vm) {
+bool completeFloor(isaac::model::GameSession& session, isaac::viewmodel::GameViewModel& vm) {
+  if (!driveToRoom(session, vm, 2, {-1.F, 0.F})) { std::cerr << "demo detail: cannot enter treasure\n"; return false; }
+  if (!collectTreasure(session, vm)) { std::cerr << "demo detail: treasure not collected\n"; return false; }
+  if (!driveToRoom(session, vm, 0, {1.F, 0.F})) { std::cerr << "demo detail: cannot leave treasure\n"; return false; }
   if (!driveToRoom(session, vm, 1, {1.F, 0.F})) { std::cerr << "demo detail: cannot enter normal\n"; return false; }
-  if (!clearCurrentRoom(session, vm)) { std::cerr << "demo detail: normal not clear, dead=" << session.snapshot().playerDead << '\n'; return false; }
+  if (!clearCurrentRoom(session, vm)) {
+    const auto& state = session.snapshot();
+    std::cerr << "demo detail: normal not clear, dead=" << state.playerDead
+              << " enemies=" << state.enemies.size()
+              << " player=" << state.playerPosition.x << ',' << state.playerPosition.y
+              << " sine=" << session.player().shooting().sineProjectiles() << '\n';
+    for (const auto& enemy : state.enemies) {
+      std::cerr << "demo detail: remaining " << enemy.id << " at "
+                << enemy.position.x << ',' << enemy.position.y << '\n';
+    }
+    return false;
+  }
   collectPickups(session, vm);
-  if (!driveToRoom(session, vm, 5, {1.F, 0.F})) { std::cerr << "demo detail: cannot enter boss\n"; return false; }
+  if (!driveToRoom(session, vm, 3, {1.F, 0.F})) { std::cerr << "demo detail: cannot enter boss\n"; return false; }
   if (!clearCurrentRoom(session, vm)) { std::cerr << "demo detail: boss not clear, dead=" << session.snapshot().playerDead << '\n'; return false; }
+  if (session.level().rooms().size() != 4) {
+    std::cerr << "demo detail: boss clear added a forbidden fifth room\n";
+    return false;
+  }
   pressConfirm(vm);
   return true;
 }
@@ -86,7 +104,7 @@ bool completeCombatAndBoss(isaac::model::GameSession& session, isaac::viewmodel:
 
 int main() {
 #define REQUIRE(condition, message) do { if (!(condition)) { std::cerr << "demo FAIL: " << message << '\n'; return EXIT_FAILURE; } } while (false)
-  isaac::model::GameSession session;
+  isaac::model::GameSession session(1U);
   isaac::viewmodel::GameViewModel vm(session);
   pressConfirm(vm);
   pressConfirm(vm);
@@ -95,37 +113,16 @@ int main() {
   pressConfirm(vm);
   REQUIRE(session.snapshot().characterId == "magdalene", "non-default Magdalene selection");
 
-  REQUIRE(driveToRoom(session, vm, 1, {1.F, 0.F}) && clearCurrentRoom(session, vm), "floor 1 normal combat");
-  collectPickups(session, vm);
-  REQUIRE(driveToRoom(session, vm, 0, {-1.F, 0.F}), "return to start");
-
-  REQUIRE(driveToRoom(session, vm, 3, {0.F, 1.F}), "enter shop");
-  pressConfirm(vm);
-  REQUIRE(!session.player().inventory().passiveItems().empty(), "buy shop passive");
-  REQUIRE(driveToRoom(session, vm, 0, {0.F, -1.F}), "leave shop");
-
   const int keysBeforeTreasure = session.player().inventory().keys();
-  REQUIRE(driveToRoom(session, vm, 2, {-1.F, 0.F}), "enter treasure");
-  const int keysAfterDoor = session.player().inventory().keys();
-  REQUIRE(keysAfterDoor == keysBeforeTreasure - 1, "treasure door consumes one key");
-  REQUIRE(collectTreasure(session, vm), "collect the visible treasure item");
-  REQUIRE(session.player().inventory().keys() == keysAfterDoor,
-          "treasure pickup does not charge a second key");
-  REQUIRE(driveToRoom(session, vm, 0, {1.F, 0.F}), "leave treasure");
-
-  REQUIRE(driveToRoom(session, vm, 4, {0.F, -1.F}, true), "bomb into secret");
-  REQUIRE(session.player().inventory().trinket() != "None", "take secret trinket");
-  REQUIRE(driveToRoom(session, vm, 0, {0.F, 1.F}), "leave secret");
-
-  REQUIRE(driveToRoom(session, vm, 1, {1.F, 0.F}) && driveToRoom(session, vm, 5, {1.F, 0.F}), "enter floor 1 boss");
-  REQUIRE(clearCurrentRoom(session, vm), "clear floor 1 boss");
-  pressConfirm(vm);
+  REQUIRE(completeFloor(session, vm), "complete floor 1 four-room route");
+  REQUIRE(session.player().inventory().keys() == keysBeforeTreasure - 1,
+          "floor 1 treasure consumes exactly one key");
   REQUIRE(session.level().floorNumber() == 2, "advance to floor 2");
 
-  REQUIRE(completeCombatAndBoss(session, vm) && session.level().floorNumber() == 2, "complete floor 2");
+  REQUIRE(completeFloor(session, vm) && session.level().floorNumber() == 2, "complete floor 2");
   REQUIRE(vm.displayProperty().get().screen == isaac::common::ScreenState::Victory, "victory screen");
 
-  std::cout << "demo: menu->Magdalene->combat/drop->shop->treasure->secret->2 floors->victory\n";
+  std::cout << "demo: menu->Magdalene->treasure->combat/Breakfast drop->Boss->2 floors->victory\n";
   return EXIT_SUCCESS;
 #undef REQUIRE
 }

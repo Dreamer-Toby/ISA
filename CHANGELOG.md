@@ -91,5 +91,12 @@
 
 - Reserved the four directional gold doors exclusively for exits whose destination is a treasure room. Ordinary, shop, secret and devil-room exits now use a distinct open wooden doorway; its rotation is based on the source image so each door opens inward from its wall.
 - Verified through the complete `GameSession` to ViewModel flow that every treasure room exposes exactly one visible random item, and added resource decoding coverage for all three item sprites.
-- Corrected Breakfast to add one red-heart container without restoring current red health.
+- Corrected Breakfast to add one red-heart container without restoring current red health (revised again from user feedback in Stage 14).
 - Preserved the MVVM boundary: item and reward rules remain in Model, DTO translation remains in ViewModel, and door texture/direction selection remains in View/Resource.
+
+### Stage 14 - four-room floors and complementary treasure rewards
+
+- Made every displayed monster milk drop a real Breakfast pickup. Breakfast now adds one red-heart container and immediately restores one whole red heart.
+- Restricted treasure rooms to Sad Onion and Wiggle Worm. Floor one selects one with the run seed; floor two always supplies the other, so both floors contain one visible, non-repeating reward.
+- Reduced every floor to exactly four connected rooms: start, one monster room, one treasure room and one Boss room. Removed runtime shop, secret and devil-room generation.
+- Removed the obsolete devil-room roll/API, kept gameplay rules in Model, and added failing-first coverage for drop effects, exact room counts, per-floor treasure presence and cross-floor non-repetition.

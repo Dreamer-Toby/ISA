@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <string>
 
 namespace {
 int failures{};
@@ -63,18 +64,19 @@ int main() {
 
   GameSession session;
   const auto& startDoors = session.snapshot().doors;
-  check(startDoors.size() == 4, "start room snapshot exposes every modeled exit");
+  check(startDoors.size() == 2, "start room exposes only the monster and treasure exits");
   const auto treasureDoor = std::ranges::find_if(startDoors, [](const DoorSnapshot& door) {
     return door.targetType == isaac::common::RoomType::Treasure;
   });
   check(treasureDoor != startDoors.end() && treasureDoor->locked && !treasureDoor->hidden &&
             !treasureDoor->sealed,
         "treasure door snapshot exposes locked visible open-state details");
-  const auto secretDoor = std::ranges::find_if(startDoors, [](const DoorSnapshot& door) {
-    return door.targetType == isaac::common::RoomType::Secret;
-  });
-  check(secretDoor != startDoors.end() && secretDoor->hidden,
-        "secret entrance remains hidden in the Model snapshot until revealed");
+  check(std::ranges::none_of(startDoors, [](const DoorSnapshot& door) {
+          return door.targetType == isaac::common::RoomType::Shop ||
+                 door.targetType == isaac::common::RoomType::Secret ||
+                 door.targetType == isaac::common::RoomType::Devil;
+        }),
+        "simplified start room has no shop, secret, or devil exit");
   session.update(1.F / 60.F, {{}, {1.F, 0.F}});
   check(session.projectiles().size() == 1, "shoot creates projectile");
   const auto shotEvents = session.drainEvents();
@@ -93,7 +95,7 @@ int main() {
   check(restartSession.level().enter(1, restartSession.player().inventory(), false),
         "restart regression enters the combat route");
   restartSession.level().markCurrentCleared();
-  check(restartSession.level().enter(5, restartSession.player().inventory(), false),
+  check(restartSession.level().enter(3, restartSession.player().inventory(), false),
         "restart regression enters the boss route");
   restartSession.level().markCurrentCleared();
   check(restartSession.level().advanceFloor(), "restart regression reaches floor two");
@@ -170,9 +172,12 @@ int main() {
   for (int frame = 0; frame < 220 && pickupSession.level().currentRoomId() == 0; ++frame) {
     pickupSession.update(1.F / 60.F, {{1.F, 0.F}, {}});
   }
+  pickupSession.player().damage(1);
+  const int containersBeforeDrops = pickupSession.player().health().containers();
+  const int redHalfUnitsBeforeDrops = pickupSession.player().health().redHalfUnits();
   int expectedPickups{};
   for (auto& enemy : pickupSession.enemySystem().enemies()) {
-    if (EnemyCatalog::all()[enemy.definitionIndex].drop != DropStrategy::None) ++expectedPickups;
+    if (EnemyCatalog::all()[enemy.definitionIndex].drop == DropStrategy::Breakfast) ++expectedPickups;
     enemy.position = pickupSession.player().position();
     enemy.health = 0.F;
   }
@@ -183,18 +188,31 @@ int main() {
         "each collected drop records one Pickup event at its behavior source");
   check(pickupSession.snapshot().pickups.empty(),
         "same-tick generated and collected pickups leave no snapshot entity");
+  check(expectedPickups > 0 &&
+            pickupSession.player().health().containers() == containersBeforeDrops + expectedPickups &&
+            pickupSession.player().health().redHalfUnits() ==
+                redHalfUnitsBeforeDrops + expectedPickups * 2,
+        "monster-dropped Breakfast adds one container and heals one whole heart");
 
-  Level level(42U);
+  Level level;
   Inventory inventory;
-  check(level.connected() && level.hasRequiredRoomTypes(), "map is connected with required rooms");
-  check(!level.enter(4, inventory, false), "secret room rejects entry without bomb");
-  check(level.enter(4, inventory, true), "bomb reveals and enters secret room");
-  check(inventory.bombs() == 0, "secret reveal consumes bomb");
-  check(level.enter(0, inventory, false), "can return from secret room");
+  const auto roomCount = [&level](isaac::common::RoomType type) {
+    return std::ranges::count_if(level.rooms(), [type](const Room& room) {
+      return room.type == type;
+    });
+  };
+  check(level.connected() && level.hasRequiredRoomTypes() && level.rooms().size() == 4 &&
+            roomCount(isaac::common::RoomType::Normal) == 2 &&
+            roomCount(isaac::common::RoomType::Treasure) == 1 &&
+            roomCount(isaac::common::RoomType::Boss) == 1 &&
+            roomCount(isaac::common::RoomType::Shop) == 0 &&
+            roomCount(isaac::common::RoomType::Secret) == 0 &&
+            roomCount(isaac::common::RoomType::Devil) == 0,
+        "each floor has exactly one start, monster, treasure, and boss room");
   check(level.enter(2, inventory, false), "key opens treasure room");
   check(inventory.keys() == 1, "locked room consumes exactly one key");
   check(level.enter(0, inventory, false), "room round trip returns to start");
-  check(level.rooms().at(4).visited && level.rooms().at(2).visited, "room state persists after round trips");
+  check(level.rooms().at(2).visited, "treasure-room state persists after a round trip");
 
   check(EnemyCatalog::all().size() == 6, "six configured normal enemies");
   EnemySystem enemySystem;
@@ -214,7 +232,10 @@ int main() {
     enemySystem.update(0.F, testPlayer, hitProjectiles, drops);
   }
   check(enemySystem.empty(), "enemy damage and death clear encounter");
-  check(!drops.empty(), "configured enemy death produces drops");
+  check(!drops.empty() && std::ranges::all_of(drops, [](const Pickup& pickup) {
+          return pickup.type == isaac::common::PickupType::Passive;
+        }),
+        "configured monster drops are typed as Breakfast passives");
 
   ItemSystem itemSystem;
   Player itemPlayer(CharacterCatalog::at(0));
@@ -227,9 +248,9 @@ int main() {
   const int redHalfUnitsBeforeBreakfast = breakfastPlayer.health().redHalfUnits();
   const int containersBeforeBreakfast = breakfastPlayer.health().containers();
   itemSystem.apply(breakfastPlayer, ItemCatalog::byId("breakfast"));
-  check(breakfastPlayer.health().redHalfUnits() == redHalfUnitsBeforeBreakfast &&
+  check(breakfastPlayer.health().redHalfUnits() == redHalfUnitsBeforeBreakfast + 2 &&
             breakfastPlayer.health().containers() == containersBeforeBreakfast + 1,
-        "Breakfast adds a heart container without restoring current health");
+        "Breakfast adds a heart container and restores one whole heart");
   Player wigglePlayer(CharacterCatalog::at(0));
   const float baseShotsPerSecond = wigglePlayer.shooting().shotsPerSecond();
   itemSystem.apply(wigglePlayer, ItemCatalog::byId("wiggle_worm"));
@@ -247,10 +268,12 @@ int main() {
   check(sineProjectile.position.x > 100.F && std::abs(sineProjectile.position.y - 200.F) > 0.1F,
         "sine projectile follows a curved trajectory");
   const int keysBeforeTreasure = itemPlayer.inventory().keys();
-  check(itemSystem.takeTreasureItem(itemPlayer, "breakfast") &&
+  check(!itemSystem.takeTreasureItem(itemPlayer, "breakfast"),
+        "Breakfast is reserved for monster drops instead of treasure rooms");
+  check(itemSystem.takeTreasureItem(itemPlayer, "wiggle_worm") &&
             itemPlayer.inventory().keys() == keysBeforeTreasure,
-        "treasure pickup grants the selected item without charging a second key");
-  check(!itemSystem.takeTreasureItem(itemPlayer, "wiggle_worm"),
+        "treasure pickup grants an allowed item without charging a second key");
+  check(!itemSystem.takeTreasureItem(itemPlayer, "sad_onion"),
         "treasure room grants at most one item");
   ItemSystem onionTreasureSystem;
   Player onionTreasurePlayer(CharacterCatalog::at(0));
@@ -261,18 +284,19 @@ int main() {
   check(itemSystem.buyShopItem(itemPlayer) && itemPlayer.inventory().coins() == 2, "shop purchase is atomic");
   check(itemSystem.takeSecretTrinket(itemPlayer) && itemPlayer.luck() > 0.F, "secret trinket applies luck");
 
-  GameSession treasureSession(0.2F, 7U);
+  GameSession treasureSession(7U);
   check(treasureSession.level().enter(2, treasureSession.player().inventory(), false),
         "treasure room opens through its modeled locked door");
   treasureSession.player().setPosition({890.F, 300.F});
   treasureSession.update(0.F, {});
   check(treasureSession.snapshot().treasureItems.size() == 1,
         "an unclaimed treasure room contains exactly one visible item");
+  std::string firstFloorTreasureId;
   if (!treasureSession.snapshot().treasureItems.empty()) {
     const auto treasure = treasureSession.snapshot().treasureItems.front();
-    check(treasure.id == "breakfast" || treasure.id == "wiggle_worm" ||
-              treasure.id == "sad_onion",
-          "treasure reward is selected from Breakfast, Wiggle Worm, and Sad Onion");
+    firstFloorTreasureId = treasure.id;
+    check(treasure.id == "wiggle_worm" || treasure.id == "sad_onion",
+          "treasure reward is selected from Wiggle Worm and Sad Onion only");
     treasureSession.player().setPosition(treasure.position);
     treasureSession.update(0.F, {});
     check(treasureSession.snapshot().treasureItems.empty() &&
@@ -280,24 +304,41 @@ int main() {
               treasureSession.player().inventory().passiveItems().size() == 1,
           "touching the treasure item collects it and removes it from the room");
   }
+  check(treasureSession.level().enter(0, treasureSession.player().inventory(), false) &&
+            treasureSession.level().enter(1, treasureSession.player().inventory(), false),
+        "treasure regression returns to the floor route");
+  treasureSession.level().markCurrentCleared();
+  check(treasureSession.level().enter(3, treasureSession.player().inventory(), false),
+        "treasure regression reaches the floor-one boss");
+  treasureSession.level().markCurrentCleared();
+  GameplayInput advanceFloor;
+  advanceFloor.interact = true;
+  treasureSession.update(0.F, advanceFloor);
+  check(treasureSession.level().floorNumber() == 2 &&
+            treasureSession.level().enter(2, treasureSession.player().inventory(), false),
+        "second floor exposes its treasure room");
+  treasureSession.player().setPosition({890.F, 300.F});
+  treasureSession.update(0.F, {});
+  check(treasureSession.snapshot().treasureItems.size() == 1 &&
+            !firstFloorTreasureId.empty() &&
+            treasureSession.snapshot().treasureItems.front().id != firstFloorTreasureId,
+        "the second-floor treasure is present and cannot repeat the first-floor reward");
 
-  bool sawBreakfast{};
   bool sawWiggleWorm{};
   bool sawSadOnion{};
   for (unsigned seed = 1; seed <= 96; ++seed) {
-    GameSession seededTreasureSession(0.2F, seed);
+    GameSession seededTreasureSession(seed);
     if (!seededTreasureSession.level().enter(
             2, seededTreasureSession.player().inventory(), false)) continue;
     seededTreasureSession.player().setPosition({890.F, 300.F});
     seededTreasureSession.update(0.F, {});
     if (seededTreasureSession.snapshot().treasureItems.empty()) continue;
     const auto& id = seededTreasureSession.snapshot().treasureItems.front().id;
-    sawBreakfast = sawBreakfast || id == "breakfast";
     sawWiggleWorm = sawWiggleWorm || id == "wiggle_worm";
     sawSadOnion = sawSadOnion || id == "sad_onion";
   }
-  check(sawBreakfast && sawWiggleWorm && sawSadOnion,
-        "seeded treasure-room selection reaches all three independent rewards");
+  check(sawWiggleWorm && sawSadOnion,
+        "seeded treasure-room selection reaches both allowed rewards and no Breakfast");
 
   Inventory economy;
   check(!economy.spendCoins(1), "coin consume fails when empty");
@@ -315,21 +356,18 @@ int main() {
   std::vector<Projectile> bossProjectiles;
   bossSystem.update(0.F, testPlayer, bossProjectiles);
   check(bossSystem.empty(), "boss death resolves encounter");
-  check(DevilRoomPolicy::opens(0.F) && DevilRoomPolicy::opens(0.349F) &&
-        !DevilRoomPolicy::opens(0.35F) && !DevilRoomPolicy::opens(0.99F),
-        "devil room probability boundaries are deterministic");
-
-  Level progression(7U);
+  Level progression;
   Inventory progressionInventory;
   check(progression.enter(1, progressionInventory, false), "enter normal route to boss");
   progression.markCurrentCleared();
-  check(progression.enter(5, progressionInventory, false), "enter boss room after clear");
+  check(progression.enter(3, progressionInventory, false), "enter boss room after clear");
   progression.markCurrentCleared();
-  check(progression.addDevilRoom(), "boss clear can add devil room");
   check(progression.advanceFloor() && progression.floorNumber() == 2, "boss death advances floor");
+  check(progression.rooms().size() == 4,
+        "advancing floors preserves the exact four-room layout");
   check(progression.enter(1, progressionInventory, false), "enter second-floor normal route");
   progression.markCurrentCleared();
-  check(progression.enter(5, progressionInventory, false), "enter second-floor boss room");
+  check(progression.enter(3, progressionInventory, false), "enter second-floor boss room");
   progression.markCurrentCleared();
   check(!progression.advanceFloor() && progression.floorNumber() == 2,
         "second floor is final and a third floor cannot be generated");
@@ -354,7 +392,7 @@ int main() {
   for (int i = 0; i < 300 && integratedRoom.level().currentRoomId() == 1; ++i) {
     integratedRoom.update(1.F / 60.F, {{1.F, 0.F}, {}});
   }
-  check(integratedRoom.level().currentRoomId() == 5 && !integratedRoom.snapshot().bosses.empty(),
+  check(integratedRoom.level().currentRoomId() == 3 && !integratedRoom.snapshot().bosses.empty(),
         "cleared GameSession room permits transition and spawns the boss");
 
   const auto at30 = simulateAtRenderRate(30);

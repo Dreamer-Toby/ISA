@@ -29,19 +29,19 @@ EasyIsaac is the final visual reference, not the new architecture. EasyX is Wind
 
 ## Test strategy
 
-Model assertions cover the 12-heart cap/damage order, exact half-heart traps, rock/player/projectile collision, complete run reset, visible one-item treasure rooms, three independent treasure effects, sine trajectories, clear-gated doors, economy, secret reveal, Boss/devil/two-floor boundaries, fixed-seed connectivity and 30/60/120 FPS-equivalent fixed steps. A ViewModel flow test covers the three-option main menu, rankings, selection, stable pause selection, pause exit/resume, HUD, defeat/restart and two-floor victory. Resource tests verify pointer-identical texture/audio caching, differently sized EasyX mask pairs, missing diagnostics and one-to-one provenance. Debug and Release builds plus the architecture scan are release gates.
+Model assertions cover the 12-heart cap/damage order, exact half-heart traps, rock/player/projectile collision, complete run reset, Breakfast drop effects, exact four-room floors, one visible treasure item per floor, complementary Sad Onion/Wiggle Worm rewards, sine trajectories, clear-gated doors, Boss/two-floor boundaries and 30/60/120 FPS-equivalent fixed steps. A ViewModel flow test covers the three-option main menu, rankings, selection, stable pause selection, pause exit/resume, HUD, defeat/restart and two-floor victory. Resource tests verify pointer-identical texture/audio caching, differently sized EasyX mask pairs, missing diagnostics and one-to-one provenance. Debug and Release builds plus the architecture scan are release gates.
 
 ## Scope simplification
 
-The original game's catalogs, exact DLC formulas, layout pools, angel/deal conditions and heart taxonomy become four characters, six enemies, three Bosses, two six-node floors, one 35% devil rule and half-heart-aware red/shield health. This keeps a closed architecture/gameplay demonstration without pretending to be a full clone.
+The original game's catalogs, exact DLC formulas, layout pools, angel/deal conditions and heart taxonomy become four characters, six enemies, three Bosses, two four-room floors and half-heart-aware red/shield health. This keeps a closed architecture/gameplay demonstration without pretending to be a full clone.
 
 ## Demonstration order
 
 1. Start and choose characters to show configured stat differences.
 2. Move/shoot; use both stable pause choices; show HUD and minimap.
 3. Walk into a rock, shoot it, and step on a trap to show physical volume and half-heart damage.
-4. Enter treasure rooms and identify the single milk Breakfast, snake Wiggle Worm or green Sad Onion; demonstrate max-health-only, sine-only tears and fire-rate-only effects separately.
-5. Spend coin/bomb at the shop and hidden entrance, then finish the floor-two dual-Boss encounter.
+4. Collect a monster-dropped Breakfast to demonstrate one added container plus one healed heart.
+5. Enter both treasure rooms to show one Sad Onion and one Wiggle Worm in opposite floor order, then finish the floor-two dual-Boss encounter.
 6. Trigger defeat separately and present deterministic tests/architecture scan.
 
-Likely questions: “Why not ECS?” — unnecessary for this bounded roster. “Does View include Model?” — the scan rejects it. “What if assets are absent?” — Resource reports it and View falls back. “How is randomness tested?” — floors use seeds and devil rooms accept a unit roll.
+Likely questions: “Why not ECS?” — unnecessary for this bounded roster. “Does View include Model?” — the scan rejects it. “What if assets are absent?” — Resource reports it and View falls back. “How is randomness tested?” — a run seed selects the first treasure and the second is its deterministic complement.

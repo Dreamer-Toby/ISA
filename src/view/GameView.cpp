@@ -181,7 +181,6 @@ float treasureDoorTargetHeight(isaac::common::Direction direction) {
 }
 
 std::string_view treasurePropStem(std::string_view itemId) {
-  if (itemId == "breakfast") return "prop0";
   if (itemId == "sad_onion") return "prop5";
   if (itemId == "wiggle_worm") return "prop6";
   return {};

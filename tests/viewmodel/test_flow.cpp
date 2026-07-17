@@ -77,7 +77,7 @@ int main() {
   }
 
   {
-    isaac::model::GameSession treasureSession(0.2F, 7U);
+    isaac::model::GameSession treasureSession(7U);
     isaac::viewmodel::GameViewModel treasureViewModel(treasureSession);
     act(treasureViewModel, UserAction::Confirm);
     act(treasureViewModel, UserAction::Confirm);
@@ -88,7 +88,11 @@ int main() {
     tick(treasureViewModel);
     int visibleTreasureItems{};
     for (const auto& entity : display(treasureViewModel).entities) {
-      if (entity.kind == isaac::common::EntityKind::TreasureItem) ++visibleTreasureItems;
+      if (entity.kind == isaac::common::EntityKind::TreasureItem) {
+        ++visibleTreasureItems;
+        check(entity.itemId == "wiggle_worm" || entity.itemId == "sad_onion",
+              "treasure presentation exposes only the two allowed reward identities");
+      }
     }
     check(visibleTreasureItems == 1,
           "an unclaimed treasure room exposes exactly one item to the View");
@@ -134,7 +138,7 @@ int main() {
   auto& resetLevel = session.level();
   check(resetLevel.enter(1, session.player().inventory(), false), "prepare restart regression room");
   resetLevel.markCurrentCleared();
-  check(resetLevel.enter(5, session.player().inventory(), false), "prepare restart regression boss");
+  check(resetLevel.enter(3, session.player().inventory(), false), "prepare restart regression boss");
   resetLevel.markCurrentCleared();
   check(resetLevel.advanceFloor(), "prepare restart regression second floor");
   session.player().setPosition({800.F, 420.F});
@@ -151,7 +155,7 @@ int main() {
             !session.snapshot().playerDead,
         "starting after death creates a fresh run instead of restoring the death location");
 
-  isaac::model::GameSession winningSession(0.99F);
+  isaac::model::GameSession winningSession;
   isaac::viewmodel::GameViewModel winningViewModel(winningSession);
   act(winningViewModel, UserAction::Confirm);
   act(winningViewModel, UserAction::Confirm);
@@ -161,7 +165,7 @@ int main() {
     check(level.floorNumber() == expectedFloor, "expected floor in deterministic course flow");
     check(level.enter(1, winningSession.player().inventory(), false), "enter combat route");
     level.markCurrentCleared();
-    check(level.enter(5, winningSession.player().inventory(), false), "enter boss route");
+    check(level.enter(3, winningSession.player().inventory(), false), "enter boss route");
     level.markCurrentCleared();
     act(winningViewModel, UserAction::Confirm);
   }

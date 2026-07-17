@@ -46,33 +46,40 @@ isaac::common::Vec2 resolveRockOverlap(isaac::common::Vec2 position, float radiu
 
 namespace isaac::model {
 
-GameSession::GameSession(float devilRoomRoll, unsigned treasureSeed)
-    : player_(CharacterCatalog::at(0)), level_(1337U), devilRoomRoll_(devilRoomRoll),
+GameSession::GameSession(unsigned treasureSeed)
+    : player_(CharacterCatalog::at(0)),
       treasureRng_(treasureSeed == 0U ? std::random_device{}() : treasureSeed) {
   chooseTreasureItem();
   rebuildSnapshot();
 }
 
 void GameSession::chooseTreasureItem() {
-  static constexpr std::array<std::string_view, 3> rewards{
-      "breakfast", "wiggle_worm", "sad_onion"};
+  if (treasureItemId_ == "wiggle_worm") {
+    treasureItemId_ = "sad_onion";
+    return;
+  }
+  if (treasureItemId_ == "sad_onion") {
+    treasureItemId_ = "wiggle_worm";
+    return;
+  }
+  static constexpr std::array<std::string_view, 2> rewards{"wiggle_worm", "sad_onion"};
   std::uniform_int_distribution<std::size_t> choose(0, rewards.size() - 1);
   treasureItemId_ = rewards[choose(treasureRng_)];
 }
 
 void GameSession::selectCharacter(std::size_t index) {
   player_ = Player(CharacterCatalog::at(index));
-  level_ = Level(1337U);
+  level_ = Level{};
   enemies_ = EnemySystem{};
   pickups_.clear();
   items_ = ItemSystem{};
   bosses_ = BossSystem{};
   bossEncounterActive_ = false;
-  bossRewardResolved_ = false;
   runCompleted_ = false;
   projectiles_.clear();
   snapshot_ = SessionSnapshot{};
   pendingEvents_.clear();
+  treasureItemId_.clear();
   chooseTreasureItem();
   rebuildSnapshot();
 }
@@ -127,7 +134,6 @@ void GameSession::update(float seconds, const GameplayInput& input) {
       if (level_.currentRoom().type == common::RoomType::Boss && !level_.currentRoom().cleared) {
         bosses_.spawnForFloor(level_.floorNumber());
         bossEncounterActive_ = true;
-        bossRewardResolved_ = false;
       }
     }
   }
@@ -156,14 +162,15 @@ void GameSession::update(float seconds, const GameplayInput& input) {
   if (bossEncounterActive_ && bosses_.empty()) {
     bossEncounterActive_ = false;
     level_.markCurrentCleared();
-    if (!bossRewardResolved_ && DevilRoomPolicy::opens(devilRoomRoll_)) level_.addDevilRoom();
-    bossRewardResolved_ = true;
   }
   for (const auto& pickup : pickups_) {
     if ((pickup.position - player_.position()).lengthSquared() < 26.F * 26.F) {
       if (pickup.type == common::PickupType::Coin) player_.inventory().addCoins(1);
       if (pickup.type == common::PickupType::Bomb) player_.inventory().addBombs(1);
       if (pickup.type == common::PickupType::Key) player_.inventory().addKeys(1);
+      if (pickup.type == common::PickupType::Passive) {
+        items_.apply(player_, ItemCatalog::byId("breakfast"));
+      }
       pendingEvents_.push_back(ModelEvent::Pickup);
     }
   }
@@ -185,7 +192,6 @@ void GameSession::update(float seconds, const GameplayInput& input) {
         player_.setPosition({480.F, 300.F});
         projectiles_.clear(); pickups_.clear(); enemies_ = EnemySystem{}; bosses_ = BossSystem{};
         items_ = ItemSystem{};
-        bossRewardResolved_ = false;
         chooseTreasureItem();
       }
     }
@@ -249,9 +255,6 @@ void GameSession::rebuildSnapshot() {
   if (level_.currentRoom().type == common::RoomType::Treasure && !items_.treasureTaken()) {
     snapshot_.treasureItems.push_back({TreasureItemPosition, treasureItemId_});
   }
-  snapshot_.devilRoomAvailable = std::ranges::any_of(level_.rooms(), [](const Room& room) {
-    return room.type == common::RoomType::Devil;
-  });
   snapshot_.roomRewardCollected =
       (level_.currentRoom().type == common::RoomType::Treasure && items_.treasureTaken()) ||
       (level_.currentRoom().type == common::RoomType::Shop && items_.shopSold()) ||

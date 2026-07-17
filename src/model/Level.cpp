@@ -1,22 +1,18 @@
 #include "model/Level.h"
 
 #include <algorithm>
-#include <array>
 #include <queue>
 
 namespace isaac::model {
 
-Level::Level(unsigned seed) : seed_(seed) { generateFloor(); }
+Level::Level() { generateFloor(); }
 
 void Level::generateFloor() {
-  const int flip = ((seed_ + static_cast<unsigned>(floorIndex_)) & 1U) ? 1 : -1;
   rooms_ = {
-      {0, common::RoomType::Normal, 0, 0, true, true, true, false, {1, 2, 3, 4}},
-      {1, common::RoomType::Normal, 1, 0, false, false, true, false, {0, 5}},
+      {0, common::RoomType::Normal, 0, 0, true, true, true, false, {1, 2}},
+      {1, common::RoomType::Normal, 1, 0, false, false, true, false, {0, 3}},
       {2, common::RoomType::Treasure, -1, 0, true, false, true, true, {0}},
-      {3, common::RoomType::Shop, 0, flip, true, false, true, true, {0}},
-      {4, common::RoomType::Secret, 0, -flip, true, false, false, false, {0}},
-      {5, common::RoomType::Boss, 2, 0, false, false, true, false, {1}},
+      {3, common::RoomType::Boss, 2, 0, false, false, true, false, {1}},
   };
   currentRoom_ = 0;
 }
@@ -34,12 +30,11 @@ bool Level::connected() const {
 }
 
 bool Level::hasRequiredRoomTypes() const {
-  constexpr std::array types{common::RoomType::Normal, common::RoomType::Treasure,
-                             common::RoomType::Shop, common::RoomType::Secret,
-                             common::RoomType::Boss};
-  return std::ranges::all_of(types, [this](common::RoomType type) {
-    return std::ranges::any_of(rooms_, [type](const Room& room) { return room.type == type; });
-  });
+  const auto count = [this](common::RoomType type) {
+    return std::ranges::count_if(rooms_, [type](const Room& room) { return room.type == type; });
+  };
+  return rooms_.size() == 4 && count(common::RoomType::Normal) == 2 &&
+         count(common::RoomType::Treasure) == 1 && count(common::RoomType::Boss) == 1;
 }
 
 std::optional<int> Level::neighbor(common::Direction direction) const {
@@ -80,16 +75,6 @@ bool Level::advanceFloor() {
       floorIndex_ >= MaxFloors - 1) return false;
   ++floorIndex_;
   generateFloor();
-  return true;
-}
-
-bool Level::addDevilRoom() {
-  if (currentRoom().type != common::RoomType::Boss ||
-      std::ranges::any_of(rooms_, [](const Room& room) { return room.type == common::RoomType::Devil; })) return false;
-  const int id = static_cast<int>(rooms_.size());
-  rooms_.push_back({id, common::RoomType::Devil, rooms_[currentRoom_].gridX,
-                    rooms_[currentRoom_].gridY + 1, true, false, true, false, {currentRoom_}});
-  rooms_[currentRoom_].neighbors.push_back(id);
   return true;
 }
 

@@ -45,10 +45,4 @@ class BossSystem {
   std::vector<Boss> bosses_;
 };
 
-class DevilRoomPolicy {
- public:
-  static constexpr float Chance = 0.35F;
-  static bool opens(float unitRoll) { return unitRoll >= 0.F && unitRoll < Chance; }
-};
-
 }  // namespace isaac::model
