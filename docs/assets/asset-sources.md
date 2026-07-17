@@ -1,6 +1,6 @@
 # Asset source manifest
 
-The project downloaded the Wiki files in the first table on **2026-07-13** for non-profit classroom demonstration. Direct requests returned HTTP 403; a retry with the matching Wiki page as the HTTP referrer succeeded. Except for the user-directed ordinary-door derivative documented below, the project generated no replacement images. `ResourceManager` loads each file with nearest-neighbor scaling (`Texture::setSmooth(false)`), and the View draws fallback geometry when a file is missing.
+The project downloaded the Wiki files in the first table on **2026-07-13** for non-profit classroom demonstration. Direct requests returned HTTP 403; a retry with the matching Wiki page as the HTTP referrer succeeded. Except for the user-directed door derivatives documented below, the project generated no replacement images. `ResourceManager` loads each file with nearest-neighbor scaling (`Texture::setSmooth(false)`), and the View draws fallback geometry when a file is missing.
 
 | Local path | Original file | Source page | Original URL | Use | Processing |
 |---|---|---|---|---|---|
@@ -15,16 +15,17 @@ The project downloaded the Wiki files in the first table on **2026-07-13** for n
 | `assets/textures/ui/red-heart.png` | Health Red 2.png | https://isaac.huijiwiki.com/wiki/HUD | https://huiji-public.huijistatic.com/isaac/uploads/8/85/Health_Red_2.png | Red-heart HUD | Renamed only; native 16×16 draw. |
 | `assets/textures/ui/shield-heart.png` | Health Soul 2.png | https://isaac.huijiwiki.com/wiki/HUD | https://huiji-public.huijistatic.com/isaac/uploads/6/6a/Health_Soul_2.png | Shield/soul-heart HUD | Renamed only; native 16×16 draw. |
 
-## User-selected ordinary door
+## User-directed treasure-room and ordinary wooden doors
 
-On **2026-07-17** the user supplied `codex-clipboard-aa0204a7-0a57-47c6-9865-552146fa73ad.png` and explicitly selected its gold door for ordinary exits. The final assets retain the selected source pixels: a deterministic mask removes pixels outside the door crop, then lossless pixel transforms produce the four directions. No generated or repainted door is retained. These are user-directed derivatives without an external URL or license record and remain limited to this non-profit classroom demo.
+On **2026-07-17** the user supplied `codex-clipboard-aa0204a7-0a57-47c6-9865-552146fa73ad.png`. The user later clarified that this gold style identifies exits whose destination is a treasure room, rather than ordinary exits. The four gold assets retain the selected source pixels: a deterministic mask removes pixels outside the door crop, then lossless pixel transforms produce the four directions. The ordinary wooden doorway was produced from the previous door draft through a user-directed image edit: keep the silhouette, replace the material with dark walnut and dull iron, and leave a near-black open passage. A flat chroma-key background was removed to alpha with the installed image helper. These derivatives have no external URL or license record and remain limited to this non-profit classroom demo.
 
 | Local path | User-provided source | Use | Processing |
 |---|---|---|---|
-| `assets/textures/rooms/normal-door-down.png` | `codex-clipboard-aa0204a7-0a57-47c6-9865-552146fa73ad.png` | Down ordinary exit | Deterministic crop and alpha mask; retained RGB pixels are copied from the user image without repainting. |
-| `assets/textures/rooms/normal-door-up.png` | `codex-clipboard-aa0204a7-0a57-47c6-9865-552146fa73ad.png` | Up ordinary exit | Exact vertical pixel mirror of `normal-door-down.png`. |
-| `assets/textures/rooms/normal-door-left.png` | `codex-clipboard-aa0204a7-0a57-47c6-9865-552146fa73ad.png` | Left ordinary exit | Exact clockwise quarter-turn of `normal-door-down.png`. |
-| `assets/textures/rooms/normal-door-right.png` | `codex-clipboard-aa0204a7-0a57-47c6-9865-552146fa73ad.png` | Right ordinary exit | Exact horizontal pixel mirror of `normal-door-left.png`. |
+| `assets/textures/rooms/treasure-door-down.png` | `codex-clipboard-aa0204a7-0a57-47c6-9865-552146fa73ad.png` | Down exit leading to a treasure room | Deterministic crop and alpha mask; retained RGB pixels are copied from the user image without repainting. |
+| `assets/textures/rooms/treasure-door-up.png` | `codex-clipboard-aa0204a7-0a57-47c6-9865-552146fa73ad.png` | Up exit leading to a treasure room | Exact vertical pixel mirror of `treasure-door-down.png`. |
+| `assets/textures/rooms/treasure-door-left.png` | `codex-clipboard-aa0204a7-0a57-47c6-9865-552146fa73ad.png` | Left exit leading to a treasure room | Exact clockwise quarter-turn of `treasure-door-down.png`. |
+| `assets/textures/rooms/treasure-door-right.png` | `codex-clipboard-aa0204a7-0a57-47c6-9865-552146fa73ad.png` | Right exit leading to a treasure room | Exact horizontal pixel mirror of `treasure-door-left.png`. |
+| `assets/textures/rooms/wood-door.png` | Built-in image edit of the previous door draft | Ordinary, shop, secret and devil-room exits | Precise material edit to dark walnut, dull iron and an open black tunnel; flat chroma-key background converted to alpha; runtime direction rotation and nearest-neighbor scaling. |
 
 ## User-provided local material library
 
@@ -33,8 +34,8 @@ The user added the source files below to `以撒的结合素材库/` on **2026-0
 | Local path | User-provided source file | Use | Processing |
 |---|---|---|---|
 | `assets/textures/rooms/boss-door.png` | `以撒的结合素材库/门/Bossroom.png` | Boss-room exits | Renamed and copied byte for byte; runtime rotation and nearest-neighbor scale. |
-| `assets/textures/rooms/treasure-door.png` | `以撒的结合素材库/门/Itemroomdoor.png` | Open treasure/shop exits | Renamed and copied byte for byte; runtime rotation and nearest-neighbor scale. |
-| `assets/textures/rooms/locked-treasure-door.png` | `以撒的结合素材库/门/Lockeditemroomdoor.png` | Key-locked treasure/shop exits | Renamed and copied byte for byte; runtime rotation and nearest-neighbor scale. |
+| `assets/textures/rooms/treasure-door.png` | `以撒的结合素材库/门/Itemroomdoor.png` | Legacy item-room reference; no longer used at runtime | Renamed and copied byte for byte. |
+| `assets/textures/rooms/locked-treasure-door.png` | `以撒的结合素材库/门/Lockeditemroomdoor.png` | Legacy locked-item-room reference; no longer used at runtime | Renamed and copied byte for byte. |
 | `assets/textures/rooms/trapdoor.png` | `以撒的结合素材库/门/Secret_Trap_Door.png` | Post-Boss floor exit | Renamed and copied byte for byte; runtime nearest-neighbor scale. |
 | `assets/textures/characters/cain-portrait.png` | `以撒的结合素材库/人物/该隐.png` | Cain selection and gameplay head | Renamed and copied byte for byte; runtime nearest-neighbor scale. |
 | `assets/textures/characters/cain-portrait-closed.png` | `以撒的结合素材库/人物/该隐_闭眼.png` | Cain blink frame | Renamed and copied byte for byte; runtime nearest-neighbor scale. |
@@ -138,10 +139,11 @@ assets/easyisaac/sounds/shoot.wav
 ## Integrity hashes (SHA-256)
 
 ```text
-eabcee887cfc7771a14ac5a5f2951628d254b7b907b87afa9d2d31b0f7534377  assets/textures/rooms/normal-door-down.png
-5ce2362879defe53f0df8a02ee3b497c3ed6213a61465b435f0f5f89a3e05223  assets/textures/rooms/normal-door-up.png
-3ddba8517253fcf7d2d49bcc9322fa257314c28b78d0f48ce15c98616d7f3e2d  assets/textures/rooms/normal-door-left.png
-147676973ccde0234a38b333059e64421dd362c18b6f320efe5e40ca9ef9c50f  assets/textures/rooms/normal-door-right.png
+df2657766a81bcf57a734d1fe9ef15c0ebd0fdace89ca4ecea72e3ea3c9fdc1e  assets/textures/rooms/wood-door.png
+eabcee887cfc7771a14ac5a5f2951628d254b7b907b87afa9d2d31b0f7534377  assets/textures/rooms/treasure-door-down.png
+5ce2362879defe53f0df8a02ee3b497c3ed6213a61465b435f0f5f89a3e05223  assets/textures/rooms/treasure-door-up.png
+3ddba8517253fcf7d2d49bcc9322fa257314c28b78d0f48ce15c98616d7f3e2d  assets/textures/rooms/treasure-door-left.png
+147676973ccde0234a38b333059e64421dd362c18b6f320efe5e40ca9ef9c50f  assets/textures/rooms/treasure-door-right.png
 e0f16223e6bc52cb6cef75f578bb7b239f4a198f3803012a5a45e2b4b8808d0b  assets/textures/rooms/boss-door.png
 1b3bd858d0ca68350a545f4059af8086293680479f0f2e7b0a5b9dc4ee6d8c1e  assets/textures/rooms/treasure-door.png
 b7503b7b367537809781618fedf890198f4ff5d893aee1d2519ae2fa129db8f8  assets/textures/rooms/locked-treasure-door.png

@@ -21,7 +21,7 @@ Access date for every entry below: **2026-07-13**. The Wiki intermittently retur
 | 小石头 | https://isaac.huijiwiki.com/wiki/C90 | Passive offensive item whose identity is a damage increase with tear-side tradeoffs in the original. | `Small Rock` stacks +1 damage; original speed/stat side effects are omitted. |
 | 悲伤洋葱 | https://isaac.huijiwiki.com/wiki/C1 | Passive tears/rate increase; the user identified the green `prop5` image as this separate rate item. | `Sad Onion` multiplies shot interval by 0.85 with a safe lower bound; exact tears formula is simplified. |
 | 幸运脚趾 | https://isaac.huijiwiki.com/wiki/T42 | Trinket described by the Wiki data table as luck up and affecting reward odds. | `Lucky Toe` occupies the trinket slot and adds +1 course luck; detailed machine/drop tables are omitted. |
-| 早餐 / Breakfast | User-identified `prop0` milk material | The requested treasure-room health item must visibly exist and restore health. | Adds one red-heart container and heals one whole course heart on pickup. |
+| 早餐 / Breakfast | User-identified `prop0` milk material | The requested treasure-room health item must visibly exist and increase maximum health. | Adds one red-heart container without changing current red health. |
 | Wiggle Worm | User-provided `prop6` material | The requested snake-tear item needs a curved projectile path without a fire-rate bonus. | Enables a bounded sine offset around the projectile's forward trajectory and leaves shot interval unchanged. |
 
 ## Enemy and boss research matrix

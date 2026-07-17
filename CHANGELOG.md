@@ -75,14 +75,21 @@
 
 - Replaced the four-choice menu with `RUN / RANKINGS / BACK`, made pause selection input-driven, and removed the mission overlay.
 - Promoted the displayed rock and trap into Model-owned physical entities. Rocks block player movement and projectiles; traps deal a true half heart and the HUD renders full, half, empty and shield states from DTOs.
-- Made character selection reset the complete run after defeat, and made Breakfast add/heal health.
-- Added one visible random Breakfast, Wiggle Worm or Sad Onion to each treasure room. Milk Breakfast adds/heals health, Wiggle Worm only enables the sine trajectory, and green Sad Onion independently raises fire rate.
+- Made character selection reset the complete run after defeat, and initially made Breakfast add/heal health (corrected in Stage 13).
+- Added one visible random Breakfast, Wiggle Worm or Sad Onion to each treasure room. The initial Breakfast healing rule was later corrected; Wiggle Worm only enables the sine trajectory, and green Sad Onion independently raises fire rate.
 - Removed floor three and its Mom's Leg encounter; floor two's dual Boss fight now completes the run.
 - Added Model/ViewModel regressions and a two-floor deterministic course demo while preserving the strict MVVM include boundaries.
 
 ### Stage 12 - door and treasure identity correction
 
-- Replaced the ordinary-door Red Room outline with the user-selected golden door and baked four lossless directional assets: right is the exact horizontal pixel mirror of left, and up is the exact vertical pixel mirror of down.
+- Replaced the ordinary-door Red Room outline with the user-selected golden door and baked four lossless directional assets; Stage 13 later corrected that door's meaning to treasure-room-only.
 - Normalized treasure, shop and Boss door scaling against the same along-wall span as ordinary doors, so opposite exits no longer render at visibly different sizes.
 - Corrected treasure presentation to `prop0` Breakfast milk, `prop5` Sad Onion fire-rate item and `prop6` Wiggle Worm; kept all item rules in Model and all sprite/direction transforms in View.
 - Added failing-first regressions proving Wiggle Worm does not alter fire rate, Sad Onion is independently collectible, and seeded treasure selection reaches all three rewards.
+
+### Stage 13 - door semantics, treasure visibility and Breakfast correction
+
+- Reserved the four directional gold doors exclusively for exits whose destination is a treasure room. Ordinary, shop, secret and devil-room exits now use a distinct open wooden doorway; its rotation is based on the source image so each door opens inward from its wall.
+- Verified through the complete `GameSession` to ViewModel flow that every treasure room exposes exactly one visible random item, and added resource decoding coverage for all three item sprites.
+- Corrected Breakfast to add one red-heart container without restoring current red health.
+- Preserved the MVVM boundary: item and reward rules remain in Model, DTO translation remains in ViewModel, and door texture/direction selection remains in View/Resource.

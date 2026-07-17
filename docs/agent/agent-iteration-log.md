@@ -160,6 +160,14 @@ Commit hashes are recorded only after the referenced commit exists; stage tags p
 - Architecture effect: ItemSystem/GameSession alone own effect and reward rules, GameViewModel continues to pass only item IDs and door DTOs, and GameView/AssetCatalog alone own directional sprite selection.
 - Verification: failing-first Model assertions cover sine-only Wiggle Worm, rate-only Sad Onion and seeded access to all three rewards; Resource tests decode all four door files and compare both mirror pairs pixel by pixel; Debug/Release, provenance and live-window checks are release gates.
 
+## Iteration 13 — 2026-07-17
+
+- Objective: correct the clarified door semantics, guarantee a visible treasure reward, and make Breakfast increase maximum health only.
+- Root cause: the directional gold door had been mapped to ordinary exits even though it identifies treasure destinations; this made an ordinary destination appear to be an empty treasure room. The wooden source also faced down and therefore needed its own rotation mapping instead of the previous door's mapping. Breakfast combined a container increase with healing.
+- Actual change: renamed the gold direction assets for treasure-only use, added one open wooden doorway for ordinary, shop, secret and devil exits, and corrected its inward-facing rotation for every wall. Removed Breakfast's heal call while retaining the container increase. The existing Model reward generation already produced one item; a full-session ViewModel regression now proves that item reaches the presentation DTO.
+- Architecture effect: GameSession and ItemSystem continue to own reward and health rules; GameViewModel only translates snapshots; GameView and Resource own target-type texture selection and sprite orientation.
+- Verification: failing-first Breakfast/resource tests, exact gold mirror checks, item-sprite decoding, complete-session treasure DTO coverage, Debug/Release CTest, provenance and live-window inspection are release gates.
+
 ## Existing stage evidence
 
 | Stage | Commit | Tag |

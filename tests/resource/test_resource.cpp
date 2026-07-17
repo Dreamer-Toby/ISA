@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdlib>
 #include <filesystem>
+#include <string>
 
 namespace {
 
@@ -50,11 +51,12 @@ int main() {
   if (!mismatchedSizePair || resources.textureCount() != 3) return EXIT_FAILURE;
 
   const auto assetRoot = std::filesystem::path(ISAAC_SOURCE_DIR) / "assets/textures";
-  constexpr std::array<const char*, 14> requiredRoomAndPortraitAssets{
-      "rooms/normal-door-up.png",
-      "rooms/normal-door-right.png",
-      "rooms/normal-door-down.png",
-      "rooms/normal-door-left.png",
+  constexpr std::array<const char*, 15> requiredRoomAndPortraitAssets{
+      "rooms/wood-door.png",
+      "rooms/treasure-door-up.png",
+      "rooms/treasure-door-right.png",
+      "rooms/treasure-door-down.png",
+      "rooms/treasure-door-left.png",
       "rooms/boss-door.png",
       "rooms/treasure-door.png",
       "rooms/locked-treasure-door.png",
@@ -69,20 +71,27 @@ int main() {
   for (const auto* asset : requiredRoomAndPortraitAssets) {
     if (!resources.texture(assetRoot / asset)) return EXIT_FAILURE;
   }
-  if (resources.textureCount() != 17) return EXIT_FAILURE;
+  if (resources.textureCount() != 18) return EXIT_FAILURE;
 
   sf::Image downDoor;
   sf::Image upDoor;
   sf::Image leftDoor;
   sf::Image rightDoor;
-  if (!downDoor.loadFromFile(assetRoot / "rooms/normal-door-down.png") ||
-      !upDoor.loadFromFile(assetRoot / "rooms/normal-door-up.png") ||
-      !leftDoor.loadFromFile(assetRoot / "rooms/normal-door-left.png") ||
-      !rightDoor.loadFromFile(assetRoot / "rooms/normal-door-right.png")) {
+  if (!downDoor.loadFromFile(assetRoot / "rooms/treasure-door-down.png") ||
+      !upDoor.loadFromFile(assetRoot / "rooms/treasure-door-up.png") ||
+      !leftDoor.loadFromFile(assetRoot / "rooms/treasure-door-left.png") ||
+      !rightDoor.loadFromFile(assetRoot / "rooms/treasure-door-right.png")) {
     return EXIT_FAILURE;
   }
   if (!isVerticalMirror(downDoor, upDoor) || !isHorizontalMirror(leftDoor, rightDoor)) {
     return EXIT_FAILURE;
+  }
+
+  for (const auto* stem : {"prop0", "prop5", "prop6"}) {
+    if (!resources.maskedTexture(easyRoot / (std::string("prop/") + stem + "_back.jpg"),
+                                 easyRoot / (std::string("prop/") + stem + "_front.jpg"))) {
+      return EXIT_FAILURE;
+    }
   }
 
   const auto soundFirst = resources.soundBuffer(easyRoot / "sounds/shoot.wav");

@@ -224,12 +224,12 @@ int main() {
   check(itemPlayer.shooting().damage() == baseDamage + 2.F, "passive effects stack");
   Player breakfastPlayer(CharacterCatalog::at(0));
   breakfastPlayer.damage(1);
-  const int redBeforeBreakfast = breakfastPlayer.health().red();
+  const int redHalfUnitsBeforeBreakfast = breakfastPlayer.health().redHalfUnits();
   const int containersBeforeBreakfast = breakfastPlayer.health().containers();
   itemSystem.apply(breakfastPlayer, ItemCatalog::byId("breakfast"));
-  check(breakfastPlayer.health().red() == redBeforeBreakfast + 1 &&
+  check(breakfastPlayer.health().redHalfUnits() == redHalfUnitsBeforeBreakfast &&
             breakfastPlayer.health().containers() == containersBeforeBreakfast + 1,
-        "Breakfast adds a container and restores a heart");
+        "Breakfast adds a heart container without restoring current health");
   Player wigglePlayer(CharacterCatalog::at(0));
   const float baseShotsPerSecond = wigglePlayer.shooting().shotsPerSecond();
   itemSystem.apply(wigglePlayer, ItemCatalog::byId("wiggle_worm"));

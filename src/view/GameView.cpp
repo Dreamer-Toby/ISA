@@ -146,20 +146,6 @@ std::filesystem::path characterPortrait(isaac::presentation::CharacterStyle styl
   return isaac::resource::AssetCatalog::isaac();
 }
 
-bool usesSpecialDoorTexture(const isaac::presentation::DoorDTO& door) {
-  using isaac::common::RoomType;
-  return door.targetType == RoomType::Boss || door.targetType == RoomType::Treasure ||
-         door.targetType == RoomType::Shop;
-}
-
-std::filesystem::path specialDoorTexture(const isaac::presentation::DoorDTO& door) {
-  if (door.targetType == isaac::common::RoomType::Boss) {
-    return isaac::resource::AssetCatalog::bossDoor();
-  }
-  return door.locked ? isaac::resource::AssetCatalog::lockedTreasureDoor()
-                     : isaac::resource::AssetCatalog::treasureDoor();
-}
-
 struct DoorPose {
   sf::Vector2f position;
   float rotationDegrees{};
@@ -173,21 +159,25 @@ DoorPose doorPose(isaac::common::Direction direction) {
   return {{480.F, 95.F}, 0.F};
 }
 
-std::filesystem::path normalDoorTexture(isaac::common::Direction direction) {
+float woodDoorRotation(isaac::common::Direction direction) {
   using isaac::common::Direction;
-  if (direction == Direction::Right) return isaac::resource::AssetCatalog::normalDoorRight();
-  if (direction == Direction::Down) return isaac::resource::AssetCatalog::normalDoorDown();
-  if (direction == Direction::Left) return isaac::resource::AssetCatalog::normalDoorLeft();
-  return isaac::resource::AssetCatalog::normalDoorUp();
+  if (direction == Direction::Right) return 270.F;
+  if (direction == Direction::Down) return 0.F;
+  if (direction == Direction::Left) return 90.F;
+  return 180.F;
 }
 
-float normalDoorTargetHeight(isaac::common::Direction direction) {
+std::filesystem::path treasureDoorTexture(isaac::common::Direction direction) {
+  using isaac::common::Direction;
+  if (direction == Direction::Right) return isaac::resource::AssetCatalog::treasureDoorRight();
+  if (direction == Direction::Down) return isaac::resource::AssetCatalog::treasureDoorDown();
+  if (direction == Direction::Left) return isaac::resource::AssetCatalog::treasureDoorLeft();
+  return isaac::resource::AssetCatalog::treasureDoorUp();
+}
+
+float treasureDoorTargetHeight(isaac::common::Direction direction) {
   using isaac::common::Direction;
   return direction == Direction::Left || direction == Direction::Right ? 111.34F : 102.F;
-}
-
-float specialDoorTargetHeight(const isaac::presentation::DoorDTO& door) {
-  return door.targetType == isaac::common::RoomType::Boss ? 67.5F : 82.F;
 }
 
 std::string_view treasurePropStem(std::string_view itemId) {
@@ -353,13 +343,19 @@ void GameView::render() {
     for (const auto& door : display.doors) {
       const auto pose = doorPose(door.direction);
       const auto tint = door.sealed ? sf::Color(105, 82, 80) : sf::Color::White;
-      const bool special = usesSpecialDoorTexture(door);
-      const auto texture = special ? specialDoorTexture(door)
-                                   : normalDoorTexture(door.direction);
+      auto texture = resource::AssetCatalog::woodDoor();
+      auto targetHeight = 158.6F;
+      auto rotation = woodDoorRotation(door.direction);
+      if (door.targetType == common::RoomType::Treasure) {
+        texture = treasureDoorTexture(door.direction);
+        targetHeight = treasureDoorTargetHeight(door.direction);
+        rotation = 0.F;
+      } else if (door.targetType == common::RoomType::Boss) {
+        texture = resource::AssetCatalog::bossDoor();
+        targetHeight = 67.5F;
+      }
       const bool drawn = drawTextureSprite(window_, resources_, texture, pose.position,
-                                           special ? specialDoorTargetHeight(door)
-                                                   : normalDoorTargetHeight(door.direction),
-                                           tint, special ? pose.rotationDegrees : 0.F);
+                                           targetHeight, tint, rotation);
       if (!drawn) {
         sf::RectangleShape fallback({64.F, 34.F});
         fallback.setOrigin({32.F, 17.F});

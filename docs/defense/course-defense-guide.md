@@ -40,7 +40,7 @@ The original game's catalogs, exact DLC formulas, layout pools, angel/deal condi
 1. Start and choose characters to show configured stat differences.
 2. Move/shoot; use both stable pause choices; show HUD and minimap.
 3. Walk into a rock, shoot it, and step on a trap to show physical volume and half-heart damage.
-4. Enter treasure rooms and identify the single milk Breakfast, snake Wiggle Worm or green Sad Onion; demonstrate health, sine-only tears and fire-rate-only effects separately.
+4. Enter treasure rooms and identify the single milk Breakfast, snake Wiggle Worm or green Sad Onion; demonstrate max-health-only, sine-only tears and fire-rate-only effects separately.
 5. Spend coin/bomb at the shop and hidden entrance, then finish the floor-two dual-Boss encounter.
 6. Trigger defeat separately and present deterministic tests/architecture scan.
 

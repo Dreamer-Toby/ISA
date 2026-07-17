@@ -76,6 +76,24 @@ int main() {
           "third and final menu option returns to the title");
   }
 
+  {
+    isaac::model::GameSession treasureSession(0.2F, 7U);
+    isaac::viewmodel::GameViewModel treasureViewModel(treasureSession);
+    act(treasureViewModel, UserAction::Confirm);
+    act(treasureViewModel, UserAction::Confirm);
+    act(treasureViewModel, UserAction::Confirm);
+    check(treasureSession.level().enter(2, treasureSession.player().inventory(), false),
+          "treasure presentation flow enters the modeled treasure room");
+    treasureSession.player().setPosition({890.F, 300.F});
+    tick(treasureViewModel);
+    int visibleTreasureItems{};
+    for (const auto& entity : display(treasureViewModel).entities) {
+      if (entity.kind == isaac::common::EntityKind::TreasureItem) ++visibleTreasureItems;
+    }
+    check(visibleTreasureItems == 1,
+          "an unclaimed treasure room exposes exactly one item to the View");
+  }
+
   isaac::model::GameSession session;
   isaac::viewmodel::GameViewModel viewModel(session);
   check(display(viewModel).screen == ScreenState::Start, "starts at menu");

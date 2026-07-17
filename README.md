@@ -17,7 +17,7 @@ The final branch does not depend on EasyX and remains portable beyond Windows. E
 - Six configured enemies: Fly, Pooter, Spider, Hopper, Gaper and Clotty, composed from movement/attack/drop strategies.
 - Three Bosses: Monstro on floor one; Duke of Flies and Larry Jr. together as the final floor-two encounter.
 - Model-owned rock and spike-trap volumes: rocks block players and tears, while traps deal exactly half a heart with normal invulnerability.
-- Coins, bombs, keys, pickups, shop, hidden entrance, active items, stacking passives and trinkets. Each treasure room visibly offers exactly one random Breakfast, Wiggle Worm or Sad Onion: milk Breakfast heals/adds a container, Wiggle Worm only bends tears along a sine path, and the green Sad Onion independently raises fire rate.
+- Coins, bombs, keys, pickups, shop, hidden entrance, active items, stacking passives and trinkets. Each treasure room visibly offers exactly one random Breakfast, Wiggle Worm or Sad Onion: milk Breakfast adds one heart container without healing, Wiggle Worm only bends tears along a sine path, and the green Sad Onion independently raises fire rate.
 - A testable 35% post-Boss devil-room roll and a complete two-floor ending. Starting after defeat creates a fresh run.
 - HUD DTOs for full/half/empty red hearts, shields, coins, bombs, keys, active item, minimap, floor and room state.
 - EasyIsaac-style room art, characters, tears, flies, props and feedback sounds with presentation-only animation and hitbox inspection.
