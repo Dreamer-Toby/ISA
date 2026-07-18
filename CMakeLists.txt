@@ -16,9 +16,9 @@ if(ENABLE_SANITIZERS AND CMAKE_CXX_COMPILER_ID MATCHES "AppleClang|Clang|GNU")
   add_link_options(-fsanitize=address,undefined)
 endif()
 
-find_package(SFML 3 COMPONENTS Graphics Window System QUIET)
+find_package(SFML 3 COMPONENTS Graphics Window System Audio QUIET)
 if(NOT SFML_FOUND AND ISAAC_FETCH_SFML)
-  set(SFML_BUILD_AUDIO OFF CACHE BOOL "" FORCE)
+  set(SFML_BUILD_AUDIO ON CACHE BOOL "" FORCE)
   set(SFML_BUILD_NETWORK OFF CACHE BOOL "" FORCE)
   set(SFML_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
   set(SFML_BUILD_TEST_SUITE OFF CACHE BOOL "" FORCE)
@@ -31,6 +31,9 @@ endif()
 add_library(isaac_common INTERFACE)
 target_include_directories(isaac_common INTERFACE src)
 
+add_library(isaac_model_interface INTERFACE)
+target_link_libraries(isaac_model_interface INTERFACE isaac_common)
+
 add_library(isaac_model STATIC
   src/model/BossSystem.cpp
   src/model/CharacterCatalog.cpp
@@ -40,19 +43,19 @@ add_library(isaac_model STATIC
   src/model/ItemSystem.cpp
   src/model/Level.cpp
   src/model/Player.cpp)
-target_link_libraries(isaac_model PUBLIC isaac_common)
+target_link_libraries(isaac_model PUBLIC isaac_model_interface)
 target_include_directories(isaac_model PUBLIC src)
 
 add_library(isaac_viewmodel STATIC src/viewmodel/GameViewModel.cpp)
-target_link_libraries(isaac_viewmodel PUBLIC isaac_model isaac_common)
+target_link_libraries(isaac_viewmodel PUBLIC isaac_model_interface)
 target_include_directories(isaac_viewmodel PUBLIC src)
 
 add_library(isaac_resource STATIC src/resource/ResourceManager.cpp)
-target_link_libraries(isaac_resource PUBLIC SFML::Graphics)
+target_link_libraries(isaac_resource PUBLIC SFML::Graphics SFML::Audio)
 target_include_directories(isaac_resource PUBLIC src)
 
 add_library(isaac_view STATIC src/view/GameView.cpp)
-target_link_libraries(isaac_view PUBLIC isaac_viewmodel isaac_resource SFML::Graphics)
+target_link_libraries(isaac_view PUBLIC isaac_common isaac_resource SFML::Graphics SFML::Audio)
 target_include_directories(isaac_view PUBLIC src)
 
 add_executable(isaac_course_game src/app/main.cpp src/app/Application.cpp)
@@ -68,10 +71,13 @@ if(BUILD_TESTING)
   target_link_libraries(isaac_model_tests PRIVATE isaac_model)
   add_test(NAME model_regression_suite COMMAND isaac_model_tests)
   add_executable(isaac_flow_tests tests/viewmodel/test_flow.cpp)
-  target_link_libraries(isaac_flow_tests PRIVATE isaac_viewmodel)
+  target_link_libraries(isaac_flow_tests PRIVATE isaac_viewmodel isaac_model)
   add_test(NAME viewmodel_course_flow COMMAND isaac_flow_tests)
+  add_executable(isaac_viewmodel_seam_tests tests/viewmodel/test_model_seam.cpp)
+  target_link_libraries(isaac_viewmodel_seam_tests PRIVATE isaac_viewmodel)
+  add_test(NAME viewmodel_model_seam COMMAND isaac_viewmodel_seam_tests)
   add_executable(isaac_course_demo tests/model/course_demo.cpp)
-  target_link_libraries(isaac_course_demo PRIVATE isaac_viewmodel)
+  target_link_libraries(isaac_course_demo PRIVATE isaac_viewmodel isaac_model)
   add_test(NAME deterministic_course_demo COMMAND isaac_course_demo)
   add_test(NAME architecture_boundaries
     COMMAND ${CMAKE_COMMAND} -DPROJECT_ROOT=${CMAKE_SOURCE_DIR}
@@ -80,6 +86,9 @@ if(BUILD_TESTING)
   target_link_libraries(isaac_resource_tests PRIVATE isaac_resource)
   target_compile_definitions(isaac_resource_tests PRIVATE ISAAC_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
   add_test(NAME resource_cache_and_missing COMMAND isaac_resource_tests)
+  add_executable(isaac_ending_presentation_tests tests/view/test_ending_presentation.cpp)
+  target_link_libraries(isaac_ending_presentation_tests PRIVATE isaac_common)
+  add_test(NAME distinct_victory_presentation COMMAND isaac_ending_presentation_tests)
   add_test(NAME asset_provenance
     COMMAND ${CMAKE_COMMAND} -DPROJECT_ROOT=${CMAKE_SOURCE_DIR}
             -P ${CMAKE_SOURCE_DIR}/tests/assets/check_assets.cmake)

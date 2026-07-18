@@ -15,16 +15,20 @@ class HealthComponent {
   void healRed(int amount);
   void addShield(int amount);
   void damage(int amount);
-  [[nodiscard]] bool dead() const { return red_ + shields_ <= 0; }
+  void damageHalfUnits(int amount);
+  [[nodiscard]] bool dead() const { return redHalfUnits_ + shieldHalfUnits_ <= 0; }
   [[nodiscard]] int containers() const { return containers_; }
-  [[nodiscard]] int red() const { return red_; }
-  [[nodiscard]] int shields() const { return shields_; }
+  [[nodiscard]] int red() const { return (redHalfUnits_ + 1) / 2; }
+  [[nodiscard]] int shields() const { return (shieldHalfUnits_ + 1) / 2; }
+  [[nodiscard]] int redHalfUnits() const { return redHalfUnits_; }
+  [[nodiscard]] int shieldHalfUnits() const { return shieldHalfUnits_; }
+  [[nodiscard]] int totalHalfUnits() const { return redHalfUnits_ + shieldHalfUnits_; }
 
  private:
   void enforceCap();
   int containers_{};
-  int red_{};
-  int shields_{};
+  int redHalfUnits_{};
+  int shieldHalfUnits_{};
 };
 
 class Inventory {
@@ -61,15 +65,19 @@ class ShootComponent {
   void tick(float seconds) { cooldown_ = std::max(0.F, cooldown_ - seconds); }
   bool consumeShot();
   [[nodiscard]] float damage() const { return damage_; }
+  [[nodiscard]] float shotsPerSecond() const { return 1.F / interval_; }
   [[nodiscard]] float projectileSpeed() const { return projectileSpeed_; }
+  [[nodiscard]] bool sineProjectiles() const { return sineProjectiles_; }
   void addDamage(float amount) { damage_ = std::clamp(damage_ + amount, 1.F, 20.F); }
   void multiplyInterval(float factor) { interval_ = std::clamp(interval_ * factor, 0.12F, 2.F); }
+  void enableSineProjectiles() { sineProjectiles_ = true; }
 
  private:
   float damage_{};
   float interval_{};
   float projectileSpeed_{};
   float cooldown_{};
+  bool sineProjectiles_{};
 };
 
 }  // namespace isaac::model

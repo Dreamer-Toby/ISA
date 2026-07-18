@@ -119,6 +119,72 @@ Commit hashes are recorded only after the referenced commit exists; stage tags p
 - Next: independent Acceptance review.
 - MVVM self-check: Model has no SFML; View has no Model include; ViewModel has no View/SFML or game-rule algorithms; App loop remains scheduling-only.
 
+## Iteration 9 — 2026-07-13 15:20 +08:00
+
+- Objective: preserve the accepted build as the midterm backup and reproduce `tianguantg/EasyIsaac` as the final presentation layer.
+- Prior problem: the accepted game was mechanically complete but visually sparse, while directly switching to EasyX would make the cross-platform SFML project Windows-only and weaken its MVVM boundary.
+- Options: port the whole reference, replace SFML with EasyX, or reproduce only its presentation. Selected presentation parity so the larger existing gameplay remains intact.
+- Actual change: `v1.0-midterm-backup`, a dedicated final branch, paper start/main/rank/selection/end screens, basement art, runtime mask-pair conversion, masked sprites, reference HUD/pause composition, event audio, presentation effects and deterministic framebuffer capture modes.
+- Architecture effect: SFML texture/audio types remain in Resource/View; AssetCatalog owns paths; ViewModel adds menu state and display-only stats; Model rules remain pure C++ and unchanged.
+- Verification: Debug, Release and ASan+UBSan builds each pass all six CTests; architecture and extended JPG/PNG/MP3/WAV provenance checks pass. Visual QA found and corrected an initial damage flash, cluttered pause text, under-scaled sprites and a real 48×48/51×48 health-mask mismatch before the final captures were accepted.
+- Evidence: `docs/progress/final-easyisaac-*.png` are live SFML framebuffer captures; `docs/design/easyisaac-visual-parity.md` records the explicit boundary.
+- Implementation commit: `fb0520f`.
+- Unresolved: only the non-force remote push remains after the evidence commit.
+- Next: run the final build matrix, record the delivery commit and push the final branch without changing the midterm tag.
+- MVVM self-check: no Model SFML include, no View Model include, no asset-path rule outside Resource, and capture preparation still advances through ViewModel commands.
+
+## Iteration 10 - 2026-07-15
+
+- Objective: make room exits visible and tell the player what to do in each room.
+- Prior problem: `AssetCatalog` registered one door image, but `GameView` drew no doors. The HUD only reported `Combat` or `Cleared`.
+- Actual change: imported four door images and six blinking character portraits from the local material library; added directional door rendering, combat seals, a Boss trapdoor and room-specific mission text with costs, progress and controls.
+- Architecture effect: Model snapshots carry direction, target type, lock, hidden and seal state. ViewModel filters hidden exits and writes presentation text. View owns texture choice, rotation, animation and fallback geometry.
+- Verification: Model tests cover hidden, locked and sealed exits. ViewModel seam tests cover door filtering and combat/Boss objectives. Resource tests decode all ten imported PNGs. A live macOS SFML run checked character selection, wall alignment and mission readability.
+- Unresolved: the local material library contains no external URL or license metadata; the asset manifest records that gap.
+- MVVM self-check: Model remains SFML-free, View includes no Model header, ViewModel adds no traversal or combat rule, and the App loop remains unchanged.
+
+## Iteration 11 — 2026-07-16
+
+- Objective: apply the second visual/gameplay feedback set without weakening strict MVVM.
+- Prior problem: the menu retained Quick Run, the pause sprite alternated by clock time, a mission overlay covered the room, obstacles were View-only decoration, defeat retained run state, Breakfast did not heal, treasure rooms had no visible reward, and a third floor remained.
+- Actual change: a three-option menu and input-owned pause index; no mission DTO/panel; Model obstacle and treasure snapshots; rock collision for player/projectiles; half-heart trap health and HUD sprites; complete run reset; visible treasure rewards; two-floor/three-Boss completion.
+- Architecture effect: GameSession owns collision, damage, random reward, item effects and progression. GameViewModel translates typed snapshots and owns only screen/menu state. GameView selects the existing obstacle, prop and health sprites.
+- Verification: tests were written to fail first, then all seven Debug CTests passed, including strict include boundaries and the deterministic public course demo. Release and short live-window checks are recorded at delivery.
+- MVVM self-check: Model remains SFML-free; View still has no Model include; ViewModel contains no collision, item or progression rules; asset paths remain under Resource `AssetCatalog`.
+
+## Iteration 12 — 2026-07-17
+
+- Objective: correct the ordinary door and separate the three treasure-item identities after visual feedback.
+- Prior problem: the ordinary door used a red Red Room outline; `prop5` was misidentified as Breakfast; Wiggle Worm incorrectly bundled a fire-rate multiplier with its sine trajectory.
+- Actual change: deterministically cropped the user's selected gold-door pixels and baked four direction files; right is a horizontal pixel mirror of left, while up is a vertical pixel mirror of down. Matched special-door and ordinary-door along-wall spans so opposite exits have the same visible size. Mapped milk `prop0` to Breakfast, green `prop5` to Sad Onion and snake `prop6` to Wiggle Worm; expanded the treasure pool to all three.
+- Architecture effect: ItemSystem/GameSession alone own effect and reward rules, GameViewModel continues to pass only item IDs and door DTOs, and GameView/AssetCatalog alone own directional sprite selection.
+- Verification: failing-first Model assertions cover sine-only Wiggle Worm, rate-only Sad Onion and seeded access to all three rewards; Resource tests decode all four door files and compare both mirror pairs pixel by pixel; Debug/Release, provenance and live-window checks are release gates.
+
+## Iteration 13 — 2026-07-17
+
+- Objective: correct the clarified door semantics, guarantee a visible treasure reward, and make Breakfast increase maximum health only.
+- Root cause: the directional gold door had been mapped to ordinary exits even though it identifies treasure destinations; this made an ordinary destination appear to be an empty treasure room. The wooden source also faced down and therefore needed its own rotation mapping instead of the previous door's mapping. Breakfast combined a container increase with healing.
+- Actual change: renamed the gold direction assets for treasure-only use, added one open wooden doorway for ordinary, shop, secret and devil exits, and corrected its inward-facing rotation for every wall. Removed Breakfast's heal call while retaining the container increase. The existing Model reward generation already produced one item; a full-session ViewModel regression now proves that item reaches the presentation DTO.
+- Architecture effect: GameSession and ItemSystem continue to own reward and health rules; GameViewModel only translates snapshots; GameView and Resource own target-type texture selection and sprite orientation.
+- Verification: failing-first Breakfast/resource tests, exact gold mirror checks, item-sprite decoding, complete-session treasure DTO coverage, Debug/Release CTest, provenance and live-window inspection are release gates.
+
+## Iteration 14 — 2026-07-17
+
+- Objective: align monster milk drops with Breakfast behavior, guarantee complementary treasure rewards, and reduce each floor to the requested four-room route.
+- Root cause: View drew every normal drop as `prop0` milk while Model still treated those drops as coins, bombs or keys; the treasure pool still contained Breakfast and selected each floor independently; Level still generated shop/secret rooms and could append a devil room after a Boss.
+- Actual change: normal drop strategies now produce a passive Breakfast pickup, whose Model effect adds one container and heals one whole heart. Treasure selection is limited to Sad Onion/Wiggle Worm: the first floor is seeded and the second chooses its complement. Level now generates only start, monster, treasure and Boss rooms, and the obsolete devil-room mutation path was removed.
+- Architecture effect: EnemySystem owns drop identity, ItemSystem owns health/stat effects, GameSession owns cross-floor reward state, and Level owns the four-node topology. View continues to render only typed DTOs and existing assets.
+- Verification: failing-first Model assertions cover Breakfast drops, exact four-room counts, both allowed first-floor rewards, a present non-repeating second-floor reward and no fifth room after Boss clear. The deterministic two-floor demo exercises both treasure rooms and monster drops.
+
+## Iteration 15 — 2026-07-17
+
+- Objective: make successful completion visibly distinct from defeat.
+- Root cause: ViewModel already emitted `ScreenState::Victory`, but GameView rendered Victory and Defeat through the same death-testament asset; changing only the overlaid title left the underlying death message visible.
+- Actual change: added a small View-owned ending presentation mapping, retained the testament only for Defeat, and rendered a dedicated victory card with explicit completion text for Victory.
+- Architecture effect: the Model and ViewModel terminal-state rules are unchanged; only View presentation metadata and rendering changed.
+- Verification: a failing-first presentation test distinguishes both terminal states, followed by the complete CTest suite and a live SFML capture of the Victory screen.
+- MVVM self-check: GameView consumes only `ScreenState` and display DTO data; no gameplay rule or Model dependency moved into View.
+
 ## Existing stage evidence
 
 | Stage | Commit | Tag |

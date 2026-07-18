@@ -4,11 +4,13 @@
 
 namespace isaac::model {
 
-const std::array<ItemDefinition, 5>& ItemCatalog::all() {
-  static constexpr std::array<ItemDefinition, 5> items{{
+const std::array<ItemDefinition, 7>& ItemCatalog::all() {
+  static constexpr std::array<ItemDefinition, 7> items{{
       {"yum_heart", "Yum Heart", ItemCategory::Active, ItemEffect::Heal, 1.F},
       {"small_rock", "Small Rock", ItemCategory::Passive, ItemEffect::DamageUp, 1.F},
       {"sad_onion", "Sad Onion", ItemCategory::Passive, ItemEffect::TearsUp, 0.85F},
+      {"breakfast", "Breakfast", ItemCategory::Passive, ItemEffect::HealthUp, 1.F},
+      {"wiggle_worm", "Wiggle Worm", ItemCategory::Passive, ItemEffect::SineTears, 0.F},
       {"lucky_toe", "Lucky Toe", ItemCategory::Trinket, ItemEffect::LuckUp, 1.F},
       {"book_of_belial", "Book of Belial", ItemCategory::Active, ItemEffect::DamageUp, 2.F},
   }};
@@ -24,8 +26,13 @@ void ItemSystem::apply(Player& player, const ItemDefinition& item) const {
   if (item.category == ItemCategory::Active) player.inventory().setActiveItem(std::string(item.displayName));
   if (item.category == ItemCategory::Passive) {
     player.inventory().addPassiveItem(std::string(item.displayName));
+    if (item.effect == ItemEffect::HealthUp) {
+      player.health().addContainer(static_cast<int>(item.amount));
+      player.health().healRed(static_cast<int>(item.amount));
+    }
     if (item.effect == ItemEffect::DamageUp) player.shooting().addDamage(item.amount);
     if (item.effect == ItemEffect::TearsUp) player.shooting().multiplyInterval(item.amount);
+    if (item.effect == ItemEffect::SineTears) player.shooting().enableSineProjectiles();
   }
   if (item.category == ItemCategory::Trinket) {
     player.inventory().setTrinket(std::string(item.displayName));
@@ -46,10 +53,11 @@ bool ItemSystem::useActive(Player& player) const {
   return false;
 }
 
-bool ItemSystem::openChest(Player& player) {
-  if (chestOpened_ || !player.inventory().useKey()) return false;
-  chestOpened_ = true;
-  apply(player, ItemCatalog::byId("sad_onion"));
+bool ItemSystem::takeTreasureItem(Player& player, std::string_view itemId) {
+  if (treasureTaken_ ||
+      (itemId != "wiggle_worm" && itemId != "sad_onion")) return false;
+  treasureTaken_ = true;
+  apply(player, ItemCatalog::byId(itemId));
   return true;
 }
 

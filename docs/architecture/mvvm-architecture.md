@@ -15,7 +15,7 @@ The direction describes compile-time knowledge. Model never knows ViewModel, Vie
 
 ## Responsibilities
 
-- `src/common`: generic `Vec2`, rectangles, directions and shared enums only.
+- `src/common`: generic math/types, presentation contracts, and reusable `Property`/`Command`/`Signal` binding primitives.
 - `src/model`: player, health, shooting, inventory, enemies, projectiles, collision, drops, rooms, map generation, items, bosses and progression.
 - `src/viewmodel`: input commands, screen state and conversion of Model snapshots to render DTOs.
 - `src/view`: SFML event mapping and rendering of generic entity/room/HUD DTOs.

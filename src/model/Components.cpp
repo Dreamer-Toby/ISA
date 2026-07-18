@@ -3,25 +3,29 @@
 namespace isaac::model {
 
 HealthComponent::HealthComponent(int containers, int red, int shields)
-    : containers_(std::max(1, containers)), red_(std::max(0, red)), shields_(std::max(0, shields)) {
+    : containers_(std::max(1, containers)), redHalfUnits_(std::max(0, red) * 2),
+      shieldHalfUnits_(std::max(0, shields) * 2) {
   enforceCap();
 }
 
 void HealthComponent::enforceCap() {
   containers_ = std::clamp(containers_, 1, MaxCombinedHearts);
-  red_ = std::clamp(red_, 0, containers_);
-  shields_ = std::clamp(shields_, 0, MaxCombinedHearts - red_);
+  redHalfUnits_ = std::clamp(redHalfUnits_, 0, containers_ * 2);
+  shieldHalfUnits_ = std::clamp(shieldHalfUnits_, 0,
+                                MaxCombinedHearts * 2 - redHalfUnits_);
 }
 
 void HealthComponent::addContainer(int amount) { containers_ += amount; enforceCap(); }
-void HealthComponent::healRed(int amount) { red_ += amount; enforceCap(); }
-void HealthComponent::addShield(int amount) { shields_ += amount; enforceCap(); }
+void HealthComponent::healRed(int amount) { redHalfUnits_ += amount * 2; enforceCap(); }
+void HealthComponent::addShield(int amount) { shieldHalfUnits_ += amount * 2; enforceCap(); }
 
-void HealthComponent::damage(int amount) {
+void HealthComponent::damage(int amount) { damageHalfUnits(amount * 2); }
+
+void HealthComponent::damageHalfUnits(int amount) {
   amount = std::max(0, amount);
-  const int absorbed = std::min(shields_, amount);
-  shields_ -= absorbed;
-  red_ = std::max(0, red_ - (amount - absorbed));
+  const int absorbed = std::min(shieldHalfUnits_, amount);
+  shieldHalfUnits_ -= absorbed;
+  redHalfUnits_ = std::max(0, redHalfUnits_ - (amount - absorbed));
 }
 
 bool Inventory::spendCoins(int amount) {
@@ -49,4 +53,3 @@ bool ShootComponent::consumeShot() {
 }
 
 }  // namespace isaac::model
-

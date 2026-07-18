@@ -13,7 +13,7 @@ namespace isaac::model {
 
 enum class MoveStrategy { Chase, Wander, KeepDistance, Dash, Stationary };
 enum class AttackStrategy { Contact, AimedShot, RadialShot };
-enum class DropStrategy { None, Coin, Bomb, Key };
+enum class DropStrategy { None, Breakfast };
 
 struct EnemyDefinition {
   std::string_view id;
@@ -47,7 +47,7 @@ class EnemyCatalog {
 class EnemySystem {
  public:
   void spawnForNormalRoom(int roomId, int floor);
-  void update(float seconds, Player& player, std::vector<Projectile>& projectiles,
+  bool update(float seconds, Player& player, std::vector<Projectile>& projectiles,
               std::vector<Pickup>& pickups);
   [[nodiscard]] const std::vector<Enemy>& enemies() const { return enemies_; }
   [[nodiscard]] std::vector<Enemy>& enemies() { return enemies_; }

@@ -11,7 +11,8 @@ class Player {
   explicit Player(const CharacterDefinition& definition);
   void move(common::Vec2 direction, float seconds);
   void tick(float seconds);
-  void damage(int amount);
+  bool damage(int amount);
+  bool damageHalfHeart();
   void resetInvulnerability() { invulnerability_ = 0.F; }
   [[nodiscard]] bool canShoot() { return shooting_.consumeShot(); }
   [[nodiscard]] const CharacterDefinition& definition() const { return definition_; }
@@ -27,6 +28,7 @@ class Player {
   [[nodiscard]] float luck() const { return definition_.luck + bonusLuck_; }
 
  private:
+  bool damageHalfUnits(int amount);
   CharacterDefinition definition_;
   common::Vec2 position_{480.F, 300.F};
   HealthComponent health_;

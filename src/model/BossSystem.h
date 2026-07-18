@@ -10,7 +10,7 @@
 
 namespace isaac::model {
 
-enum class BossPattern { LeapVolley, OrbitBurst, AxisDash, WarningStomp };
+enum class BossPattern { LeapVolley, OrbitBurst, AxisDash };
 
 struct BossDefinition {
   std::string_view id;
@@ -30,25 +30,19 @@ struct Boss {
 
 class BossCatalog {
  public:
-  static const std::array<BossDefinition, 4>& all();
+  static const std::array<BossDefinition, 3>& all();
 };
 
 class BossSystem {
  public:
   void spawnForFloor(int floor);
-  void update(float seconds, Player& player, std::vector<Projectile>& projectiles);
+  bool update(float seconds, Player& player, std::vector<Projectile>& projectiles);
   [[nodiscard]] bool empty() const { return bosses_.empty(); }
   [[nodiscard]] const std::vector<Boss>& bosses() const { return bosses_; }
   [[nodiscard]] std::vector<Boss>& bosses() { return bosses_; }
 
  private:
   std::vector<Boss> bosses_;
-};
-
-class DevilRoomPolicy {
- public:
-  static constexpr float Chance = 0.35F;
-  static bool opens(float unitRoll) { return unitRoll >= 0.F && unitRoll < Chance; }
 };
 
 }  // namespace isaac::model

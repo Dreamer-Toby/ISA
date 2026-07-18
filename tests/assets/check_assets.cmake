@@ -1,5 +1,9 @@
 file(READ "${PROJECT_ROOT}/docs/assets/asset-sources.md" manifest)
-file(GLOB_RECURSE assets RELATIVE "${PROJECT_ROOT}" "${PROJECT_ROOT}/assets/*.png")
+file(GLOB_RECURSE assets RELATIVE "${PROJECT_ROOT}"
+     "${PROJECT_ROOT}/assets/*.jpg"
+     "${PROJECT_ROOT}/assets/*.mp3"
+     "${PROJECT_ROOT}/assets/*.png"
+     "${PROJECT_ROOT}/assets/*.wav")
 foreach(asset IN LISTS assets)
   string(FIND "${manifest}" "${asset}" found)
   if(found EQUAL -1)

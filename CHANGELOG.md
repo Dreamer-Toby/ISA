@@ -57,3 +57,51 @@
 - Rendered every HUD field inside the window and exposed current character stats during selection.
 - Added all four character icons, dedicated implemented-item research and per-content failed-asset lookup records.
 - Added genuine SFML window captures for start, selection, gameplay HUD and pause states.
+
+### Stage 9 — EasyIsaac final presentation
+
+- Froze the accepted midterm build at `v1.0-midterm-backup` and moved final work to `feature/easyisaac-final-replica`.
+- Added paper start/menu/rank/selection/ending screens, basement room art, masked character/enemy/projectile/item sprites, reference-style HUD and pause scroll.
+- Added runtime EasyX mask-pair conversion, cached SFML Audio event effects, transition/damage feedback and optional hitbox inspection.
+- Preserved the strict MVVM dependency direction and the full four-character, six-enemy, four-Boss, three-floor course loop.
+- Added menu/rank/quick-run tests, mask/audio resource tests, complete imported-asset provenance and reproducible final framebuffer captures.
+
+### Stage 10 - illustrated doors and mission guidance
+
+- Imported four door images and six character portraits from the user-provided local material library. The View now draws directional normal, treasure, locked, Boss and trapdoor states, plus distinct Cain, Judas and Magdalene heads.
+- Added pure Model door snapshots, contextual ViewModel mission text, per-floor reward reset and regression coverage for hidden, locked, sealed and cleared exits.
+
+### Stage 11 - gameplay feedback correction
+
+- Replaced the four-choice menu with `RUN / RANKINGS / BACK`, made pause selection input-driven, and removed the mission overlay.
+- Promoted the displayed rock and trap into Model-owned physical entities. Rocks block player movement and projectiles; traps deal a true half heart and the HUD renders full, half, empty and shield states from DTOs.
+- Made character selection reset the complete run after defeat, and initially made Breakfast add/heal health (corrected in Stage 13).
+- Added one visible random Breakfast, Wiggle Worm or Sad Onion to each treasure room. The initial Breakfast healing rule was later corrected; Wiggle Worm only enables the sine trajectory, and green Sad Onion independently raises fire rate.
+- Removed floor three and its Mom's Leg encounter; floor two's dual Boss fight now completes the run.
+- Added Model/ViewModel regressions and a two-floor deterministic course demo while preserving the strict MVVM include boundaries.
+
+### Stage 12 - door and treasure identity correction
+
+- Replaced the ordinary-door Red Room outline with the user-selected golden door and baked four lossless directional assets; Stage 13 later corrected that door's meaning to treasure-room-only.
+- Normalized treasure, shop and Boss door scaling against the same along-wall span as ordinary doors, so opposite exits no longer render at visibly different sizes.
+- Corrected treasure presentation to `prop0` Breakfast milk, `prop5` Sad Onion fire-rate item and `prop6` Wiggle Worm; kept all item rules in Model and all sprite/direction transforms in View.
+- Added failing-first regressions proving Wiggle Worm does not alter fire rate, Sad Onion is independently collectible, and seeded treasure selection reaches all three rewards.
+
+### Stage 13 - door semantics, treasure visibility and Breakfast correction
+
+- Reserved the four directional gold doors exclusively for exits whose destination is a treasure room. Ordinary, shop, secret and devil-room exits now use a distinct open wooden doorway; its rotation is based on the source image so each door opens inward from its wall.
+- Verified through the complete `GameSession` to ViewModel flow that every treasure room exposes exactly one visible random item, and added resource decoding coverage for all three item sprites.
+- Corrected Breakfast to add one red-heart container without restoring current red health (revised again from user feedback in Stage 14).
+- Preserved the MVVM boundary: item and reward rules remain in Model, DTO translation remains in ViewModel, and door texture/direction selection remains in View/Resource.
+
+### Stage 14 - four-room floors and complementary treasure rewards
+
+- Made every displayed monster milk drop a real Breakfast pickup. Breakfast now adds one red-heart container and immediately restores one whole red heart.
+- Restricted treasure rooms to Sad Onion and Wiggle Worm. Floor one selects one with the run seed; floor two always supplies the other, so both floors contain one visible, non-repeating reward.
+- Reduced every floor to exactly four connected rooms: start, one monster room, one treasure room and one Boss room. Removed runtime shop, secret and devil-room generation.
+- Removed the obsolete devil-room roll/API, kept gameplay rules in Model, and added failing-first coverage for drop effects, exact room counts, per-floor treasure presence and cross-floor non-repetition.
+
+### Stage 15 - distinct victory settlement
+
+- Split the shared defeat/victory presentation so a completed run now shows a dedicated `VICTORY` card instead of the death-testament artwork.
+- Kept the defeat testament unchanged and added a presentation regression covering both terminal states.

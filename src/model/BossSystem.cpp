@@ -5,12 +5,11 @@
 
 namespace isaac::model {
 
-const std::array<BossDefinition, 4>& BossCatalog::all() {
-  static constexpr std::array<BossDefinition, 4> definitions{{
+const std::array<BossDefinition, 3>& BossCatalog::all() {
+  static constexpr std::array<BossDefinition, 3> definitions{{
       {"monstro", "Monstro", 75.F, BossPattern::LeapVolley},
       {"duke_of_flies", "Duke of Flies", 65.F, BossPattern::OrbitBurst},
       {"larry_jr", "Larry Jr.", 70.F, BossPattern::AxisDash},
-      {"moms_leg", "Mom's Leg", 150.F, BossPattern::WarningStomp},
   }};
   return definitions;
 }
@@ -22,10 +21,10 @@ void BossSystem::spawnForFloor(int floor) {
     bosses_.push_back({1, {620.F, 210.F}, BossCatalog::all()[1].health, 1, 0.F, 0.8F});
     bosses_.push_back({2, {620.F, 380.F}, BossCatalog::all()[2].health, 1, 0.F, 1.2F});
   }
-  if (floor == 3) bosses_.push_back({3, {650.F, 280.F}, BossCatalog::all()[3].health, 1, 0.F, 1.1F});
 }
 
-void BossSystem::update(float seconds, Player& player, std::vector<Projectile>& projectiles) {
+bool BossSystem::update(float seconds, Player& player, std::vector<Projectile>& projectiles) {
+  bool playerHurt{};
   for (auto& boss : bosses_) {
     const auto& definition = BossCatalog::all()[boss.definitionIndex];
     boss.phaseTimer += seconds;
@@ -40,12 +39,11 @@ void BossSystem::update(float seconds, Player& player, std::vector<Projectile>& 
     if (definition.pattern == BossPattern::AxisDash && std::fmod(boss.phaseTimer, 2.F) < 0.45F) {
       boss.position += common::Vec2{toward.x, 0.F}.normalized() * (150.F * seconds);
     }
-    if (definition.pattern == BossPattern::WarningStomp && std::fmod(boss.phaseTimer, 2.4F) > 1.8F) {
-      boss.position = player.position();
-    }
     boss.position.x = std::clamp(boss.position.x, 90.F, 870.F);
     boss.position.y = std::clamp(boss.position.y, 130.F, 450.F);
-    if ((boss.position - player.position()).lengthSquared() < 42.F * 42.F) player.damage(1);
+    if ((boss.position - player.position()).lengthSquared() < 42.F * 42.F) {
+      playerHurt = player.damage(1) || playerHurt;
+    }
 
     if (boss.attackTimer <= 0.F) {
       constexpr std::array<common::Vec2, 4> cardinal{{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}};
@@ -65,11 +63,13 @@ void BossSystem::update(float seconds, Player& player, std::vector<Projectile>& 
         }
       }
     } else if ((projectile.position - player.position()).lengthSquared() < 22.F * 22.F) {
-      player.damage(1); projectile.alive = false;
+      playerHurt = player.damage(1) || playerHurt;
+      projectile.alive = false;
     }
   }
   std::erase_if(bosses_, [](const Boss& boss) { return boss.health <= 0.F; });
   std::erase_if(projectiles, [](const Projectile& projectile) { return !projectile.alive; });
+  return playerHurt;
 }
 
 }  // namespace isaac::model

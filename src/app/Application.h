@@ -5,12 +5,14 @@
 #include "view/GameView.h"
 #include "viewmodel/GameViewModel.h"
 
+#include <cstddef>
+
 namespace isaac::app {
 
 class Application {
  public:
   Application();
-  void prepareCharacterSelectEvidence();
+  ~Application();
   int run();
 
  private:
@@ -18,7 +20,8 @@ class Application {
   viewmodel::GameViewModel viewModel_;
   resource::ResourceManager resources_;
   view::GameView view_;
-  bool evidenceMode_{};
+  std::size_t displayConnection_{};
+  std::size_t presentationConnection_{};
 };
 
 }  // namespace isaac::app

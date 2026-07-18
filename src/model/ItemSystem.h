@@ -8,7 +8,7 @@
 namespace isaac::model {
 
 enum class ItemCategory { Active, Passive, Trinket };
-enum class ItemEffect { Heal, DamageUp, TearsUp, LuckUp };
+enum class ItemEffect { Heal, HealthUp, DamageUp, TearsUp, SineTears, LuckUp };
 
 struct ItemDefinition {
   std::string_view id;
@@ -20,7 +20,7 @@ struct ItemDefinition {
 
 class ItemCatalog {
  public:
-  static const std::array<ItemDefinition, 5>& all();
+  static const std::array<ItemDefinition, 7>& all();
   static const ItemDefinition& byId(std::string_view id);
 };
 
@@ -28,14 +28,15 @@ class ItemSystem {
  public:
   void apply(Player& player, const ItemDefinition& item) const;
   bool useActive(Player& player) const;
-  bool openChest(Player& player);
+  bool takeTreasureItem(Player& player, std::string_view itemId);
   bool buyShopItem(Player& player, int price = 5);
   bool takeSecretTrinket(Player& player);
-  [[nodiscard]] bool chestOpened() const { return chestOpened_; }
+  [[nodiscard]] bool treasureTaken() const { return treasureTaken_; }
   [[nodiscard]] bool shopSold() const { return shopSold_; }
+  [[nodiscard]] bool secretTaken() const { return secretTaken_; }
 
  private:
-  bool chestOpened_{};
+  bool treasureTaken_{};
   bool shopSold_{};
   bool secretTaken_{};
 };
